@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bitcoin Transaction Visualization</title>
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            overflow: hidden;
+        }
+        #graphcontainer {
+            width: 100vw;
+            height: 100vh;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div id="graphcontainer">
+        <svg></svg>
+    </div>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script type="module" src="/graph.js"></script>
+</body>
+</html>
