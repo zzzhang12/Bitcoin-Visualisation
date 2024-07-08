@@ -31,42 +31,38 @@ var txTotalSize = 0;
 
 var blkTimer = null;
 
-// // WebSocket connection
-// const bcWebsocket = new WebSocket("ws://localhost:3000");
 
-// window.addEventListener("load", init, false);
+window.addEventListener("load", init, false);
 
-// function init() {
-//     console.log("Initializing...");
-//     runWebSocket();
-// }
+function init() {
+    console.log("Initializing...");
+    runWebSocket();
+}
 
-// function runWebSocket() {
-//     console.log("Attempting to open WebSocket connection to ws://localhost:3000");
-//     bcWebsocket.onopen = function(openEvent) { 
-//         console.log('WebSocket connected');
-//         onOpen(openEvent);
-//     };
-//     bcWebsocket.onmessage = function(msgEvent) {
-//         onMessage(msgEvent);
-//         console.log('WebSocket message received');
-//     };
-//     bcWebsocket.onerror = function(error) {
-//         console.error('WebSocket Error:', error);    
-//     };
-//     bcWebsocket.onclose = function(_event) {
-//         console.log('WebSocket closed');
-//     };
-// }
+function runWebSocket() {
+    let socket = io("http://localhost:3000",{
+        withCredentials: true,
+        // transports: ['websocket', 'polling']
+        }
+    )
+    socket.on('connect', function() {
+        console.log("Connected to server WebSocket");
+    });
 
-// function onOpen(_openEvent) {
-//     console.log("Connected to server WebSocket");
-// }
+    socket.on('disconnect', function() {
+        console.log('Disconnected from server');
+    });
 
-// function onMessage(msgEvent) {
-//     const msg = JSON.parse(msgEvent.data);
-//     processMessage(msg);
-// }
+    socket.on('graph_data', function(msg) {
+        console.log('Received graph data:', msg);
+        processMessage(msg);
+    });
+
+    socket.on('connection_response', function(msg) {
+        console.log('Server response:', msg);
+    });
+};
+
 
 function processMessage(msg){
     if (paused) {
@@ -77,7 +73,7 @@ function processMessage(msg){
     }
 }
 
-d3.json("graph_data.json").then(function(graphData) {
+d3.json("/static/graph_data.json").then(function(graphData) {
     renderGraph(graphData);
 }).catch(function(error) {
     console.error("Error loading the graph data: ", error);
@@ -168,14 +164,3 @@ function renderGraph(graphData) {
     }
 
 }
-
-// // Log WebSocket handshake request headers
-// bcWebsocket.addEventListener('open', function (event) {
-//     console.log("Handshake Request Headers:");
-//     console.log(socket);
-// });
-
-// bcWebsocket.addEventListener('error', function (event) {
-//     console.error("Handshake Error Details:");
-//     console.error(event);
-// });
