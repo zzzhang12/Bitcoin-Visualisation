@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, send_from_directory, render_template
 import json
 import networkx as nx
 from fa2_modified import ForceAtlas2
@@ -8,11 +8,9 @@ import threading
 from dotenv import load_dotenv
 import traceback
 from flask_socketio import SocketIO, send, emit
+import time
 
-# Load environment variables from .env file
-load_dotenv()
-
-app = Flask(__name__)
+app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # WebSocket to receive Bitcoin transactions
@@ -24,6 +22,7 @@ nodes = []
 edges = []
 node_ids = set()
 clients = set()
+broadcast_interval = 5  # Frequency in seconds to broadcast data to clients
 
 def push(msg):
     global queue
@@ -183,7 +182,7 @@ def process_transaction(transactions):
         # Save graph_data to a JSON file
         with open('graph_data.json', 'w') as f:
             json.dump(graph_data, f)
-        # broadcast_to_clients(graph_data)
+        broadcast_to_clients(graph_data)
         return graph_data
 
     except Exception as e:
@@ -191,14 +190,22 @@ def process_transaction(transactions):
         traceback.print_exc()
 
 
-@app.route('/', methods=['GET'])
+@app.route('/api/graph', methods=['GET'])
 def get_graph():
     print("Received request for graph")
     if not queue:
         return jsonify({'nodes': [], 'edges': []})
     transactions = queue[:]
     graph_data = process_transaction(transactions)
-    return jsonify(graph_data)
+    return jsonify(graph_data) 
+
+@app.route('/static/<path:path>', methods=['GET'])
+def static_proxy(path):
+    return send_from_directory(app.static_folder, path)
+
+@app.route('/', methods=['GET'])
+def index():
+    return render_template('index.html')
 
 
 def compute_graph():
@@ -243,17 +250,16 @@ def compute_graph():
 
 @socketio.on('connect')
 def handle_connect():
-    print("Client connected")
-    print("Request Headers:", request.headers)
-    print("Request Data:", request.data)
+    print('Client connected')
+    emit('connection_response', {'data': 'Connected to server'})
 
 @socketio.on('disconnect')
 def handle_disconnect():
-    print("Client disconnected")
+    print('Client disconnected')
 
-@socketio.on('message')
-def handle_message(message):
-    print(f"Received message from client: {message}")
+@socketio.on('request_graph_data')
+def handle_request_graph_data():
+    graph_data = compute_graph()
 
 
 def broadcast_to_clients(data):
@@ -264,9 +270,23 @@ def broadcast_to_clients(data):
         except Exception as e:
             print(f"Error broadcasting to client: {e}")
 
+def periodic_broadcast():
+    while True:
+        if not queue:
+            continue
+        transactions = queue[:]
+        graph_data = process_transaction(transactions)
+        socketio.emit('graph_data', graph_data)
+        time.sleep(broadcast_interval)
 
+# if __name__ == '__main__':
+#     print("Starting Flask server on 0.0.0.0:3000")
+#     threading.Thread(target=start_ws).start()
+#     start_polling()
+#     socketio.run(app, host='0.0.0.0', port=3000)
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    start_polling()
+    threading.Thread(target=start_polling).start()
+    threading.Thread(target=periodic_broadcast).start()
     socketio.run(app, host='0.0.0.0', port=3000)

@@ -34,30 +34,37 @@ var blkTimer = null;
 // // WebSocket connection
 // const bcWebsocket = new WebSocket("ws://localhost:3000");
 
-// window.addEventListener("load", init, false);
+window.addEventListener("load", init, false);
 
-// function init() {
-//     console.log("Initializing...");
-//     runWebSocket();
-// }
+function init() {
+    console.log("Initializing...");
+    runWebSocket();
+}
 
-// function runWebSocket() {
-//     console.log("Attempting to open WebSocket connection to ws://localhost:3000");
-//     bcWebsocket.onopen = function(openEvent) { 
-//         console.log('WebSocket connected');
-//         onOpen(openEvent);
-//     };
-//     bcWebsocket.onmessage = function(msgEvent) {
-//         onMessage(msgEvent);
-//         console.log('WebSocket message received');
-//     };
-//     bcWebsocket.onerror = function(error) {
-//         console.error('WebSocket Error:', error);    
-//     };
-//     bcWebsocket.onclose = function(_event) {
-//         console.log('WebSocket closed');
-//     };
-// }
+function runWebSocket() {
+    let socket = io("http://localhost:3000",{
+        withCredentials: true,
+        // transports: ['websocket', 'polling']
+        }
+    )
+    socket.on('connect', function() {
+        console.log("Connected to server WebSocket");
+    });
+
+    socket.on('disconnect', function() {
+        console.log('Disconnected from server');
+    });
+
+    socket.on('graph_data', function(msg) {
+        console.log('Received graph data:', msg);
+        processMessage(msg);
+    });
+
+    socket.on('connection_response', function(msg) {
+        console.log('Server response:', msg);
+    });
+};
+
 
 // function onOpen(_openEvent) {
 //     console.log("Connected to server WebSocket");
@@ -77,11 +84,11 @@ function processMessage(msg){
     }
 }
 
-d3.json("graph_data.json").then(function(graphData) {
-    renderGraph(graphData);
-}).catch(function(error) {
-    console.error("Error loading the graph data: ", error);
-});
+// d3.json("graph_data.json").then(function(graphData) {
+//     renderGraph(graphData);
+// }).catch(function(error) {
+//     console.error("Error loading the graph data: ", error);
+// });
 
 function renderGraph(graphData) {
     console.log("Attempting to render graph");
