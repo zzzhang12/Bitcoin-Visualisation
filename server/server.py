@@ -9,6 +9,7 @@ import traceback
 from flask_socketio import SocketIO, send, emit
 import time
 import logging
+from threading import Thread
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', filename='app.log', filemode='w')
 
@@ -66,19 +67,17 @@ def start_polling():
 
 def poll():
     if len(queue) == 0:
+        start_polling()
         return
     message = shift()
     if message is not None:
         process_transaction([message])
     start_polling()
 
+
 def on_message(ws, message):
     data = json.loads(message)
-    if len(queue) < MAX_SIZE:
-        queue.append(data)
-    else:
-        queue.pop(0)
-        queue.append(data)
+    push(data)
 
 def on_error(ws, error):
     print(f"WebSocket error: {error}")
@@ -347,14 +346,12 @@ def index():
     return render_template('index.html')
 
 
-def compute_graph():
-    # Your compute_graph logic
-    return {'nodes': [], 'edges': []} 
 @socketio.on('connect')
 def handle_connect():
     client_id = request.sid
     clients[client_id] = {'sent_nodes': set(), 'sent_edges': set()}
     print(f"Client connected: {client_id}")
+    emit('connection_response', {'data': 'Connected to server'})
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -363,22 +360,37 @@ def handle_disconnect():
         del clients[client_id]
     print(f"Client disconnected: {client_id}")
 
-@socketio.on('request_graph_data')
-def handle_request_graph_data():
-    graph_data = compute_graph()
-    emit('graph_data', graph_data)
 
-def broadcast_to_clients():
+# @socketio.on('request_graph_data')
+# def handle_request_graph_data():
+#     graph_data = compute_graph()
+#     emit('graph_data', graph_data)
+
+def broadcast_to_clients(data):
+    print("Broadcasting data to clients")
+    for client in clients:
+        try:
+            # client.send(json.dumps(data))
+            emit('graph_data', data, to=client)
+        except Exception as e:
+            print(f"Error broadcasting to client: {e}")
+
+
+def periodic_broadcast():
     while True:
+        if not queue:
+            continue
+        transactions = queue[:]
+        graph_data = process_transaction(transactions)
+        socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
-        if queue:
-            new_nodes, new_edges = process_transaction(queue)
-            graph_data = compute_graph(new_nodes, new_edges)
-            for client_id, client_data in clients.items():
-                emit('graph_data', graph_data, to=client_id)
 
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
-    threading.Thread(target=start_ws).start()
-    start_polling()
+    broadcast_thread = Thread(target=periodic_broadcast)
+    broadcast_thread.daemon = True
+    broadcast_thread.start()
+    websocket_thread = Thread(target=start_ws)
+    websocket_thread.daemon = True
+    websocket_thread.start()
     socketio.run(app, host='0.0.0.0', port=3000)
