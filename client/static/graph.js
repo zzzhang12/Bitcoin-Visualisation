@@ -1,38 +1,9 @@
 // Global variables
-var isHovered = false;
 var paused = false;
 var msgBuf = [];
-var minDegs = 0;
-var minValConstraint = 0;
-var maxValConstraint = Number.MAX_VALUE;
-var minFeeConstraint = 0;
-var maxFeeConstraint = Number.MAX_VALUE;
-var addrFilter = '';
-var txFilter = '';
 
-var currUSDBTC = 0;
-var txRate = 0;
-var lastRateTx = 0;
-var timeOfLastTx = Date.now();
+let socket, svg, g, link, node, simulation;
 
-var numTx = 0;
-var numIn = 0;
-var numOut = 0;
-var numNodes = 0;
-
-var txMaxVal = 0;
-var txTotalVal = 0;
-
-var txMaxFee = 0;
-var txTotalFee = 0;
-
-var txMaxSize = 0;
-var txTotalSize = 0;
-
-var blkTimer = null;
-
-// // WebSocket connection
-// const bcWebsocket = new WebSocket("ws://localhost:3000");
 
 window.addEventListener("load", init, false);
 
@@ -42,7 +13,7 @@ function init() {
 }
 
 function runWebSocket() {
-    let socket = io("http://localhost:3000",{
+    socket = io("http://localhost:3000",{
         withCredentials: true,
         // transports: ['websocket', 'polling']
         }
@@ -66,15 +37,6 @@ function runWebSocket() {
 };
 
 
-// function onOpen(_openEvent) {
-//     console.log("Connected to server WebSocket");
-// }
-
-// function onMessage(msgEvent) {
-//     const msg = JSON.parse(msgEvent.data);
-//     processMessage(msg);
-// }
-
 function processMessage(msg){
     if (paused) {
         msgBuf.push(msg);
@@ -90,30 +52,67 @@ function processMessage(msg){
 //     console.error("Error loading the graph data: ", error);
 // });
 
-function renderGraph(graphData) {
-    console.log("Attempting to render graph");
+
+function initializeGraph() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    const svg = d3.select("svg")
-        .call(d3.zoom().on("zoom", ({transform}) => {
+    svg = d3.select("svg")
+        .call(d3.zoom().on("zoom", ({ transform }) => {
             g.attr("transform", transform);
         }))
         .append("g");
 
-    const g = svg.append("g");
+    g = svg.append("g");
 
-    const link = g.selectAll(".link")
-        .data(graphData.edges)
-        .enter().append("line")
-        .attr("class", "link")
-        .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399");
+    link = g.selectAll(".link");
+    node = g.selectAll(".node");
 
-    const node = g.selectAll(".node")
-        .data(graphData.nodes)
-        .enter().append("circle")
+    simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-30))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
+        .on("tick", ticked);
+}
+
+
+function renderGraph(graphData) {
+    console.log("Attempting to render graph");
+    console.log("Received graph data structure:", graphData);
+
+    if (!Array.isArray(graphData.nodes) || !Array.isArray(graphData.edges)) {
+        console.error("Graph data is not correctly structured:", graphData);
+        return;
+    }
+
+    if (!svg) {
+        initializeGraph();
+    }
+
+    updateGraph(graphData);
+}
+
+
+function updateGraph(newGraphData) {
+    console.log("Updating graph with new data:", newGraphData);
+
+    if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
+        console.error("New graph data is not correctly structured:", newGraphData);
+        return;
+    }
+
+    const existingNodes = new Set(node.data().map(d => d.id));
+
+    const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
+    const linksToAdd = newGraphData.edges;
+
+    node = node.data(node.data().concat(nodesToAdd), d => d.id);
+    node.exit().remove();
+
+    node = node.enter().append("circle")
         .attr("class", "node")
-        .attr("r", d => d.type === 'tx' ? 10 : 5)  // Larger size for transaction nodes, smaller for input/output nodes
+        .attr("r", d => d.type === 'tx' ? 6 : 1)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         .style("fill", d => d.color)
@@ -121,68 +120,77 @@ function renderGraph(graphData) {
             .on("start", dragStarted)
             .on("drag", dragged)
             .on("end", dragEnded))
-        .on("click", focusOnNode);  // Add click event for focusing
+        .on("click", focusOnNode)
+        .merge(node);
 
-    const simulation = d3.forceSimulation(graphData.nodes)
-        .force("link", d3.forceLink(graphData.edges).id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-30))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-        .on("tick", ticked);
+    link = link.data(link.data().concat(linksToAdd), d => `${d.source}-${d.target}`);
+    link.exit().remove();
 
-    // Stop the simulation after the initial adjustment
-    setTimeout(() => {
-        simulation.stop();
-    }, 2000);
+    link = link.enter().append("line")
+        .attr("class", "link")
+        .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
+        .merge(link);
 
-    function ticked() {
-        link
-            .attr("x1", d => d.source.x)
-            .attr("y1", d => d.source.y)
-            .attr("x2", d => d.target.x)
-            .attr("y2", d => d.target.y);
-
-        node
-            .attr("cx", d => d.x)
-            .attr("cy", d => d.y);
-    }
-
-    function dragStarted(event, d) {
-        if (!event.active) simulation.alphaTarget(0.3).restart();
-        d.fx = d.x;
-        d.fy = d.y;
-    }
-
-    function dragged(event, d) {
-        d.fx = event.x;
-        d.fy = event.y;
-    }
-
-    function dragEnded(event, d) {
-        if (!event.active) simulation.alphaTarget(0);
-        d.fx = null;
-        d.fy = null;
-    }
-
-    function focusOnNode(event, d) {
-        const scale = 2.5;  // Increased scale for more noticeable zoom
-        const transitionDuration = 1000;  // Increased duration for more noticeable transition
-        const transform = d3.zoomIdentity
-            .translate(width / 2, height / 2)
-            .scale(scale)
-            .translate(-d.x, -d.y);
-        svg.transition().duration(transitionDuration).call(d3.zoom().transform, transform);
-    }
-
+    simulation.nodes(node.data());
+    simulation.force("link").links(link.data());
+    simulation.alpha(1).restart();
 }
 
-// // Log WebSocket handshake request headers
-// bcWebsocket.addEventListener('open', function (event) {
-//     console.log("Handshake Request Headers:");
-//     console.log(socket);
-// });
+function ticked() {
+    link
+        .attr("x1", d => d.source.x)
+        .attr("y1", d => d.source.y)
+        .attr("x2", d => d.target.x)
+        .attr("y2", d => d.target.y);
 
-// bcWebsocket.addEventListener('error', function (event) {
-//     console.error("Handshake Error Details:");
-//     console.error(event);
-// });
+    node
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y);
+}
+
+function dragStarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+}
+
+function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+
+    // Move connected nodes
+    node.each(function(n) {
+        if (n.id !== d.id && isConnected(d, n)) {
+            n.fx = event.x;
+            n.fy = event.y;
+        }
+    });
+    simulation.alpha(1).restart();
+}
+
+function dragEnded(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+
+    // Unfix connected nodes
+    node.each(function(n) {
+        if (n.id !== d.id && isConnected(d, n)) {
+            n.fx = null;
+            n.fy = null;
+        }
+    });
+}
+
+function focusOnNode(event, d) {
+    const scale = 3.5;
+    const transform = d3.zoomIdentity
+        .translate(window.innerWidth / 2, window.innerHeight / 2)
+        .scale(scale)
+        .translate(-d.x, -d.y);
+    svg.transition().duration(750).call(d3.zoom().transform, transform);
+}
+
+function isConnected(a, b) {
+    return link.data().some(d => (d.source.id === a.id && d.target.id === b.id) || (d.source.id === b.id && d.target.id === a.id));
+}
