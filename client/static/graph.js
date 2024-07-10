@@ -107,6 +107,18 @@ function updateGraph(newGraphData) {
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
     const linksToAdd = newGraphData.edges;
 
+    // // Limit the number of nodes and edges for debugging
+    // const NODE_LIMIT = 25; // Change this to the number of nodes you want to debug with
+    // const EDGE_LIMIT = 50; // Change this to the number of edges you want to debug with
+    // const limitedNodes = newGraphData.nodes.slice(0, NODE_LIMIT);
+    // const limitedEdges = newGraphData.edges.slice(0, EDGE_LIMIT);
+
+    // const existingNodes = new Set(node.data().map(d => d.id));
+
+    // const nodesToAdd = limitedNodes.filter(node => !existingNodes.has(node.id));
+    // const linksToAdd = limitedEdges;
+
+
     node = node.data(node.data().concat(nodesToAdd), d => d.id);
     node.exit().remove();
 
@@ -120,7 +132,10 @@ function updateGraph(newGraphData) {
             .on("start", dragStarted)
             .on("drag", dragged)
             .on("end", dragEnded))
-        .on("click", focusOnNode)
+        // .on("click", focusOnNode)
+        .on("click", function(event, d) {
+            document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
+        })
         .merge(node);
 
     link = link.data(link.data().concat(linksToAdd), d => `${d.source}-${d.target}`);
