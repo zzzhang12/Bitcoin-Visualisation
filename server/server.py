@@ -155,7 +155,8 @@ def process_transaction(transactions):
                 n = prev_out.get('n', 0)
                 addr_tag = prev_out.get('addr_tag', '')
                 
-                currID = f"{addr}:{tx_index}:{n}"
+                # currID = f"{addr}:{tx_index}:{n}"
+                currID = f"{tx_index}:{n}"
                 
                 existInput = next((n for n in nodes if n['id'] == currID), None)
 
@@ -200,13 +201,13 @@ def process_transaction(transactions):
             for out in outputs:
                 addr = out.get('addr')
                 value = out.get('value', 0)
-                # tx_index = out.get('tx_index', 0)
-                tx_index = prev_out.get('tx_index', random.randint(0, 100000000)) 
+                tx_index = out.get('tx_index', random.randint(0, 100000000))
+                # tx_index = prev_out.get('tx_index', random.randint(0, 100000000)) 
                 n = out.get('n', 0)
                 addr_tag = out.get('addr_tag', '')
 
-                currID = f"{addr}:{tx_index}:{n}"
-                # currID = f"{tx_index}:{n}"
+                # currID = f"{addr}:{tx_index}:{n}"
+                currID = f"{tx_index}:{n}"
 
                 existOutput = next((n for n in nodes if n['id'] == currID), None)
 
@@ -370,6 +371,7 @@ def handle_disconnect():
 
 @socketio.on('request_graph_data')
 def handle_request_graph_data():
+    print ("client requested graph data")
     graph_data = compute_graph()
 
 
@@ -397,5 +399,5 @@ if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
     threading.Thread(target=start_polling).start()
-    threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=periodic_broadcast).start()
     socketio.run(app, host='0.0.0.0', port=3000)

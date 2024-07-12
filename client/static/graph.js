@@ -1,16 +1,22 @@
 // Global variables
 var paused = false;
 var msgBuf = [];
+const TOTAL_WIDTH = 500;
+const TOTAL_HEIGHT = 500;
+const rows = 1
+const cols = 2
 
 let socket, svg, g, link, node, simulation;
 
 
 window.addEventListener("load", init, false);
 
+
 function init() {
     console.log("Initializing...");
     runWebSocket();
 }
+
 
 function runWebSocket() {
     socket = io("http://localhost:3000",{
@@ -37,6 +43,14 @@ function runWebSocket() {
 };
 
 
+function getUrlParameter(name) {
+    name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    var results = regex.exec(location.search);
+    return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
+
 function processMessage(msg){
     if (paused) {
         msgBuf.push(msg);
@@ -46,11 +60,11 @@ function processMessage(msg){
     }
 }
 
-// d3.json("graph_data.json").then(function(graphData) {
-//     renderGraph(graphData);
-// }).catch(function(error) {
-//     console.error("Error loading the graph data: ", error);
-// });
+d3.json("static/test_data.json").then(function(graphData) {
+    renderGraph(graphData);
+}).catch(function(error) {
+    console.error("Error loading the graph data: ", error);
+});
 
 
 function initializeGraph() {
@@ -86,11 +100,51 @@ function renderGraph(graphData) {
         return;
     }
 
+    const row = parseInt(getUrlParameter('row'), 10);
+    const col = parseInt(getUrlParameter('col'), 10);
+
+    const clientWidth = TOTAL_WIDTH / cols;
+    const clientHeight = TOTAL_HEIGHT / rows;
+
+    const offsetX = col * clientWidth;
+    const offsetY = row * clientHeight;
+
+    console.log(`Client row: ${row}, column: ${col}`);
+    console.log(`Client dimensions (width x height): ${clientWidth} x ${clientHeight}`);
+    console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
+    console.log(`Client x range: [${offsetX - TOTAL_WIDTH / 2}, ${offsetX - TOTAL_WIDTH / 2 + clientWidth}]`);
+    console.log(`Client y range: [${offsetY - TOTAL_HEIGHT / 2}, ${offsetY - TOTAL_HEIGHT / 2 + clientHeight}]`);
+
+    // Filter nodes based on the client's width, height, and offset
+    const filteredNodes = graphData.nodes.filter(node => {
+        const withinXRange = node.x >= offsetX - TOTAL_WIDTH / 2 && node.x < (offsetX - TOTAL_WIDTH / 2 + clientWidth);
+        const withinYRange = node.y >= offsetY - TOTAL_HEIGHT / 2 && node.y < (offsetY - TOTAL_HEIGHT / 2 + clientHeight);
+
+        console.log(`Node ${node.id} (x: ${node.x}, y: ${node.y}) - within X range: ${withinXRange}, within Y range: ${withinYRange}`);
+
+        return withinXRange && withinYRange;
+    });
+
+    console.log('Filtered nodes:', filteredNodes);
+
+    // Filter edges based on the filtered nodes
+    const filteredEdges = graphData.edges.filter(edge => {
+        const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
+        const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
+
+        console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+
+        return sourceInFilteredNodes && targetInFilteredNodes;
+    });
+
+    console.log('Filtered edges:', filteredEdges);
+
     if (!svg) {
         initializeGraph();
     }
 
-    updateGraph(graphData);
+    // updateGraph(graphData);
+    updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
@@ -106,18 +160,6 @@ function updateGraph(newGraphData) {
 
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
     const linksToAdd = newGraphData.edges;
-
-    // // Limit the number of nodes and edges for debugging
-    // const NODE_LIMIT = 25; // Change this to the number of nodes you want to debug with
-    // const EDGE_LIMIT = 50; // Change this to the number of edges you want to debug with
-    // const limitedNodes = newGraphData.nodes.slice(0, NODE_LIMIT);
-    // const limitedEdges = newGraphData.edges.slice(0, EDGE_LIMIT);
-
-    // const existingNodes = new Set(node.data().map(d => d.id));
-
-    // const nodesToAdd = limitedNodes.filter(node => !existingNodes.has(node.id));
-    // const linksToAdd = limitedEdges;
-
 
     node = node.data(node.data().concat(nodesToAdd), d => d.id);
     node.exit().remove();
