@@ -1,12 +1,11 @@
 // Global variables
 var paused = false;
 var msgBuf = [];
-const CLIENT_WIDTH = 300;  
-const CLIENT_HEIGHT = 300;
+const CLIENT_WIDTH = 853;  
+const CLIENT_HEIGHT = 982;
 
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
-
 
 window.addEventListener("load", init, false);
 
@@ -59,7 +58,7 @@ function processMessage(msg){
     }
 }
 
-d3.json("static/test_data_2.json").then(function(graphData) {
+d3.json("static/test_data.json").then(function(graphData) {
     renderGraph(graphData);
 }).catch(function(error) {
     console.error("Error loading the graph data: ", error);
@@ -112,9 +111,15 @@ function calculateIntersection(sourceNode, targetNode, offsetX, offsetY, clientW
     return null;
 }
 
+// console.log("width: ", width)
+// console.log("height: ", height)
+
 function initializeGraph() {
     const width = window.innerWidth;
     const height = window.innerHeight;
+    console.log("width: ", width)
+    console.log("height: ", height)
+
 
     svg = d3.select("svg")
         .call(d3.zoom().on("zoom", ({ transform }) => {
@@ -127,12 +132,12 @@ function initializeGraph() {
     link = g.selectAll(".link");
     node = g.selectAll(".node");
 
-    simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-30))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-        .on("tick", ticked);
+    // simulation = d3.forceSimulation()
+    //     .force("link", d3.forceLink().id(d => d.id).distance(100))
+    //     .force("charge", d3.forceManyBody().strength(-30))
+    //     .force("center", d3.forceCenter(width / 2, height / 2))
+    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
+    //     .on("tick", ticked);
 }
 
 
@@ -152,6 +157,9 @@ function renderGraph(graphData) {
      offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
+     offsetX = 0 
+     offsetY = 0
+
     // Calculate the filtered nodes based on the client viewport
     let filteredNodes = graphData.nodes.filter(node => {
         const xInRange = col > 0 ? (node.x >= offsetX && node.x < (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
@@ -167,107 +175,7 @@ function renderGraph(graphData) {
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
     // console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
     // console.log(`Client y range: [${offsetY}, ${offsetY + CLIENT_HEIGHT}]`);
-
-    // // Create a map for quick node lookup
-    // const nodesMap = new Map();
-    // graphData.nodes.forEach(node => nodesMap.set(node.id, node));
-
-    // const filteredEdges = [];
-
-    // // Check edges and calculate intersections
-    // graphData.edges.forEach(edge => {
-    //     const sourceNode = nodesMap.get(edge.source);
-    //     const targetNode = nodesMap.get(edge.target);
-
-    //     if (filteredNodes.includes(sourceNode) && filteredNodes.includes(targetNode)) {
-    //         filteredEdges.push(edge);
-    //     } else if (filteredNodes.includes(sourceNode) || filteredNodes.includes(targetNode)) {
-    //         const intersection = calculateIntersection(sourceNode, targetNode, offsetX, offsetY, clientWidth, clientHeight);
-
-    //         if (intersection) {
-    //             const intersectionId = `intersection_${sourceNode.id}_${targetNode.id}`;
-    //             nodesMap.set(intersectionId, intersection);
-
-    //             if (filteredNodes.includes(sourceNode)) {
-    //                 filteredEdges.push({source: edge.source, target: intersectionId, type: edge.type});
-    //             } else {
-    //                 filteredEdges.push({source: intersectionId, target: edge.target, type: edge.type});
-    //             }
-    //         }
-    //     }
-    // });
-
-    // console.log("Filtered edges:", filteredEdges);
-
-
-    // // Filter nodes based on the client's width, height, and offset
-    // const filteredNodes = graphData.nodes.filter(node => {
-    //     const withinXRange = node.x >= offsetX - TOTAL_WIDTH / 2 && node.x < (offsetX - TOTAL_WIDTH / 2 + clientWidth);
-    //     const withinYRange = node.y >= offsetY - TOTAL_HEIGHT / 2 && node.y < (offsetY - TOTAL_HEIGHT / 2 + clientHeight);
-    //     return withinXRange && withinYRange;
-    // });
-
-    // console.log('Filtered nodes:', filteredNodes);
-
-    // const filteredEdges = [];
-    // const intersectionNodes = {};
-
-    // graphData.edges.forEach(edge => {
-    //     const sourceNode = graphData.nodes.find(node => node.id === edge.source);
-    //     const targetNode = graphData.nodes.find(node => node.id === edge.target);
-
-    //     const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
-    //     const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
-
-    //     if (sourceInFilteredNodes && targetInFilteredNodes) {
-    //         filteredEdges.push(edge);
-    //     } else {
-    //         const intersection = getIntersection(
-    //             sourceNode.x, sourceNode.y,
-    //             targetNode.x, targetNode.y,
-    //             clientWidth, clientHeight,
-    //             offsetX - TOTAL_WIDTH / 2, offsetY - TOTAL_HEIGHT / 2
-    //         );
-
-    //         if (intersection) {
-    //             console.log("there is an intersection")
-    //             const intersectionId = `intersection_${edge.source}_${edge.target}`;
-
-    //             if (!intersectionNodes[intersectionId]) {
-    //                 intersectionNodes[intersectionId] = {
-    //                     id: intersectionId,
-    //                     x: intersection.x,
-    //                     y: intersection.y,
-    //                     color: "#000000", // Intersection point color
-    //                     type: "intersection"
-    //                 };
-    //             }
-
-    //             if (sourceInFilteredNodes) {
-    //                 filteredEdges.push({
-    //                     source: edge.source,
-    //                     target: intersectionId,
-    //                     type: edge.type
-    //                 });
-    //             }
-
-    //             if (targetInFilteredNodes) {
-    //                 filteredEdges.push({
-    //                     source: intersectionId,
-    //                     target: edge.target,
-    //                     type: edge.type
-    //                 });
-    //             }
-    //         }
-    //     }
-    // });
-
-    // // Add intersection nodes to filtered nodes
-    // Object.values(intersectionNodes).forEach(node => filteredNodes.push(node));
-
-    // console.log('Filtered edges:', filteredEdges);
-    // console.log('Filtered nodes with intersections:', filteredNodes);
-
+   
     // Filter edges based on the filtered nodes
     const filteredEdges = graphData.edges.filter(edge => {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
@@ -284,8 +192,8 @@ function renderGraph(graphData) {
         initializeGraph();
     }
 
-    // updateGraph(graphData);
-    updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    updateGraph(graphData);
+    // updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
@@ -335,9 +243,9 @@ function updateGraph(newGraphData) {
 }
 
 function ticked() {
-    node.each(function(d) {
-        console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
-    });
+    // node.each(function(d) {
+    //     console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
+    // });
     link
         .attr("x1", d => d.source.x - offsetX)
         .attr("y1", d => d.source.y - offsetY)

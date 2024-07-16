@@ -8,6 +8,7 @@ import traceback
 from flask_socketio import SocketIO, emit
 import time
 import random 
+import math
 
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -24,6 +25,58 @@ clients = set()
 broadcast_interval = 5  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 
+# Screen setup
+# NUM_ROWS = 4
+# NUM_COLS = 4
+# CLIENT_WIDTH = 400
+# CLIENT_HEIGHT = 300
+
+NUM_ROWS = 1
+NUM_COLS = 2
+CLIENT_WIDTH = 853
+CLIENT_HEIGHT = 982
+
+# # Calculate boundary lines based on the number of clients and their sizes
+# HORIZONTAL_BOUNDARIES = [i * CLIENT_HEIGHT for i in range(NUM_COLS)] 
+# VERTICAL_BOUNDARIES = [i * CLIENT_WIDTH for i in range(NUM_ROWS)]
+
+# HORIZONTAL_BOUNDARIES = [(i * CLIENT_HEIGHT) for i in range(-NUM_COLS//2, NUM_COLS//2 + 1) if i != 0]
+# VERTICAL_BOUNDARIES = [(i * CLIENT_WIDTH) for i in range(-NUM_ROWS//2, NUM_ROWS//2 + 1) if i != 0]
+
+HORIZONTAL_BOUNDARIES = [] 
+VERTICAL_BOUNDARIES = [853]
+
+# # Dummy nodes and edges for testing
+# test_nodes = [
+#     {'id': 'n1', 'x': 50, 'y': 50, 'color': '#ffffff', 'type': 'tx'},
+#     {'id': 'n2', 'x': 450, 'y': 50, 'color': '#FF9933', 'type': 'input'},  # Spans vertical boundary at x = 400
+#     {'id': 'n3', 'x': 50, 'y': 350, 'color': '#003399', 'type': 'output'}, # Spans horizontal boundary at y = 300
+#     {'id': 'n4', 'x': 450, 'y': 350, 'color': '#ffffff', 'type': 'tx'},   # Spans both vertical and horizontal boundaries
+# ]
+
+# test_edges = [
+#     {'source': 'n1', 'target': 'n2', 'type': 'out_link'},  # Vertical spanning edge
+#     {'source': 'n1', 'target': 'n3', 'type': 'out_link'},  # Horizontal spanning edge
+#     {'source': 'n1', 'target': 'n4', 'type': 'out_link'},  # Both vertical and horizontal spanning edge
+# ]
+
+test_nodes = [
+     {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
+    {"id": "n2", "x": 800, "y": 100, "color": "#FF9933", "type": "input"},
+    {"id": "n3", "x": 900, "y": 100, "color": "#003399", "type": "output"},
+    {"id": "n4", "x": 1000, "y": 100, "color": "#ffffff", "type": "tx"}
+]
+
+test_edges = [
+    {"source": "n1", "target": "n2", "type": "out_link"},  
+    {"source": "n3", "target": "n4", "type": "out_link"},  
+    {"source": "n1", "target": "n3", "type": "out_link"}, 
+    {"source": "n2", "target": "n4", "type": "out_link"}  
+]
+
+
+# Add dummy positions to nodes
+positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
 def push(msg):
     global queue
     if len(queue) < MAX_SIZE:
@@ -273,26 +326,28 @@ def process_transaction(transactions):
 
 
 def compute_graph(new_nodes, new_edges):
-    global nx_graph
+    # global nx_graph
 
     try:
-        forceatlas2 = ForceAtlas2(
-            outboundAttractionDistribution=False,
-            linLogMode=False,
-            adjustSizes=False,
-            edgeWeightInfluence=1.0,
-            jitterTolerance=1.0,
-            barnesHutOptimize=True,
-            barnesHutTheta=1.2,
-            multiThreaded=False,
-            scalingRatio=2.0,
-            strongGravityMode=False,
-            gravity=1.0,
-            verbose=True
-        )
-        positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
-        print (("----------------------"))
-        print ("positions: ", positions)
+        # forceatlas2 = ForceAtlas2(
+        #     outboundAttractionDistribution=False,
+        #     linLogMode=False,
+        #     adjustSizes=False,
+        #     edgeWeightInfluence=1.0,
+        #     jitterTolerance=1.0,
+        #     barnesHutOptimize=True,
+        #     barnesHutTheta=1.2,
+        #     multiThreaded=False,
+        #     scalingRatio=2.0,
+        #     strongGravityMode=False,
+        #     gravity=1.0,
+        #     verbose=True
+        # )
+        # positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
+        # print (("----------------------"))
+        # print ("positions: ", positions)
+
+        
         # print("positions: ", positions)
         # all_nodes_set = set(node['id'] for node in new_nodes)
 
@@ -303,26 +358,75 @@ def compute_graph(new_nodes, new_edges):
         # all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
 
         # Collect all nodes that are relevant for the graph data update
-        all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
+        # all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
+        # for edge in new_edges:
+        #     all_nodes_set.add(edge['source'].split(':')[0])
+        #     all_nodes_set.add(edge['target'].split(':')[0])
+
+        # # Filter the nodes that are part of the new updates
+        # all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
+
+        # print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
+        # print(f"Nodes found in positions: {set(positions.keys())}")
+        # print(f"All nodes to be processed in all_nodes: {all_nodes}")
+
+        # for node in all_nodes:
+        #     if node['id'] not in positions:
+        #         print(f"Node not found in positions: {node['id']}")
+
+        new_edges_split = []
         for edge in new_edges:
-            all_nodes_set.add(edge['source'].split(':')[0])
-            all_nodes_set.add(edge['target'].split(':')[0])
+            source_pos = positions[edge['source']]
+            target_pos = positions[edge['target']]
 
-        # Filter the nodes that are part of the new updates
-        all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
+            # Handle Spanning Edges
+            if is_different_client(source_pos, target_pos):
+                intersections = []
 
-        print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
-        print(f"Nodes found in positions: {set(positions.keys())}")
-        print(f"All nodes to be processed in all_nodes: {all_nodes}")
+                # Calculate intersections with vertical boundaries
+                for boundary in VERTICAL_BOUNDARIES:
+                    if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
+                        intersection = compute_intersection(source_pos, target_pos, boundary, True)
+                        if intersection:
+                            intersections.append(intersection)
 
-        for node in all_nodes:
-            if node['id'] not in positions:
-                print(f"Node not found in positions: {node['id']}")
+                # Calculate intersections with horizontal boundaries
+                for boundary in HORIZONTAL_BOUNDARIES:
+                    if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
+                        intersection = compute_intersection(source_pos, target_pos, boundary, False)
+                        if intersection:
+                            intersections.append(intersection)
+
+                print ("intersections: ", intersections)
+                # Sort intersections by their distance from the source node
+                intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
+
+                last_node_id = edge['source']
+
+                for i, intersection in enumerate(intersections):
+                    intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
+                    positions[intersection_id] = intersection
+
+                    new_edges_split.append({'source': last_node_id, 'target': intersection_id, 'type': edge['type']})
+                    # all_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
+
+                    last_node_id = intersection_id
+
+                new_edges_split.append({'source': last_node_id, 'target': edge['target'], 'type': edge['type']})
+            else:
+                new_edges_split.append(edge)
 
         graph_data = {
-            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type']} for node in all_nodes if node['id'] in positions],
-            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1], 'color': node['color'], 'type': node['type']} for node in new_nodes if node['id'] in positions],
+            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges_split]
         }
+
+        print(f"Final graph data: {graph_data}")
+
+        # graph_data = {
+        #     'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type']} for node in all_nodes if node['id'] in positions],
+        #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+        # }
 
         # # Adjust node IDs to match those used in positions
         # graph_data = {
@@ -336,6 +440,27 @@ def compute_graph(new_nodes, new_edges):
         print("Error rendering graph:", str(e))
         traceback.print_exc()
         return {'nodes': [], 'edges': []}
+
+
+def is_different_client(p1, p2):
+            x1, y1 = p1
+            x2, y2 = p2
+            return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
+
+
+def compute_intersection(p1, p2, boundary, is_vertical):
+            x1, y1 = p1
+            x2, y2 = p2
+            if is_vertical:
+                if x1 == x2:
+                    return None  # Avoid division by zero
+                y = y1 + (boundary - x1) * (y2 - y1) / (x2 - x1)
+                return (boundary, y)
+            else:
+                if y1 == y2:
+                    return None  # Avoid division by zero
+                x = x1 + (boundary - y1) * (x2 - x1) / (y2 - y1)
+                return (x, boundary)
 
 
 @app.route('/api/graph', methods=['GET'])
@@ -394,10 +519,12 @@ def periodic_broadcast():
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 
+# Test the function
+compute_graph(test_nodes, test_edges)
 
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
-    threading.Thread(target=start_ws).start()
-    threading.Thread(target=start_polling).start()
+    # threading.Thread(target=start_ws).start()
+    # threading.Thread(target=start_polling).start()
     # threading.Thread(target=periodic_broadcast).start()
     socketio.run(app, host='0.0.0.0', port=3000)
