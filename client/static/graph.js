@@ -58,61 +58,12 @@ function processMessage(msg){
     }
 }
 
-d3.json("static/test_data.json").then(function(graphData) {
+d3.json("static/test_data_4.json").then(function(graphData) {
     renderGraph(graphData);
 }).catch(function(error) {
     console.error("Error loading the graph data: ", error);
 });
 
-
-// Function to calculate the intersection point with the canvas boundary
-function calculateIntersection(sourceNode, targetNode, offsetX, offsetY, clientWidth, clientHeight) {
-    const x1 = sourceNode.x, y1 = sourceNode.y, x2 = targetNode.x, y2 = targetNode.y;
-    const boundaries = [
-        {x: offsetX, y: offsetY},                             // left boundary
-        {x: offsetX + clientWidth, y: offsetY},               // right boundary
-        {x: offsetX, y: offsetY + clientHeight},              // bottom boundary
-        {x: offsetX + clientWidth, y: offsetY + clientHeight} // top boundary
-    ];
-
-    let intersections = [];
-
-    // Check intersections with the four boundaries of the canvas
-    for (const boundary of boundaries) {
-        let intersection = null;
-
-        // Intersect with vertical boundaries
-        if (boundary.x === offsetX || boundary.x === offsetX + clientWidth) {
-            const t = (boundary.x - x1) / (x2 - x1);
-            const y = y1 + t * (y2 - y1);
-            if (y >= offsetY && y <= offsetY + clientHeight) {
-                intersection = {x: boundary.x, y: y};
-            }
-        }
-
-        // Intersect with horizontal boundaries
-        if (boundary.y === offsetY || boundary.y === offsetY + clientHeight) {
-            const t = (boundary.y - y1) / (y2 - y1);
-            const x = x1 + t * (x2 - x1);
-            if (x >= offsetX && x <= offsetX + clientWidth) {
-                intersection = {x: x, y: boundary.y};
-            }
-        }
-
-        if (intersection) {
-            intersections.push(intersection);
-        }
-    }
-
-    if (intersections.length > 0) {
-        return intersections[0]; // Return the first intersection point found
-    }
-
-    return null;
-}
-
-// console.log("width: ", width)
-// console.log("height: ", height)
 
 function initializeGraph() {
     const width = window.innerWidth;
@@ -157,21 +108,19 @@ function renderGraph(graphData) {
      offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
-     offsetX = 0 
-     offsetY = 0
+    //  offsetX = 0 
+    //  offsetY = 0  // uncomment when testing only 1 client
 
     // Calculate the filtered nodes based on the client viewport
     let filteredNodes = graphData.nodes.filter(node => {
-        const xInRange = col > 0 ? (node.x >= offsetX && node.x < (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
-        const yInRange = row > 0 ? (node.y >= offsetY && node.y < (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
+        const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
+        const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
         console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
         return xInRange && yInRange;
     });
 
     console.log("Filtered nodes:", filteredNodes);
 
-    // console.log(`Client row: ${row}, column: ${col}`);
-    // console.log(`Client dimensions (width x height): ${clientWidth} x ${clientHeight}`);
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
     // console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
     // console.log(`Client y range: [${offsetY}, ${offsetY + CLIENT_HEIGHT}]`);
@@ -192,8 +141,15 @@ function renderGraph(graphData) {
         initializeGraph();
     }
 
-    updateGraph(graphData);
-    // updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    // Convert edges to reference the node objects
+    const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
+    graphData.edges.forEach(d => {
+        d.source = nodeById.get(d.source);
+        d.target = nodeById.get(d.target);
+    });
+
+    // updateGraph(graphData);  // for testing with only client
+    updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
@@ -216,6 +172,7 @@ function updateGraph(newGraphData) {
     node = node.enter().append("circle")
         .attr("class", "node")
         .attr("r", d => d.type === 'tx' ? 6 : 1)
+        // .attr("r", d => 6)  // for testing intersection nodes
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => d.color)
@@ -235,11 +192,13 @@ function updateGraph(newGraphData) {
     link = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
+        .style("stroke-width", 2) 
         .merge(link);
 
-    simulation.nodes(node.data());
-    simulation.force("link").links(link.data());
-    simulation.alpha(1).restart();
+    // simulation.nodes(node.data());
+    // simulation.force("link").links(link.data());
+    // simulation.alpha(1).restart();
+    ticked();
 }
 
 function ticked() {
@@ -258,7 +217,7 @@ function ticked() {
 }
 
 function dragStarted(event, d) {
-    if (!event.active) simulation.alphaTarget(0.3).restart();
+    // if (!event.active) simulation.alphaTarget(0.3).restart();
     d.fx = d.x;
     d.fy = d.y;
 }

@@ -25,12 +25,6 @@ clients = set()
 broadcast_interval = 5  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 
-# Screen setup
-# NUM_ROWS = 4
-# NUM_COLS = 4
-# CLIENT_WIDTH = 400
-# CLIENT_HEIGHT = 300
-
 NUM_ROWS = 1
 NUM_COLS = 2
 CLIENT_WIDTH = 853
@@ -74,9 +68,10 @@ test_edges = [
     {"source": "n2", "target": "n4", "type": "out_link"}  
 ]
 
-
 # Add dummy positions to nodes
 positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
+
+
 def push(msg):
     global queue
     if len(queue) < MAX_SIZE:

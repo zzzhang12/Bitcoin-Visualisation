@@ -1,0 +1,12 @@
+{
+    "nodes": [
+        {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
+        {"id": "n2", "x": 1000, "y": 100, "color": "#003399", "type": "output"},
+        {"id": "intersection_n1_n2_0", "x": 853, "y": 100, "color": "#000000", "type": "intersection"}
+    ],
+    "edges": [
+        {"source": "n1", "target": "n2", "type": "out_link"},
+        {"source": "n1", "target": "intersection_n1_n2_0", "type": "out_link"},
+        {"source": "intersection_n1_n2_0", "target": "n2", "type": "out_link"}
+    ]
+}
