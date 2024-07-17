@@ -22,7 +22,7 @@ nodes = []
 edges = []
 node_ids = set()
 clients = set()
-broadcast_interval = 5  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 
 NUM_ROWS = 1
@@ -203,8 +203,8 @@ def process_transaction(transactions):
                 n = prev_out.get('n', 0)
                 addr_tag = prev_out.get('addr_tag', '')
                 
-                # currID = f"{addr}:{tx_index}:{n}"
-                currID = f"{tx_index}:{n}"
+                currID = f"{addr}:{tx_index}:{n}"
+                # currID = f"{tx_index}:{n}"
                 
                 existInput = next((n for n in nodes if n['id'] == currID), None)
 
@@ -254,8 +254,8 @@ def process_transaction(transactions):
                 n = out.get('n', 0)
                 addr_tag = out.get('addr_tag', '')
 
-                # currID = f"{addr}:{tx_index}:{n}"
-                currID = f"{tx_index}:{n}"
+                currID = f"{addr}:{tx_index}:{n}"
+                # currID = f"{tx_index}:{n}"
 
                 existOutput = next((n for n in nodes if n['id'] == currID), None)
 
@@ -509,8 +509,8 @@ def periodic_broadcast():
             continue
         transactions = queue[:]
         new_nodes, new_edges = process_transaction(transactions)
-        graph_data = compute_graph(new_nodes, new_edges)
-        # graph_data = compute_graph(nodes, edges)
+        # graph_data = compute_graph(new_nodes, new_edges)
+        graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 
