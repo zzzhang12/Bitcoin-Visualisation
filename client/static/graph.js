@@ -58,11 +58,11 @@ function processMessage(msg){
     }
 }
 
-d3.json("static/graph_data.json").then(function(graphData) {
-    renderGraph(graphData);
-}).catch(function(error) {
-    console.error("Error loading the graph data: ", error);
-});
+// d3.json("static/graph_data.json").then(function(graphData) {
+//     renderGraph(graphData);
+// }).catch(function(error) {
+//     console.error("Error loading the graph data: ", error);
+// });
 
 
 function initializeGraph() {
@@ -83,12 +83,12 @@ function initializeGraph() {
     link = g.selectAll(".link");
     node = g.selectAll(".node");
 
-    // simulation = d3.forceSimulation()
-    //     .force("link", d3.forceLink().id(d => d.id).distance(100))
-    //     .force("charge", d3.forceManyBody().strength(-30))
-    //     .force("center", d3.forceCenter(width / 2, height / 2))
-    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-    //     .on("tick", ticked);
+    simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-30))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
+        .on("tick", ticked);
 }
 
 
@@ -112,8 +112,8 @@ function renderGraph(graphData) {
      offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 4;
-    const scaleFactorY = 4;
+    const scaleFactorX = 1;
+    const scaleFactorY = 1;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -150,12 +150,12 @@ function renderGraph(graphData) {
         initializeGraph();
     }
 
-    // Convert edges to reference the node objects
-    const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
-    graphData.edges.forEach(d => {
-        d.source = nodeById.get(d.source);
-        d.target = nodeById.get(d.target);
-    });
+    // // Convert edges to reference the node objects
+    // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
+    // graphData.edges.forEach(d => {
+    //     d.source = nodeById.get(d.source);
+    //     d.target = nodeById.get(d.target);
+    // });
 
     updateGraph(graphData);  // for testing with only client
     // updateGraph({nodes: filteredNodes, edges: filteredEdges});
@@ -174,7 +174,16 @@ function updateGraph(newGraphData) {
 
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
     const linksToAdd = newGraphData.edges;
+    const nodesToUpdate = newGraphData.nodes.filter(node => existingNodes.has(node.id));
 
+    // // Update positions of existing nodes
+    // nodesToUpdate.forEach(updatedNode => {
+    //     const nodeToUpdate = node.data().find(d => d.id === updatedNode.id);
+    //     nodeToUpdate.x = updatedNode.x;
+    //     nodeToUpdate.y = updatedNode.y;
+    // });
+
+    // Update node data with new nodes
     node = node.data(node.data().concat(nodesToAdd), d => d.id);
     node.exit().remove();
 
@@ -195,6 +204,7 @@ function updateGraph(newGraphData) {
         })
         .merge(node);
 
+    // Update link data with new links
     link = link.data(link.data().concat(linksToAdd), d => `${d.source}-${d.target}`);
     link.exit().remove();
 
@@ -204,10 +214,10 @@ function updateGraph(newGraphData) {
         .style("stroke-width", 0.5) 
         .merge(link);
 
-    // simulation.nodes(node.data());
-    // simulation.force("link").links(link.data());
-    // simulation.alpha(1).restart();
-    ticked();
+    simulation.nodes(node.data());
+    simulation.force("link").links(link.data());
+    simulation.alpha(1).restart();
+    // ticked();
 }
 
 function ticked() {
@@ -225,75 +235,75 @@ function ticked() {
         .attr("cy", d => d.y - offsetY);
 }
 
-// function dragStarted(event, d) {
-//     // if (!event.active) simulation.alphaTarget(0.3).restart();
-//     d.fx = d.x;
-//     d.fy = d.y;
-// }
-
-// function dragged(event, d) {
-//     d.fx = event.x;
-//     d.fy = event.y;
-
-//     // Move connected nodes
-//     node.each(function(n) {
-//         if (n.id !== d.id && isConnected(d, n)) {
-//             n.fx = event.x;
-//             n.fy = event.y;
-//         }
-//     });
-//     simulation.alpha(1).restart();
-// }
-
-// function dragEnded(event, d) {
-//     if (!event.active) simulation.alphaTarget(0);
-//     d.fx = null;
-//     d.fy = null;
-
-//     // Unfix connected nodes
-//     node.each(function(n) {
-//         if (n.id !== d.id && isConnected(d, n)) {
-//             n.fx = null;
-//             n.fy = null;
-//         }
-//     });
-// }
-
 function dragStarted(event, d) {
-    d3.select(this).raise().attr("stroke", "black");
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
 }
 
-
 function dragged(event, d) {
-    d.x = event.x;
-    d.y = event.y;
+    d.fx = event.x;
+    d.fy = event.y;
 
-    d3.select(this)
-        .attr("cx", d.x - offsetX)
-        .attr("cy", d.y - offsetY);
-
-    updateConnectedNodesAndLinks();
+    // Move connected nodes
+    node.each(function(n) {
+        if (n.id !== d.id && isConnected(d, n)) {
+            n.fx = event.x;
+            n.fy = event.y;
+        }
+    });
+    simulation.alpha(1).restart();
 }
 
 function dragEnded(event, d) {
-    d3.select(this).attr("stroke", null);
-}
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
 
-function updateConnectedNodesAndLinks() {
-    node.each(function(d) {
-        d3.select(this)
-            .attr("cx", d.x - offsetX)
-            .attr("cy", d.y - offsetY);
-    });
-
-    link.each(function(d) {
-        d3.select(this)
-            .attr("x1", d.source.x - offsetX)
-            .attr("y1", d.source.y - offsetY)
-            .attr("x2", d.target.x - offsetX)
-            .attr("y2", d.target.y - offsetY);
+    // Unfix connected nodes
+    node.each(function(n) {
+        if (n.id !== d.id && isConnected(d, n)) {
+            n.fx = null;
+            n.fy = null;
+        }
     });
 }
+
+// function dragStarted(event, d) {
+//     d3.select(this).raise().attr("stroke", "black");
+// }
+
+
+// function dragged(event, d) {
+//     d.x = event.x;
+//     d.y = event.y;
+
+//     d3.select(this)
+//         .attr("cx", d.x - offsetX)
+//         .attr("cy", d.y - offsetY);
+
+//     updateConnectedNodesAndLinks();
+// }
+
+// function dragEnded(event, d) {
+//     d3.select(this).attr("stroke", null);
+// }
+
+// function updateConnectedNodesAndLinks() {
+//     node.each(function(d) {
+//         d3.select(this)
+//             .attr("cx", d.x - offsetX)
+//             .attr("cy", d.y - offsetY);
+//     });
+
+//     link.each(function(d) {
+//         d3.select(this)
+//             .attr("x1", d.source.x - offsetX)
+//             .attr("y1", d.source.y - offsetY)
+//             .attr("x2", d.target.x - offsetX)
+//             .attr("y2", d.target.y - offsetY);
+//     });
+// }
 
 
 function focusOnNode(event, d) {

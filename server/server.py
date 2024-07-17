@@ -342,7 +342,7 @@ def compute_graph(new_nodes, new_edges):
         # print (("----------------------"))
         # print ("positions: ", positions)
 
-        all_nodes_set = set(node['id'] for node in new_nodes)
+        # all_nodes_set = set(node['id'] for node in new_nodes)
 
         # for edge in new_edges:
         #     all_nodes_set.add(edge['source'])
@@ -509,8 +509,8 @@ def periodic_broadcast():
             continue
         transactions = queue[:]
         new_nodes, new_edges = process_transaction(transactions)
-        # graph_data = compute_graph(new_nodes, new_edges)
-        graph_data = compute_graph(nodes, edges)
+        graph_data = compute_graph(new_nodes, new_edges)
+        # graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 
