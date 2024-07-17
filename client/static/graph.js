@@ -94,7 +94,7 @@ function initializeGraph() {
 
 function renderGraph(graphData) {
     console.log("Attempting to render graph");
-    console.log("Received graph data structure:", graphData);
+    // console.log("Received graph data structure:", graphData);
 
     if (!Array.isArray(graphData.nodes) || !Array.isArray(graphData.edges)) {
         console.error("Graph data is not correctly structured:", graphData);
@@ -124,7 +124,7 @@ function renderGraph(graphData) {
     let filteredNodes = graphData.nodes.filter(node => {
         const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
         const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
-        console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
+        // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
         return xInRange && yInRange;
     });
 
@@ -139,7 +139,7 @@ function renderGraph(graphData) {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
         const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
-        console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+        // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
 
         return sourceInFilteredNodes && targetInFilteredNodes;
     });

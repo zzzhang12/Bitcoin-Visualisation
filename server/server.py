@@ -68,8 +68,8 @@ test_edges = [
     {"source": "n2", "target": "n4", "type": "out_link"}  
 ]
 
-# Add dummy positions to nodes
-positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
+# # Add dummy positions to nodes
+# positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
 
 
 def push(msg):
@@ -321,30 +321,28 @@ def process_transaction(transactions):
 
 
 def compute_graph(new_nodes, new_edges):
-    # global nx_graph
+    global nx_graph
 
     try:
-        # forceatlas2 = ForceAtlas2(
-        #     outboundAttractionDistribution=False,
-        #     linLogMode=False,
-        #     adjustSizes=False,
-        #     edgeWeightInfluence=1.0,
-        #     jitterTolerance=1.0,
-        #     barnesHutOptimize=True,
-        #     barnesHutTheta=1.2,
-        #     multiThreaded=False,
-        #     scalingRatio=2.0,
-        #     strongGravityMode=False,
-        #     gravity=1.0,
-        #     verbose=True
-        # )
-        # positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
+        forceatlas2 = ForceAtlas2(
+            outboundAttractionDistribution=False,
+            linLogMode=False,
+            adjustSizes=False,
+            edgeWeightInfluence=1.0,
+            jitterTolerance=1.0,
+            barnesHutOptimize=True,
+            barnesHutTheta=1.2,
+            multiThreaded=False,
+            scalingRatio=2.0,
+            strongGravityMode=False,
+            gravity=1.0,
+            verbose=True
+        )
+        positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
         # print (("----------------------"))
         # print ("positions: ", positions)
 
-        
-        # print("positions: ", positions)
-        # all_nodes_set = set(node['id'] for node in new_nodes)
+        all_nodes_set = set(node['id'] for node in new_nodes)
 
         # for edge in new_edges:
         #     all_nodes_set.add(edge['source'])
@@ -353,75 +351,75 @@ def compute_graph(new_nodes, new_edges):
         # all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
 
         # Collect all nodes that are relevant for the graph data update
-        # all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
-        # for edge in new_edges:
-        #     all_nodes_set.add(edge['source'].split(':')[0])
-        #     all_nodes_set.add(edge['target'].split(':')[0])
+        all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
+        for edge in new_edges:
+            all_nodes_set.add(edge['source'].split(':')[0])
+            all_nodes_set.add(edge['target'].split(':')[0])
 
-        # # Filter the nodes that are part of the new updates
-        # all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
+        # Filter the nodes that are part of the new updates
+        all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
 
-        # print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
-        # print(f"Nodes found in positions: {set(positions.keys())}")
-        # print(f"All nodes to be processed in all_nodes: {all_nodes}")
+        print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
+        print(f"Nodes found in positions: {set(positions.keys())}")
+        print(f"All nodes to be processed in all_nodes: {all_nodes}")
 
         # for node in all_nodes:
         #     if node['id'] not in positions:
         #         print(f"Node not found in positions: {node['id']}")
 
-        new_edges_split = []
-        for edge in new_edges:
-            source_pos = positions[edge['source']]
-            target_pos = positions[edge['target']]
+        # new_edges_split = []
+        # for edge in new_edges:
+        #     source_pos = positions[edge['source']]
+        #     target_pos = positions[edge['target']]
 
-            # Handle Spanning Edges
-            if is_different_client(source_pos, target_pos):
-                intersections = []
+        #     # Handle Spanning Edges
+        #     if is_different_client(source_pos, target_pos):
+        #         intersections = []
 
-                # Calculate intersections with vertical boundaries
-                for boundary in VERTICAL_BOUNDARIES:
-                    if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
-                        intersection = compute_intersection(source_pos, target_pos, boundary, True)
-                        if intersection:
-                            intersections.append(intersection)
+        #         # Calculate intersections with vertical boundaries
+        #         for boundary in VERTICAL_BOUNDARIES:
+        #             if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
+        #                 intersection = compute_intersection(source_pos, target_pos, boundary, True)
+        #                 if intersection:
+        #                     intersections.append(intersection)
 
-                # Calculate intersections with horizontal boundaries
-                for boundary in HORIZONTAL_BOUNDARIES:
-                    if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
-                        intersection = compute_intersection(source_pos, target_pos, boundary, False)
-                        if intersection:
-                            intersections.append(intersection)
+        #         # Calculate intersections with horizontal boundaries
+        #         for boundary in HORIZONTAL_BOUNDARIES:
+        #             if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
+        #                 intersection = compute_intersection(source_pos, target_pos, boundary, False)
+        #                 if intersection:
+        #                     intersections.append(intersection)
 
-                print ("intersections: ", intersections)
-                # Sort intersections by their distance from the source node
-                intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
+        #         print ("intersections: ", intersections)
+        #         # Sort intersections by their distance from the source node
+        #         intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
 
-                last_node_id = edge['source']
+        #         last_node_id = edge['source']
 
-                for i, intersection in enumerate(intersections):
-                    intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
-                    positions[intersection_id] = intersection
+        #         for i, intersection in enumerate(intersections):
+        #             intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
+        #             positions[intersection_id] = intersection
 
-                    new_edges_split.append({'source': last_node_id, 'target': intersection_id, 'type': edge['type']})
-                    # all_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
+        #             new_edges_split.append({'source': last_node_id, 'target': intersection_id, 'type': edge['type']})
+        #             # all_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
 
-                    last_node_id = intersection_id
+        #             last_node_id = intersection_id
 
-                new_edges_split.append({'source': last_node_id, 'target': edge['target'], 'type': edge['type']})
-            else:
-                new_edges_split.append(edge)
-
-        graph_data = {
-            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1], 'color': node['color'], 'type': node['type']} for node in new_nodes if node['id'] in positions],
-            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges_split]
-        }
-
-        print(f"Final graph data: {graph_data}")
+        #         new_edges_split.append({'source': last_node_id, 'target': edge['target'], 'type': edge['type']})
+        #     else:
+        #         new_edges_split.append(edge)
 
         # graph_data = {
-        #     'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type']} for node in all_nodes if node['id'] in positions],
-        #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+        #     'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1], 'color': node['color'], 'type': node['type']} for node in new_nodes if node['id'] in positions],
+        #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges_split]
         # }
+
+        # print(f"Final graph data: {graph_data}")
+
+        graph_data = {
+            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type']} for node in all_nodes if node['id'] in positions],
+            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+        }
 
         # # Adjust node IDs to match those used in positions
         # graph_data = {
@@ -505,21 +503,23 @@ def broadcast_to_clients(data):
 
 
 def periodic_broadcast():
+    global nodes, edges
     while True:
         if not queue:
             continue
         transactions = queue[:]
         new_nodes, new_edges = process_transaction(transactions)
-        graph_data = compute_graph(new_nodes, new_edges)
+        # graph_data = compute_graph(new_nodes, new_edges)
+        graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 
-# Test the function
-compute_graph(test_nodes, test_edges)
+# # Test the function
+# compute_graph(test_nodes, test_edges)
 
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
-    # threading.Thread(target=start_ws).start()
-    # threading.Thread(target=start_polling).start()
-    # threading.Thread(target=periodic_broadcast).start()
+    threading.Thread(target=start_ws).start()
+    threading.Thread(target=start_polling).start()
+    threading.Thread(target=periodic_broadcast).start()
     socketio.run(app, host='0.0.0.0', port=3000)
