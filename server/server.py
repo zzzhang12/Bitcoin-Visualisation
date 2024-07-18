@@ -22,7 +22,7 @@ nodes = []
 edges = []
 node_ids = set()
 clients = set()
-broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 
 NUM_ROWS = 1
@@ -519,7 +519,7 @@ def periodic_broadcast():
 
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
-    threading.Thread(target=start_ws).start()
-    threading.Thread(target=start_polling).start()
-    threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=start_ws).start()
+    # threading.Thread(target=start_polling).start()
+    # threading.Thread(target=periodic_broadcast).start()
     socketio.run(app, host='0.0.0.0', port=3000)

@@ -58,11 +58,11 @@ function processMessage(msg){
     }
 }
 
-// d3.json("static/graph_data.json").then(function(graphData) {
-//     renderGraph(graphData);
-// }).catch(function(error) {
-//     console.error("Error loading the graph data: ", error);
-// });
+d3.json("static/test_data_4.json").then(function(graphData) {
+    renderGraph(graphData);
+}).catch(function(error) {
+    console.error("Error loading the graph data: ", error);
+});
 
 
 function initializeGraph() {
@@ -108,12 +108,12 @@ function renderGraph(graphData) {
      offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
-     offsetX = 0 
-     offsetY = 0  // uncomment when testing only 1 client
+    //  offsetX = 0 
+    //  offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 4;
-    const scaleFactorY = 4;
+    const scaleFactorX = 1;
+    const scaleFactorY = 1;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -124,7 +124,7 @@ function renderGraph(graphData) {
     let filteredNodes = graphData.nodes.filter(node => {
         const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
         const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
-        // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
+        console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
         return xInRange && yInRange;
     });
 
@@ -139,7 +139,7 @@ function renderGraph(graphData) {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
         const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
-        // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+        console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
 
         return sourceInFilteredNodes && targetInFilteredNodes;
     });
@@ -157,8 +157,8 @@ function renderGraph(graphData) {
         d.target = nodeById.get(d.target);
     });
 
-    updateGraph(graphData);  // for testing with only client
-    // updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    // updateGraph(graphData);  // for testing with only client
+    updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
@@ -189,8 +189,8 @@ function updateGraph(newGraphData) {
 
     node = node.enter().append("circle")
         .attr("class", "node")
-        .attr("r", d => d.type === 'tx' ? 3 : 0.5)
-        // .attr("r", d => 6)  // for testing intersection nodes
+        // .attr("r", d => d.type === 'tx' ? 3 : 0.5)
+        .attr("r", d => 6)  // for testing intersection nodes
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => d.color)
@@ -211,8 +211,19 @@ function updateGraph(newGraphData) {
     link = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
-        .style("stroke-width", 0.5) 
+        .style("stroke-width", 1.5) 
         .merge(link);
+
+    // Separate nodes into movable and static groups
+    const movableNodes = node.filter(d => d.type !== 'intersection');
+    const staticNodes = node.filter(d => d.type === 'intersection');
+
+    simulation = d3.forceSimulation(movableNodes.data())
+        .force("link", d3.forceLink(newGraphData.edges).id(d => d.id).distance(50))
+        .force("charge", d3.forceManyBody().strength(-100))
+        .force("center", d3.forceCenter((window.innerWidth / 2) - offsetX, (window.innerHeight / 2) - offsetY))
+        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 20 : 5))
+        .on("tick", ticked);
 
     // simulation.nodes(node.data());
     // simulation.force("link").links(link.data());
@@ -235,85 +246,85 @@ function ticked() {
         .attr("cy", d => d.y - offsetY);
 }
 
-// function dragStarted(event, d) {
-//     if (!event.active) simulation.alphaTarget(0.3).restart();
-//     d.fx = d.x;
-//     d.fy = d.y;
-// }
-
-// function dragged(event, d) {
-//     d.fx = event.x;
-//     d.fy = event.y;
-
-//     // Move connected nodes
-//     node.each(function(n) {
-//         if (n.id !== d.id && isConnected(d, n)) {
-//             n.fx = event.x;
-//             n.fy = event.y;
-//         }
-//     });
-//     simulation.alpha(1).restart();
-// }
-
-// function dragEnded(event, d) {
-//     if (!event.active) simulation.alphaTarget(0);
-//     d.fx = null;
-//     d.fy = null;
-
-//     // Unfix connected nodes
-//     node.each(function(n) {
-//         if (n.id !== d.id && isConnected(d, n)) {
-//             n.fx = null;
-//             n.fy = null;
-//         }
-//     });
-// }
-
 function dragStarted(event, d) {
-    d3.select(this).raise().attr("stroke", "black");
+    // if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
 }
 
-
 function dragged(event, d) {
-    d.x = event.x;
-    d.y = event.y;
+    d.fx = event.x;
+    d.fy = event.y;
 
-    d3.select(this)
-        .attr("cx", d.x - offsetX)
-        .attr("cy", d.y - offsetY);
-
-    updateConnectedNodesAndLinks();
+    // Move connected nodes
+    node.each(function(n) {
+        if (n.id !== d.id && isConnected(d, n)) {
+            n.fx = event.x;
+            n.fy = event.y;
+        }
+    });
+    simulation.alpha(1).restart();
 }
 
 function dragEnded(event, d) {
-    d3.select(this).attr("stroke", null);
-}
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
 
-function updateConnectedNodesAndLinks() {
-    node.each(function(d) {
-        d3.select(this)
-            .attr("cx", d.x - offsetX)
-            .attr("cy", d.y - offsetY);
-    });
-
-    link.each(function(d) {
-        d3.select(this)
-            .attr("x1", d.source.x - offsetX)
-            .attr("y1", d.source.y - offsetY)
-            .attr("x2", d.target.x - offsetX)
-            .attr("y2", d.target.y - offsetY);
+    // Unfix connected nodes
+    node.each(function(n) {
+        if (n.id !== d.id && isConnected(d, n)) {
+            n.fx = null;
+            n.fy = null;
+        }
     });
 }
 
+// function dragStarted(event, d) {
+//     d3.select(this).raise().attr("stroke", "black");
+// }
 
-function focusOnNode(event, d) {
-    const scale = 3.5;
-    const transform = d3.zoomIdentity
-        .translate(window.innerWidth / 2, window.innerHeight / 2)
-        .scale(scale)
-        .translate(-d.x, -d.y);
-    svg.transition().duration(750).call(d3.zoom().transform, transform);
-}
+
+// function dragged(event, d) {
+//     d.x = event.x;
+//     d.y = event.y;
+
+//     d3.select(this)
+//         .attr("cx", d.x - offsetX)
+//         .attr("cy", d.y - offsetY);
+
+//     updateConnectedNodesAndLinks();
+// }
+
+// function dragEnded(event, d) {
+//     d3.select(this).attr("stroke", null);
+// }
+
+// function updateConnectedNodesAndLinks() {
+//     node.each(function(d) {
+//         d3.select(this)
+//             .attr("cx", d.x - offsetX)
+//             .attr("cy", d.y - offsetY);
+//     });
+
+//     link.each(function(d) {
+//         d3.select(this)
+//             .attr("x1", d.source.x - offsetX)
+//             .attr("y1", d.source.y - offsetY)
+//             .attr("x2", d.target.x - offsetX)
+//             .attr("y2", d.target.y - offsetY);
+//     });
+// }
+
+
+// function focusOnNode(event, d) {
+//     const scale = 3.5;
+//     const transform = d3.zoomIdentity
+//         .translate(window.innerWidth / 2, window.innerHeight / 2)
+//         .scale(scale)
+//         .translate(-d.x, -d.y);
+//     svg.transition().duration(750).call(d3.zoom().transform, transform);
+// }
 
 function isConnected(a, b) {
     return link.data().some(d => (d.source.id === a.id && d.target.id === b.id) || (d.source.id === b.id && d.target.id === a.id));
