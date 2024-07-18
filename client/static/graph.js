@@ -58,11 +58,11 @@ function processMessage(msg){
     }
 }
 
-d3.json("static/test_data_4.json").then(function(graphData) {
-    renderGraph(graphData);
-}).catch(function(error) {
-    console.error("Error loading the graph data: ", error);
-});
+// d3.json("static/test_data_4.json").then(function(graphData) {
+//     renderGraph(graphData);
+// }).catch(function(error) {
+//     console.error("Error loading the graph data: ", error);
+// });
 
 
 function initializeGraph() {
@@ -83,12 +83,12 @@ function initializeGraph() {
     link = g.selectAll(".link");
     node = g.selectAll(".node");
 
-    // simulation = d3.forceSimulation()
-    //     .force("link", d3.forceLink().id(d => d.id).distance(100))
-    //     .force("charge", d3.forceManyBody().strength(-30))
-    //     .force("center", d3.forceCenter(width / 2, height / 2))
-    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-    //     .on("tick", ticked);
+    simulation = d3.forceSimulation()
+        .force("link", d3.forceLink().id(d => d.id).distance(100))
+        .force("charge", d3.forceManyBody().strength(-30))
+        .force("center", d3.forceCenter(width / 2, height / 2))
+        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
+        .on("tick", ticked);
 }
 
 
@@ -108,8 +108,8 @@ function renderGraph(graphData) {
      offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
-    //  offsetX = 0 
-    //  offsetY = 0  // uncomment when testing only 1 client
+     offsetX = 0 
+     offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
     const scaleFactorX = 1;
@@ -157,8 +157,8 @@ function renderGraph(graphData) {
         d.target = nodeById.get(d.target);
     });
 
-    // updateGraph(graphData);  // for testing with only client
-    updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    updateGraph(graphData);  // for testing with only client
+    // updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
@@ -189,8 +189,8 @@ function updateGraph(newGraphData) {
 
     node = node.enter().append("circle")
         .attr("class", "node")
-        // .attr("r", d => d.type === 'tx' ? 3 : 0.5)
-        .attr("r", d => 6)  // for testing intersection nodes
+        .attr("r", d => d.type === 'tx' ? 3 : 0.5)
+        // .attr("r", d => 6)  // for testing intersection nodes
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => d.color)
@@ -211,24 +211,25 @@ function updateGraph(newGraphData) {
     link = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
-        .style("stroke-width", 1.5) 
+        .style("stroke-width", 0.5) 
         .merge(link);
 
     // Separate nodes into movable and static groups
     const movableNodes = node.filter(d => d.type !== 'intersection');
     const staticNodes = node.filter(d => d.type === 'intersection');
 
-    simulation = d3.forceSimulation(movableNodes.data())
-        .force("link", d3.forceLink(newGraphData.edges).id(d => d.id).distance(50))
-        .force("charge", d3.forceManyBody().strength(-100))
-        .force("center", d3.forceCenter((window.innerWidth / 2) - offsetX, (window.innerHeight / 2) - offsetY))
-        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 20 : 5))
-        .on("tick", ticked);
+    // simulation = d3.forceSimulation(movableNodes.data())
+    //     .force("link", d3.forceLink(newGraphData.edges).id(d => d.id).distance(50))
+    //     .force("charge", d3.forceManyBody().strength(-100))
+    //     .force("center", d3.forceCenter((window.innerWidth / 2) - offsetX, (window.innerHeight / 2) - offsetY))
+    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 20 : 5))
+    //     .on("tick", ticked);
+    // ticked();
 
-    // simulation.nodes(node.data());
-    // simulation.force("link").links(link.data());
-    // simulation.alpha(1).restart();
-    ticked();
+    simulation.nodes(node.data());
+    simulation.force("link").links(link.data());
+    simulation.alpha(1).restart();
+
 }
 
 function ticked() {

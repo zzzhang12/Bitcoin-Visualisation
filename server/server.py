@@ -22,7 +22,7 @@ nodes = []
 edges = []
 node_ids = set()
 clients = set()
-broadcast_interval = 1  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 0.6  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 
 NUM_ROWS = 1
@@ -71,6 +71,14 @@ test_edges = [
 # # Add dummy positions to nodes
 # positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
 
+# Global variables
+numNodes = 0
+txTotalVal = 0
+txMaxVal = 0
+txTotalFee = 0
+txMaxFee = 0
+txTotalSize = 0
+txMaxSize = 0
 
 def push(msg):
     global queue
@@ -150,15 +158,10 @@ def process_transaction(transactions):
     # print ("---------------------------")
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
-    numNodes = 0
-    txTotalVal = 0
-    txMaxVal = 0
-    txTotalFee = 0
-    txMaxFee = 0
-    txTotalSize = 0
-    txMaxSize = 0
 
     global nodes, edges, node_ids, nx_graph
+    global numNodes, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize
+
     new_nodes = []
     new_edges = []
     try:
@@ -167,21 +170,35 @@ def process_transaction(transactions):
             # if i == 1:
             #     print ("-----------------------------------")
             #     print ("transaction: ", tx)
-            tx_id = tx.get('x', {}).get('hash')
-            if not tx_id:
-                continue
-            tx_index = int(tx.get('x', {}).get('tx_index', 0))
-            tx_size = tx.get('x', {}).get('size', 0)
-            tx_time = tx.get('x', {}).get('time', 0)
-            tx_relayer = tx.get('x', {}).get('relayed_by', '')
-            is_coinbase = tx.get('x', {}).get('is_coinbase', 0)
+            txIndex = random.randint(0, 100000000)
+            tx['x']['tx_index'] = txIndex
+            tx_id = tx['x']['tx_index']
+
+            tx_hash = tx['x']['hash']
+            tx_size = tx['x']['size']
+            tx_time = tx['x']['time']
+            tx_relayer = tx['x']['relayed_by']
+            inputs = tx['x']['inputs']
+            outputs = tx['x']['out']
+            is_coinbase = tx['x'].get('is_coinbase', 0)
+            
+            orig_tx_color = '#ffffff'
             tx_color = '#ffffff'
 
             if tx_id not in node_ids:
                 node = {
-                    'id': tx_id, 'label': f'Transaction {tx_id}', 'txHash': tx_id,
-                    'size': tx_size, 'time': tx_time, 'relayer': tx_relayer, 'color': tx_color,
-                    'type': 'tx', 'tx_index': tx_index, 'is_coinbase': is_coinbase
+                    'id': tx_id, 
+                    'label': tx_hash, 
+                    'txHash': tx_hash,
+                    'inVals': 0,
+                    'outVals': 0,
+                    'fee': 0,
+                    'txtime': tx_time,
+                    'bytesize': tx_size, 
+                    'relayer': tx_relayer,
+                    'orig_color': orig_tx_color,
+                    'color': tx_color,
+                    'type': 'tx'
                 }
                 nodes.append(node)
                 new_nodes.append(node)
@@ -189,112 +206,143 @@ def process_transaction(transactions):
                 nx_graph.add_node(tx_id)
 
                 print(f"Added transaction node: {tx_id}")
+                numNodes += 1
 
-            inputs = tx.get('x', {}).get('inputs', [])
-            outputs = tx.get('x', {}).get('out', [])
+
             inVals = 0
-            outVals = 0
+            # add orange inputs to graph
+            for currInput in inputs:
+                currInput['prev_out']['tx_index'] = random.randint(0, 100000000)
+                currID = f"{currInput['prev_out']['tx_index']}:{currInput['prev_out']['n']}"
+                addr = currInput['prev_out']['addr']
+                size = currInput['prev_out']['value']
+                orig_in_color = '#FF9933'
+                in_color = '#FF9933'
+                
+                existInput = nx_graph.nodes.get(currID)
 
-            for inp in inputs:
-                prev_out = inp.get('prev_out', {})
-                addr = prev_out.get('addr')
-                value = prev_out.get('value', 0)
-                tx_index = prev_out.get('tx_index', random.randint(0, 100000000)) 
-                n = prev_out.get('n', 0)
-                addr_tag = prev_out.get('addr_tag', '')
-                
-                currID = f"{addr}:{tx_index}:{n}"
-                # currID = f"{tx_index}:{n}"
-                
-                existInput = next((n for n in nodes if n['id'] == currID), None)
+                from_text = f" from {currInput['prev_out']['addr']}"
 
                 if addr is None:
                     print(f"Skipping input with None address: {currID}")
 
                 if addr:
+                    # if input has not already been seen since start of visualisation,
+                    # add new node and edge to tx
                     if existInput is None:
-                        # node = {
-                        #     'id': addr, 'label': addr, 'value': value,
-                        #     'tag': addr_tag, 'color': '#FF9933', 'type': 'input'
-                        # }
                         node = {
-                            'id': currID, 'label': f"{(value * 1000 / 100000000):.2f}mB {addr}",
-                            'addr': addr, 'value': value, 'tag': addr_tag,
-                            'color': '#FF9933', 'type': 'input'
+                            'id': currID, 
+                            'label': f"{currInput['prev_out']['value'] * 1000 / 100000000:.2f}mB{from_text}",
+                            'addr': addr, 
+                            'size': size,
+                            'orig_in_color': orig_in_color,
+                            'color': in_color, 
+                            'type': 'input'
                         }
                         nodes.append(node)
                         new_nodes.append(node)
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
-
-                        print(f"Added new input node: {currID}")
                         
-                        edge = {'source': currID, 'target': tx_id, 'value': value, 'type': 'in_link'}
+                        edge = {
+                            'id': f"{currID}:{tx_id}",
+                            'source': currID, 
+                            'target': tx_id, 
+                            'orig_in_color': orig_in_color,
+                            'color': in_color, 
+                            'type': 'in_link'
+                            }
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
 
+                        numNodes += 1
+                        print(f"Added new input node: {currID}")
                         print(f"Added input edge: {currID} -> {tx_id}")
+
                     else:
                         existInput['type'] = 'InOut'
 
-                        edge = {'source': currID, 'target': tx_id, 'value': value, 'type': 'in_link'}
+                        edge = {
+                            'id': "{currID}:{tx_id}joinToExistIn",
+                            'source': currID, 
+                            'target': tx_id, 
+                            'orig_in_color': orig_in_color,
+                            'color': in_color,
+                            'type': 'in_link'}
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
 
-                        print(f"Added input edge: {currID} -> {tx_id}")
-                inVals += value
+                        print('Joined input node:', currID)
+                inVals += size
 
-            for out in outputs:
-                addr = out.get('addr')
-                value = out.get('value', 0)
-                tx_index = out.get('tx_index', random.randint(0, 100000000))
-                # tx_index = prev_out.get('tx_index', random.randint(0, 100000000)) 
-                n = out.get('n', 0)
-                addr_tag = out.get('addr_tag', '')
+                        
+            outVals = 0
+            # add blue outputs to graph
+            for currOutput in outputs:
+                currOutput['tx_index'] = random.randint(0, 100000000)
+                currID = f"{currOutput['tx_index']}:{currOutput['n']}"
+                size = currOutput['value']
+                to_text = f" to {currOutput['addr']}"
 
-                currID = f"{addr}:{tx_index}:{n}"
-                # currID = f"{tx_index}:{n}"
+                orig_out_color = '#003399'
+                out_color = '#003399'
 
-                existOutput = next((n for n in nodes if n['id'] == currID), None)
+                existOutput = nx_graph.nodes.get(currID)
 
                 if addr is None:
                     print(f"Skipping output with None address: {currID}")
 
                 if addr:
                     if existOutput is None:
-                        # node = {
-                        #     'id': addr, 'label': addr, 'value': value,
-                        #     'tag': addr_tag, 'color': '#003399', 'type': 'output'
-                        # }
                         node = {
-                            'id': currID, 'label': f"{(value * 1000 / 100000000):.2f}mB {addr}",
-                            'addr': addr, 'value': value, 'tag': addr_tag,
-                            'color': '#003399', 'type': 'output'
+                            'id': currID, 
+                            'label': f"{currOutput['value'] * 1000 / 100000000:.2f}mB{to_text}",
+                            'addr': currOutput['addr'], 
+                            'tag' :currOutput.get('addr_tag'), 
+                            'size': size, 
+                            'orig_out_color': orig_out_color,
+                            'color': out_color, 
+                            'type': 'output'
                         }
                         nodes.append(node)
                         new_nodes.append(node)
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
 
-                        print(f"Added new output node: {currID}")
-
-                        edge = {'source': tx_id, 'target': currID, 'value': value, 'type': 'out_link'}
+                        edge = {
+                            'id': f"{tx_id}:{currID}",
+                            'source': tx_id, 
+                            'target': currID,  
+                            'orig_out_color': orig_out_color,
+                            'color': out_color, 
+                            'type': 'out_link'
+                        }
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
 
+                        numNodes += 1
+                        print(f"Added new output node: {currID}")
                         print(f"Added output edge: {tx_id} -> {currID}")
+
                     else:
                         existOutput['type'] = 'InOut'
-                        edge = {'source': tx_id, 'target': currID, 'value': value, 'type': 'out_link'}
+                        edge = {
+                            'id': f"{tx_id}:{currID}joinToExistOut",
+                            'source': tx_id, 
+                            'target': currID,  
+                            'orig_out_color': orig_out_color,
+                            'color': out_color, 
+                            'type': 'out_link'
+                        }
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
 
-                        print(f"Added output edge: {tx_id} -> {currID}")
-                outVals += value
+                        print('Joined output node:', currID)
+                outVals += size
 
             # Update transaction node values
             tx_fee = max(inVals - outVals, 0)
@@ -310,7 +358,6 @@ def process_transaction(transactions):
             txMaxFee = max(txMaxFee, tx_fee)
             txTotalSize += tx_size
             txMaxSize = max(txMaxSize, tx_size)
-            numNodes += 1
 
             i += 1
         return new_nodes, new_edges
@@ -342,26 +389,26 @@ def compute_graph(new_nodes, new_edges):
         # print (("----------------------"))
         # print ("positions: ", positions)
 
-        # all_nodes_set = set(node['id'] for node in new_nodes)
+        all_nodes_set = set(node['id'] for node in new_nodes)
 
-        # for edge in new_edges:
-        #     all_nodes_set.add(edge['source'])
-        #     all_nodes_set.add(edge['target'])
-
-        # all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
-
-        # Collect all nodes that are relevant for the graph data update
-        all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
         for edge in new_edges:
-            all_nodes_set.add(edge['source'].split(':')[0])
-            all_nodes_set.add(edge['target'].split(':')[0])
+            all_nodes_set.add(edge['source'])
+            all_nodes_set.add(edge['target'])
 
-        # Filter the nodes that are part of the new updates
-        all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
+        all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
 
-        print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
-        print(f"Nodes found in positions: {set(positions.keys())}")
-        print(f"All nodes to be processed in all_nodes: {all_nodes}")
+        # # Collect all nodes that are relevant for the graph data update
+        # all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
+        # for edge in new_edges:
+        #     all_nodes_set.add(edge['source'].split(':')[0])
+        #     all_nodes_set.add(edge['target'].split(':')[0])
+
+        # # Filter the nodes that are part of the new updates
+        # all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
+
+        # print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
+        # print(f"Nodes found in positions: {set(positions.keys())}")
+        # print(f"All nodes to be processed in all_nodes: {all_nodes}")
 
         # for node in all_nodes:
         #     if node['id'] not in positions:
@@ -509,8 +556,8 @@ def periodic_broadcast():
             continue
         transactions = queue[:]
         new_nodes, new_edges = process_transaction(transactions)
-        # graph_data = compute_graph(new_nodes, new_edges)
-        graph_data = compute_graph(nodes, edges)
+        graph_data = compute_graph(new_nodes, new_edges)
+        # graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 
@@ -519,7 +566,7 @@ def periodic_broadcast():
 
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
-    # threading.Thread(target=start_ws).start()
-    # threading.Thread(target=start_polling).start()
-    # threading.Thread(target=periodic_broadcast).start()
+    threading.Thread(target=start_ws).start()
+    threading.Thread(target=start_polling).start()
+    threading.Thread(target=periodic_broadcast).start()
     socketio.run(app, host='0.0.0.0', port=3000)
