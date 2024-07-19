@@ -42,19 +42,19 @@ HORIZONTAL_BOUNDARIES = []
 VERTICAL_BOUNDARIES = [853]
 
 # # Dummy nodes and edges for testing
-test_nodes = [
-     {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
-    {"id": "n2", "x": 800, "y": 100, "color": "#FF9933", "type": "input"},
-    {"id": "n3", "x": 900, "y": 100, "color": "#003399", "type": "output"},
-    {"id": "n4", "x": 1000, "y": 100, "color": "#ffffff", "type": "tx"}
-]
+# test_nodes = [
+#      {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
+#     {"id": "n2", "x": 800, "y": 100, "color": "#FF9933", "type": "input"},
+#     {"id": "n3", "x": 900, "y": 100, "color": "#003399", "type": "output"},
+#     {"id": "n4", "x": 1000, "y": 100, "color": "#ffffff", "type": "tx"}
+# ]
 
-test_edges = [
-    {"source": "n1", "target": "n2", "type": "out_link"},  
-    {"source": "n3", "target": "n4", "type": "out_link"},  
-    {"source": "n1", "target": "n3", "type": "out_link"}, 
-    {"source": "n2", "target": "n4", "type": "out_link"}  
-]
+# test_edges = [
+#     {"source": "n1", "target": "n2", "type": "out_link"},  
+#     {"source": "n3", "target": "n4", "type": "out_link"},  
+#     {"source": "n1", "target": "n3", "type": "out_link"}, 
+#     {"source": "n2", "target": "n4", "type": "out_link"}  
+# ]
 
 # # Add dummy positions to nodes
 # positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
@@ -99,7 +99,7 @@ def start_polling():
 
 def poll():
     if len(queue) == 0:
-        start_polling()
+        # start_polling()
         return
     message = shift()
     if message is not None:
@@ -387,18 +387,10 @@ def compute_graph(new_nodes, new_edges):
 
         all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
 
-        # # Collect all nodes that are relevant for the graph data update
-        # all_nodes_set = set(node['id'].split(':')[0] for node in new_nodes)
-        # for edge in new_edges:
-        #     all_nodes_set.add(edge['source'].split(':')[0])
-        #     all_nodes_set.add(edge['target'].split(':')[0])
 
-        # # Filter the nodes that are part of the new updates
-        # all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
-
-        print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
-        print("--------------------------------------")
-        print(f"Nodes found in positions: {set(positions.keys())}")
+        # print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
+        # print("--------------------------------------")
+        # print(f"Nodes found in positions: {set(positions.keys())}")
         # print(f"All nodes to be processed in all_nodes: {all_nodes}")
 
         # for node in all_nodes:
@@ -458,12 +450,6 @@ def compute_graph(new_nodes, new_edges):
             'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type']} for node in all_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
         }
-
-        # # Adjust node IDs to match those used in positions
-        # graph_data = {
-        #     'nodes': [{'id': node['id'], 'x': positions[node['addr']][0], 'y': positions[node['addr']][1], 'color': node['color'], 'type': node['type']} for node in all_nodes if node['addr'] in positions],
-        #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
-        # }
 
         return graph_data
 

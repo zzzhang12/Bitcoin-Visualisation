@@ -126,53 +126,31 @@ function renderGraph(graphData) {
         node.y = node.y * scaleFactorY;
     });
 
-    const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
     
     // Calculate the filtered nodes based on the client viewport
     let filteredNodes = graphData.nodes.filter(node => {
         const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
         const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
         // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
-        // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
         return xInRange && yInRange;
     });
 
-    // console.log("Filtered nodes:", filteredNodes);
     // console.log("Filtered nodes:", filteredNodes);
 
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
     // console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
     // console.log(`Client y range: [${offsetY}, ${offsetY + CLIENT_HEIGHT}]`);
-   
-    const filteredEdges = graphData.edges.filter(edge => {
-        const sourceExists = nodeById.has(edge.source);
-        const targetExists = nodeById.has(edge.target);
-        
-        // Log missing nodes
-        if (!sourceExists || !targetExists) {
-            console.warn(`Missing node for edge: ${edge.source} -> ${edge.target}`);
-            if (!sourceExists) {
-                console.warn(`Source node missing: ${edge.source}`);
-            }
-            if (!targetExists) {
-                console.warn(`Target node missing: ${edge.target}`);
-            }
-        }
-        
-        return sourceExists && targetExists;
-    });
     
-    // // Filter edges based on the filtered nodes
-    // const filteredEdges = graphData.edges.filter(edge => {
-    //     const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
-    //     const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
+    // Filter edges based on the filtered nodes
+    const filteredEdges = graphData.edges.filter(edge => {
+        const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
+        const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
         // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
 
-    //     return sourceInFilteredNodes && targetInFilteredNodes;
-    // });
+        return sourceInFilteredNodes && targetInFilteredNodes;
+    });
 
-    // console.log('Filtered edges:', filteredEdges);
     // console.log('Filtered edges:', filteredEdges);
 
     if (!svg) {
@@ -180,7 +158,7 @@ function renderGraph(graphData) {
     }
 
     // Convert edges to reference the node objects
-
+    const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
     graphData.edges.forEach(d => {
         d.source = nodeById.get(d.source);
         d.target = nodeById.get(d.target);
@@ -254,36 +232,21 @@ function updateGraph(newGraphData) {
     //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 20 : 5))
     //     .on("tick", ticked);
     ticked();
-    ticked();
 
     // simulation.nodes(node.data());
     // simulation.force("link").links(link.data());
     // simulation.alpha(1).restart();
-    // simulation.nodes(node.data());
-    // simulation.force("link").links(link.data());
-    // simulation.alpha(1).restart();
-
 }
 
 function ticked() {
     // node.each(function(d) {
     //     console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
     // });
-    // link
-    //     .attr("x1", d => d.source.x - offsetX)
-    //     .attr("y1", d => d.source.y - offsetY)
-    //     .attr("x2", d => d.target.x - offsetX)
-    //     .attr("y2", d => d.target.y - offsetY);
-
-    // node
-    //     .attr("cx", d => d.x - offsetX)
-    //     .attr("cy", d => d.y - offsetY);
-
-        link
-        .attr("x1", d => nodeById.get(d.source).x - offsetX)
-        .attr("y1", d => nodeById.get(d.source).y - offsetY)
-        .attr("x2", d => nodeById.get(d.target).x - offsetX)
-        .attr("y2", d => nodeById.get(d.target).y - offsetY);
+    link
+        .attr("x1", d => d.source.x - offsetX)
+        .attr("y1", d => d.source.y - offsetY)
+        .attr("x2", d => d.target.x - offsetX)
+        .attr("y2", d => d.target.y - offsetY);
 
     node
         .attr("cx", d => d.x - offsetX)
