@@ -556,8 +556,8 @@ def periodic_broadcast():
             continue
         transactions = queue[:]
         new_nodes, new_edges = process_transaction(transactions)
-        graph_data = compute_graph(new_nodes, new_edges)
-        # graph_data = compute_graph(nodes, edges)
+        # graph_data = compute_graph(new_nodes, new_edges)
+        graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 

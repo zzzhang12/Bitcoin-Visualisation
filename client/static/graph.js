@@ -83,12 +83,12 @@ function initializeGraph() {
     link = g.selectAll(".link");
     node = g.selectAll(".node");
 
-    simulation = d3.forceSimulation()
-        .force("link", d3.forceLink().id(d => d.id).distance(100))
-        .force("charge", d3.forceManyBody().strength(-30))
-        .force("center", d3.forceCenter(width / 2, height / 2))
-        .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-        .on("tick", ticked);
+    // simulation = d3.forceSimulation()
+    //     .force("link", d3.forceLink().id(d => d.id).distance(100))
+    //     .force("charge", d3.forceManyBody().strength(-30))
+    //     .force("center", d3.forceCenter(width / 2, height / 2))
+    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
+    //     .on("tick", ticked);
 }
 
 
@@ -124,11 +124,11 @@ function renderGraph(graphData) {
     let filteredNodes = graphData.nodes.filter(node => {
         const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
         const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
-        console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
+        // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
         return xInRange && yInRange;
     });
 
-    console.log("Filtered nodes:", filteredNodes);
+    // console.log("Filtered nodes:", filteredNodes);
 
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
     // console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
@@ -139,12 +139,12 @@ function renderGraph(graphData) {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
         const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
-        console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+        // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
 
         return sourceInFilteredNodes && targetInFilteredNodes;
     });
 
-    console.log('Filtered edges:', filteredEdges);
+    // console.log('Filtered edges:', filteredEdges);
 
     if (!svg) {
         initializeGraph();
@@ -224,11 +224,11 @@ function updateGraph(newGraphData) {
     //     .force("center", d3.forceCenter((window.innerWidth / 2) - offsetX, (window.innerHeight / 2) - offsetY))
     //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 20 : 5))
     //     .on("tick", ticked);
-    // ticked();
+    ticked();
 
-    simulation.nodes(node.data());
-    simulation.force("link").links(link.data());
-    simulation.alpha(1).restart();
+    // simulation.nodes(node.data());
+    // simulation.force("link").links(link.data());
+    // simulation.alpha(1).restart();
 
 }
 
