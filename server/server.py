@@ -22,8 +22,9 @@ nodes = []
 edges = []
 node_ids = set()
 clients = set()
-broadcast_interval = 0.6  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 0.3  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
+lock = threading.Lock()
 
 NUM_ROWS = 1
 NUM_COLS = 2
@@ -41,19 +42,6 @@ HORIZONTAL_BOUNDARIES = []
 VERTICAL_BOUNDARIES = [853]
 
 # # Dummy nodes and edges for testing
-# test_nodes = [
-#     {'id': 'n1', 'x': 50, 'y': 50, 'color': '#ffffff', 'type': 'tx'},
-#     {'id': 'n2', 'x': 450, 'y': 50, 'color': '#FF9933', 'type': 'input'},  # Spans vertical boundary at x = 400
-#     {'id': 'n3', 'x': 50, 'y': 350, 'color': '#003399', 'type': 'output'}, # Spans horizontal boundary at y = 300
-#     {'id': 'n4', 'x': 450, 'y': 350, 'color': '#ffffff', 'type': 'tx'},   # Spans both vertical and horizontal boundaries
-# ]
-
-# test_edges = [
-#     {'source': 'n1', 'target': 'n2', 'type': 'out_link'},  # Vertical spanning edge
-#     {'source': 'n1', 'target': 'n3', 'type': 'out_link'},  # Horizontal spanning edge
-#     {'source': 'n1', 'target': 'n4', 'type': 'out_link'},  # Both vertical and horizontal spanning edge
-# ]
-
 test_nodes = [
      {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
     {"id": "n2", "x": 800, "y": 100, "color": "#FF9933", "type": "input"},
@@ -111,6 +99,7 @@ def start_polling():
 
 def poll():
     if len(queue) == 0:
+        start_polling()
         return
     message = shift()
     if message is not None:
@@ -165,6 +154,7 @@ def process_transaction(transactions):
     new_nodes = []
     new_edges = []
     try:
+        print ("number of transactions: ", len(transactions))
         i = 1
         for tx in transactions:
             # if i == 1:
@@ -503,16 +493,6 @@ def compute_intersection(p1, p2, boundary, is_vertical):
                 return (x, boundary)
 
 
-@app.route('/api/graph', methods=['GET'])
-def get_graph():
-    print("Received request for graph")
-    if not queue:
-        return jsonify({'nodes': [], 'edges': []})
-    transactions = queue[:]
-    graph_data = process_transaction(transactions)
-    return jsonify(graph_data)
-
-
 @app.route('/static/<path:path>', methods=['GET'])
 def static_proxy(path):
     return send_from_directory(app.static_folder, path)
@@ -532,21 +512,6 @@ def handle_connect():
 @socketio.on('disconnect')
 def handle_disconnect():
     print('Client disconnected')
-
-
-@socketio.on('request_graph_data')
-def handle_request_graph_data():
-    print ("client requested graph data")
-    graph_data = compute_graph()
-
-
-def broadcast_to_clients(data):
-    print("Broadcasting data to clients")
-    for client in clients:
-        try:
-            client.send(json.dumps(data))
-        except Exception as e:
-            print(f"Error broadcasting to client: {e}")
 
 
 def periodic_broadcast():
