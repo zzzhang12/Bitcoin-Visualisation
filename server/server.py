@@ -396,8 +396,9 @@ def compute_graph(new_nodes, new_edges):
         # # Filter the nodes that are part of the new updates
         # all_nodes = [node for node in nodes if node['id'].split(':')[0] in all_nodes_set]
 
-        # print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
-        # print(f"Nodes found in positions: {set(positions.keys())}")
+        print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
+        print("--------------------------------------")
+        print(f"Nodes found in positions: {set(positions.keys())}")
         # print(f"All nodes to be processed in all_nodes: {all_nodes}")
 
         # for node in all_nodes:
@@ -521,8 +522,8 @@ def periodic_broadcast():
             continue
         transactions = queue[:]
         new_nodes, new_edges = process_transaction(transactions)
-        graph_data = compute_graph(new_nodes, new_edges)
-        # graph_data = compute_graph(nodes, edges)
+        # graph_data = compute_graph(new_nodes, new_edges)
+        graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         time.sleep(broadcast_interval)
 
