@@ -217,6 +217,7 @@ def process_transaction(transactions):
                     'outVals': 0,
                     'fee': 0,
                     'txtime': tx_time,
+                    'size': 2500000000,
                     'bytesize': tx_size, 
                     'relayer': tx_relayer,
                     'orig_color': orig_tx_color,
@@ -511,7 +512,7 @@ def compute_graph(new_nodes, new_edges):
         # print(f"Final graph data: {graph_data}")
 
         graph_data = {
-            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type']} for node in all_nodes if node['id'] in positions],
+            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type'], 'size': node['size']} for node in all_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
         }
 

@@ -112,8 +112,8 @@ function renderGraph(graphData) {
      offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 5;
-    const scaleFactorY = 5;
+    const scaleFactorX = 4;
+    const scaleFactorY = 4;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -207,6 +207,7 @@ function updateGraph(newGraphData) {
         .merge(node);
 
     // Update link data with new links
+    const nodeById = new Map(node.data().map(d => [d.id, d]));
     link = link.data(link.data().concat(linksToAdd), d => `${d.source}-${d.target}`);
     link.exit().remove();
 
@@ -214,6 +215,15 @@ function updateGraph(newGraphData) {
         .attr("class", "link")
         .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
         .style("stroke-width", 0.5) 
+        .on("click", function(event, d) {
+            let value;
+            if (d.type === 'in_link') {
+                value = nodeById.get(d.source.id).size;
+            } else if (d.type === 'out_link') {
+                value = nodeById.get(d.target.id).size;
+            }
+            displayValue(value, event.pageX, event.pageY);
+        })
         .merge(link);
 
     // Separate nodes into movable and static groups
@@ -247,6 +257,35 @@ function ticked() {
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY);
 }
+
+
+// Function to display the value
+function displayValue(value, x, y) {
+    const tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("position", "absolute")
+        .style("left", x + "px")
+        .style("top", y + "px")
+        .style("background", "rgba(0, 0, 0, 0.7)")
+        .style("color", "white")
+        .style("padding", "5px 10px")
+        .style("border-radius", "5px")
+        .style("pointer-events", "none")
+        .style("opacity", 0)
+        .text(`Value: ${value}`);
+
+    tooltip.transition()
+        .duration(200)
+        .style("opacity", 1);
+
+    setTimeout(() => {
+        tooltip.transition()
+            .duration(200)
+            .style("opacity", 0)
+            .remove();
+    }, 2000);
+}
+
 
 function dragStarted(event, d) {
     // if (!event.active) simulation.alphaTarget(0.3).restart();
