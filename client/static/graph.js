@@ -174,10 +174,11 @@ function updateGraph(newGraphData) {
     const existingNodes = new Set(node.data().map(d => d.id));
 
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
-    const linksToAdd = newGraphData.edges;
     const nodesToUpdate = newGraphData.nodes.filter(node => existingNodes.has(node.id));
+    const linksToAdd = newGraphData.edges;
 
     console.log("number of nodesToAdd: ", nodesToAdd.length)
+    
     // Update positions of existing nodes
     nodesToUpdate.forEach(updatedNode => {
         const nodeToUpdate = node.data().find(d => d.id === updatedNode.id);
@@ -215,13 +216,14 @@ function updateGraph(newGraphData) {
         .attr("class", "link")
         .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
         .style("stroke-width", 0.5) 
-        .on("click", function(event, d) {
+        .on("mouseover", function(event, d) {
             let value;
             if (d.type === 'in_link') {
                 value = nodeById.get(d.source.id).size;
             } else if (d.type === 'out_link') {
                 value = nodeById.get(d.target.id).size;
             }
+            value = (value / 100000000).toPrecision(4)
             displayValue(value, event.pageX, event.pageY);
         })
         .merge(link);
@@ -272,19 +274,21 @@ function displayValue(value, x, y) {
         .style("border-radius", "5px")
         .style("pointer-events", "none")
         .style("opacity", 0)
-        .text(`Value: ${value}`);
+        .text(`value: ${value}BTC`);
 
     tooltip.transition()
-        .duration(200)
+        .duration(100)
         .style("opacity", 1);
 
     setTimeout(() => {
         tooltip.transition()
-            .duration(200)
+            .duration(30)
             .style("opacity", 0)
             .remove();
-    }, 2000);
+    }, 1000);
 }
+
+
 
 
 function dragStarted(event, d) {
