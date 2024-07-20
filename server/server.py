@@ -22,9 +22,24 @@ nodes = []
 edges = []
 node_ids = set()
 clients = set()
-broadcast_interval = 0.3  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 6  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 lock = threading.Lock()
+node_positions = {}
+file_index = 0
+
+json_files = [
+    '1.json',
+    '2.json',
+    '3.json',
+    # '4.json',
+    # '5.json',
+    # '6.json',
+    # '7.json',
+    # '8.json',
+    # '9.json',
+    # '10.json'
+]
 
 NUM_ROWS = 1
 NUM_COLS = 2
@@ -88,6 +103,24 @@ def shift():
     return None
 
 polling_ref = None
+
+# def start_polling():
+#     global polling_ref
+#     if polling_ref is not None:
+#         polling_ref.cancel()
+#     polling_ref = None
+
+#     def poll():
+#         if len(queue) == 0:
+#             return
+#         message = shift()
+#         if message is None:
+#             return
+#         process_transaction([message])
+#         start_polling()
+
+#     polling_ref = threading.Timer(0.5, poll)
+#     polling_ref.start()
 
 def start_polling():
     global polling_ref
@@ -154,7 +187,7 @@ def process_transaction(transactions):
     new_nodes = []
     new_edges = []
     try:
-        print ("number of transactions: ", len(transactions))
+        # print ("number of transactions: ", len(transactions))
         i = 1
         for tx in transactions:
             # if i == 1:
@@ -194,8 +227,10 @@ def process_transaction(transactions):
                 new_nodes.append(node)
                 node_ids.add(tx_id)
                 nx_graph.add_node(tx_id)
+                
+                node_positions[tx_id] = None # Track initial position
 
-                print(f"Added transaction node: {tx_id}")
+                # print(f"Added transaction node: {tx_id}")
                 numNodes += 1
 
 
@@ -213,8 +248,8 @@ def process_transaction(transactions):
 
                 from_text = f" from {currInput['prev_out']['addr']}"
 
-                if addr is None:
-                    print(f"Skipping input with None address: {currID}")
+                # if addr is None:
+                #     print(f"Skipping input with None address: {currID}")
 
                 if addr:
                     # if input has not already been seen since start of visualisation,
@@ -246,9 +281,11 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
 
+                        node_positions[tx_id] = None # Track initial position
+
                         numNodes += 1
-                        print(f"Added new input node: {currID}")
-                        print(f"Added input edge: {currID} -> {tx_id}")
+                        # print(f"Added new input node: {currID}")
+                        # print(f"Added input edge: {currID} -> {tx_id}")
 
                     else:
                         existInput['type'] = 'InOut'
@@ -259,12 +296,13 @@ def process_transaction(transactions):
                             'target': tx_id, 
                             'orig_in_color': orig_in_color,
                             'color': in_color,
-                            'type': 'in_link'}
+                            'type': 'in_link'
+                            }
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
 
-                        print('Joined input node:', currID)
+                        # print('Joined input node:', currID)
                 inVals += size
 
                         
@@ -281,8 +319,8 @@ def process_transaction(transactions):
 
                 existOutput = nx_graph.nodes.get(currID)
 
-                if addr is None:
-                    print(f"Skipping output with None address: {currID}")
+                # if addr is None:
+                #     print(f"Skipping output with None address: {currID}")
 
                 if addr:
                     if existOutput is None:
@@ -313,9 +351,11 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
 
+                        node_positions[tx_id] = None # Track initial position
+
                         numNodes += 1
-                        print(f"Added new output node: {currID}")
-                        print(f"Added output edge: {tx_id} -> {currID}")
+                        # print(f"Added new output node: {currID}")
+                        # print(f"Added output edge: {tx_id} -> {currID}")
 
                     else:
                         existOutput['type'] = 'InOut'
@@ -331,7 +371,7 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
 
-                        print('Joined output node:', currID)
+                        # print('Joined output node:', currID)
                 outVals += size
 
             # Update transaction node values
@@ -358,7 +398,7 @@ def process_transaction(transactions):
 
 
 def compute_graph(new_nodes, new_edges):
-    global nx_graph
+    global nx_graph, node_positions
 
     try:
         forceatlas2 = ForceAtlas2(
@@ -379,6 +419,30 @@ def compute_graph(new_nodes, new_edges):
         # print (("----------------------"))
         # print ("positions: ", positions)
 
+        # changed_nodes = []
+        
+        # print("---------------------------------")
+        # print ("length of positions: ", len(positions))
+        # for node in nodes:
+        #     if node['id'] in positions:
+        #         new_pos = positions[node['id']]
+        #         prev_pos = node_positions.get(node['id'])
+
+        #         if prev_pos is None or new_pos != prev_pos:
+        #             changed_nodes.append({
+        #                 'id': node['id'],
+        #                 'x': new_pos[0],
+        #                 'y': new_pos[1],
+        #                 'color': node['color'],
+        #                 'type': node['type']
+        #             })
+        #             node_positions[node['id']] = new_pos
+
+        # print ("length of changed_nodes: ", len(changed_nodes))
+        # graph_data = {
+        # 'nodes': changed_nodes,
+        # 'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+        # }
         all_nodes_set = set(node['id'] for node in new_nodes)
 
         for edge in new_edges:
@@ -492,8 +556,11 @@ def index():
 
 @socketio.on('connect')
 def handle_connect():
-    print('Client connected')
+    print('Client connected') 
     emit('connection_response', {'data': 'Connected to server'})
+    # global file_index
+    # file_index = 0 
+    # socketio.start_background_task(send_json_files)
 
 
 @socketio.on('disconnect')
@@ -511,7 +578,27 @@ def periodic_broadcast():
         # graph_data = compute_graph(new_nodes, new_edges)
         graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
+        print("emitted to client")
+
+         # Save graph_data to a local JSON file with sequential names
+        # filename = f"{counter}.json"
+        # with open(filename, 'w') as f:
+        #     json.dump(graph_data, f, indent=4)
+        # counter += 1
+
         time.sleep(broadcast_interval)
+
+
+
+def send_json_files():
+    global file_index, json_files
+    while file_index < len(json_files):
+        with open(json_files[file_index]) as f:
+            graph_data = json.load(f)
+            socketio.emit('graph_data', graph_data)
+            print("emitted to client")
+        file_index += 1
+        time.sleep(broadcast_interval)  # Adjust the delay as needed
 
 # # Test the function
 # compute_graph(test_nodes, test_edges)
@@ -521,4 +608,5 @@ if __name__ == '__main__':
     threading.Thread(target=start_ws).start()
     threading.Thread(target=start_polling).start()
     threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)

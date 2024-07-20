@@ -89,12 +89,6 @@ function initializeGraph() {
     //     .force("center", d3.forceCenter(width / 2, height / 2))
     //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
     //     .on("tick", ticked);
-    // simulation = d3.forceSimulation()
-    //     .force("link", d3.forceLink().id(d => d.id).distance(100))
-    //     .force("charge", d3.forceManyBody().strength(-30))
-    //     .force("center", d3.forceCenter(width / 2, height / 2))
-    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-    //     .on("tick", ticked);
 }
 
 
@@ -118,8 +112,8 @@ function renderGraph(graphData) {
      offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 3;
-    const scaleFactorY = 3;
+    const scaleFactorX = 5;
+    const scaleFactorY = 5;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -170,7 +164,7 @@ function renderGraph(graphData) {
 
 
 function updateGraph(newGraphData) {
-    console.log("Updating graph with new data:", newGraphData);
+    // console.log("Updating graph with new data:", newGraphData);
 
     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
         console.error("New graph data is not correctly structured:", newGraphData);
@@ -183,6 +177,7 @@ function updateGraph(newGraphData) {
     const linksToAdd = newGraphData.edges;
     const nodesToUpdate = newGraphData.nodes.filter(node => existingNodes.has(node.id));
 
+    console.log("number of nodesToAdd: ", nodesToAdd.length)
     // Update positions of existing nodes
     nodesToUpdate.forEach(updatedNode => {
         const nodeToUpdate = node.data().find(d => d.id === updatedNode.id);
