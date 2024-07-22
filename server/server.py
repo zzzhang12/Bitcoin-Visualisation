@@ -9,6 +9,7 @@ from flask_socketio import SocketIO, emit
 import time
 import random 
 import math
+import requests
 
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -24,8 +25,9 @@ node_ids = set()
 clients = set()
 broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
-lock = threading.Lock()
+address_cache = {}
 node_positions = {}
+
 file_index = 0
 
 json_files = [
@@ -398,6 +400,27 @@ def process_transaction(transactions):
         traceback.print_exc()
 
 
+
+def get_address_balances(addresses):
+    # url = "https://blockchain.info/multiaddr?active=" + '|'.join(addresses)
+    url = f"https://blockchain.info/multiaddr?active={'|'.join(addresses)}&n=3"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        balances = {addr['address']: addr['final_balance'] / 1e8 for addr in data['addresses']}  # Convert from satoshis to BTC
+        return balances
+    else:
+        print("Error fetching balances:", response.status_code)
+        return {}
+
+
+def update_cache(address, transaction_value):
+    if address in address_cache:
+        address_cache[address] += transaction_value
+    else:
+        address_cache[address] = transaction_value
+
+
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions
 
@@ -452,6 +475,23 @@ def compute_graph(new_nodes, new_edges):
 
         all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
 
+         # list of addresses needing balance queries
+        addresses_to_query = []
+
+        # Check each node address
+        for node in all_nodes:
+            address = node['addr']
+            # If it's not in cache, needs querying
+            if address not in address_cache:
+                addresses_to_query.append(address)
+            # If already in cache, update cached value
+            transaction_value = node['size']
+            update_cache(address, transaction_value)
+
+        # If there are addresses to query, fetch their balances and update cache
+        if addresses_to_query:
+            new_balances = get_address_balances(addresses_to_query)
+            address_cache.update(new_balances)
 
         # print(f"All nodes to be processed in all_nodes_set: {all_nodes_set}")
         # print("--------------------------------------")
@@ -511,8 +551,15 @@ def compute_graph(new_nodes, new_edges):
 
         # print(f"Final graph data: {graph_data}")
 
+        # graph_data = {
+        #     'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type'], 'size': node['size']} for node in all_nodes if node['id'] in positions],
+        #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+        # }
+
         graph_data = {
-            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type'], 'size': node['size']} for node in all_nodes if node['id'] in positions],
+            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1], 
+                       'color': node['color'], 'type': node['type'], 
+                       'size': address_cache.get(node['addr'], 0)} for node in all_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
         }
 
