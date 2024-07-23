@@ -322,7 +322,7 @@ function ticked() {
 }
 
 
-// Function to display the value
+// Function to display transaction values for edges and address balance for nodes
 function displayValue(type, value, x, y) {
     const displayText = type === 'balance' ? `balance: ${value} BTC` : `value: ${value} BTC`;
     const tooltip = d3.select("body").append("div")
@@ -349,7 +349,6 @@ function displayValue(type, value, x, y) {
             .remove();
     }, 1000);
 }
-
 
 
 

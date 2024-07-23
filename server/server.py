@@ -27,6 +27,7 @@ broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
+queue_lock = threading.Lock()
 
 file_index = 0
 
@@ -113,38 +114,71 @@ polling_ref = None
 #     polling_ref = None
 
 #     def poll():
+#         print ("inside poll()")
 #         if len(queue) == 0:
 #             return
 #         message = shift()
+#         print ("message: ", message)
 #         if message is None:
 #             return
 #         process_transaction([message])
-#         start_polling()
 
 #     polling_ref = threading.Timer(0.5, poll)
 #     polling_ref.start()
 
+
 def start_polling():
+    print ("start polling")
     global polling_ref
+    
+    def poll():
+        print("inside poll()")
+        while True:
+            print("inside while True")
+            if len(queue) == 0:
+                print("length of queue is 0")
+                # time.sleep(0.5)
+                # print("slept 0.5s")
+                return
+            # message = queue.pop(0) 
+            message = shift() # Simulate queue.shift()
+            if message is None:
+                continue
+            print("message: ", message)
+            process_transaction([message])
+            time.sleep(0.5)  # Polling interval
+    
     if polling_ref is not None:
+        print ("polling_ref is not None")
         polling_ref.cancel()
-    polling_ref = threading.Timer(0.5, poll)
+
+    polling_ref = threading.Thread(target=poll)
+    polling_ref.daemon = True  # To ensure it exits when the main program exits
     polling_ref.start()
+# def start_polling():
+#     global polling_ref
+#     if polling_ref is not None:
+#         polling_ref.cancel()
+#     polling_ref = threading.Timer(0.5, poll)
+#     polling_ref.start()
 
 
-def poll():
-    if len(queue) == 0:
-        # start_polling()
-        return
-    message = shift()
-    if message is not None:
-        process_transaction([message])
-    start_polling()
+# def poll():
+#     if len(queue) == 0:
+#         # start_polling()
+#         return
+#     message = shift()
+#     print ("message: ", message)
+#     if message is not None:
+#         process_transaction([message])
+#     start_polling()
 
 
 def on_message(ws, message):
+    print("received websocket messages")
     data = json.loads(message)
     push(data)
+    # queue.append(data)
     # if len(queue) < MAX_SIZE:
     #     queue.append(data)
     # else:
@@ -165,6 +199,10 @@ def on_open(ws):
         print("Connected to external Bitcoin WebSocket service")
         ws.send(json.dumps({"op": "unconfirmed_sub"}))
         print("subscribed to unconfirmed transactions")
+        # ws.send(json.dumps({"op": "blocks_sub"}))
+        # print("subscribed to new block notifications")
+        start_polling()
+
     threading.Thread(target=run).start()
 
 
@@ -174,12 +212,13 @@ def start_ws():
                                 on_error=on_error,
                                 on_close=on_close)
     ws.on_open = on_open
+    websocket.enableTrace(True)
     print("Starting WebSocket connection to:", BITCOIN_WS_URL) 
     ws.run_forever()
 
 
 def process_transaction(transactions):
-    # print ("---------------------------")
+    print ("---------------------------")
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
 
@@ -628,7 +667,7 @@ def periodic_broadcast():
         if not queue:
             continue
         transactions = queue[:]
-        new_nodes, new_edges = process_transaction(transactions)
+        # new_nodes, new_edges = process_transaction(transactions)
         # graph_data = compute_graph(new_nodes, new_edges)
         graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
@@ -660,7 +699,7 @@ def send_json_files():
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    threading.Thread(target=start_polling).start()
-    threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=start_polling).start()
+    # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)
