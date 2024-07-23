@@ -480,13 +480,14 @@ def compute_graph(new_nodes, new_edges):
 
         # Check each node address
         for node in all_nodes:
-            address = node['addr']
-            # If it's not in cache, needs querying
-            if address not in address_cache:
-                addresses_to_query.append(address)
-            # If already in cache, update cached value
-            transaction_value = node['size']
-            update_cache(address, transaction_value)
+            if (node['type'] != "tx"):
+                address = node['addr']
+                # If it's not in cache, needs querying
+                if address and address not in address_cache:
+                    addresses_to_query.append(address)
+                    # If already in cache, update cached value
+                    transaction_value = node['size']
+                    update_cache(address, transaction_value)
 
         # If there are addresses to query, fetch their balances and update cache
         if addresses_to_query:
@@ -557,9 +558,14 @@ def compute_graph(new_nodes, new_edges):
         # }
 
         graph_data = {
-            'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1], 
-                       'color': node['color'], 'type': node['type'], 
-                       'size': address_cache.get(node['addr'], 0)} for node in all_nodes if node['id'] in positions],
+            'nodes': [{'id': node['id'], 
+                       'x': positions[node['id']][0], 
+                       'y': positions[node['id']][1], 
+                       'color': node['color'], 
+                       'type': node['type'], 
+                       'size': node['size'],
+                       'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None
+                     } for node in all_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
         }
 

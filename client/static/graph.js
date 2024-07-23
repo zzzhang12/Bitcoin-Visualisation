@@ -7,6 +7,7 @@ const CLIENT_HEIGHT = 982;
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
 
+
 window.addEventListener("load", init, false);
 
 
@@ -112,8 +113,8 @@ function renderGraph(graphData) {
      offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 2;
-    const scaleFactorY = 2;
+    const scaleFactorX = 3;
+    const scaleFactorY = 3;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -163,6 +164,7 @@ function renderGraph(graphData) {
 }
 
 
+
 function updateGraph(newGraphData) {
     // console.log("Updating graph with new data:", newGraphData);
 
@@ -197,6 +199,8 @@ function updateGraph(newGraphData) {
     // const updatedNodes = node.data().concat(nodes);
     // node = node.data(updatedNodes, d => d.id);
 
+    // const nodeById = new Map(node.data().map(d => [d.id, d]));
+
     const nodeEnter = node.enter().append("circle")
         .attr("class", "node")
         .attr("r", d => d.type === 'tx' ? 3 : 0.5)
@@ -209,6 +213,11 @@ function updateGraph(newGraphData) {
             .on("end", dragEnded))
         .on("click", function(event, d) {
             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
+        })
+        .on("mouseover", function(event, d) {
+            if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
+                displayValue('balance', d.balance, event.pageX, event.pageY);
+            }
         });
 
     node = nodeEnter.merge(node);
@@ -225,12 +234,14 @@ function updateGraph(newGraphData) {
         .on("mouseover", function(event, d) {
             let value;
             if (d.type === 'in_link') {
-                value = nodeById.get(d.source.id).size;
+                // value = nodeById.get(d.source.id).size;
+                value = d.source.size;
             } else if (d.type === 'out_link') {
-                value = nodeById.get(d.target.id).size;
+                // value = nodeById.get(d.target.id).size;
+                value = d.target.size;
             }
             value = (value / 100000000).toPrecision(4);
-            displayValue(value, event.pageX, event.pageY);
+            displayValue('transaction', value, event.pageX, event.pageY);
         });
 
     link = linkEnter.merge(link);
@@ -312,7 +323,8 @@ function ticked() {
 
 
 // Function to display the value
-function displayValue(value, x, y) {
+function displayValue(type, value, x, y) {
+    const displayText = type === 'balance' ? `balance: ${value} BTC` : `value: ${value} BTC`;
     const tooltip = d3.select("body").append("div")
         .attr("class", "tooltip")
         .style("position", "absolute")
@@ -324,7 +336,7 @@ function displayValue(value, x, y) {
         .style("border-radius", "5px")
         .style("pointer-events", "none")
         .style("opacity", 0)
-        .text(`value: ${value}BTC`);
+        .text(displayText);
 
     tooltip.transition()
         .duration(100)
