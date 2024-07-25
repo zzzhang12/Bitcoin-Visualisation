@@ -128,54 +128,30 @@ polling_ref = None
 
 
 def start_polling():
-    print ("start polling")
     global polling_ref
     
     def poll():
-        print("inside poll()")
         while True:
-            print("inside while True")
             if len(queue) == 0:
-                print("length of queue is 0")
-                # time.sleep(0.5)
-                # print("slept 0.5s")
-                return
-            # message = queue.pop(0) 
-            message = shift() # Simulate queue.shift()
+                time.sleep(0.5)
+                continue
+            message = shift()
             if message is None:
                 continue
             print("message: ", message)
             process_transaction([message])
             time.sleep(0.5)  # Polling interval
-    
+
     if polling_ref is not None:
-        print ("polling_ref is not None")
         polling_ref.cancel()
-
+    
     polling_ref = threading.Thread(target=poll)
-    polling_ref.daemon = True  # To ensure it exits when the main program exits
+    polling_ref.daemon = True  # exits when the main program exits
     polling_ref.start()
-# def start_polling():
-#     global polling_ref
-#     if polling_ref is not None:
-#         polling_ref.cancel()
-#     polling_ref = threading.Timer(0.5, poll)
-#     polling_ref.start()
-
-
-# def poll():
-#     if len(queue) == 0:
-#         # start_polling()
-#         return
-#     message = shift()
-#     print ("message: ", message)
-#     if message is not None:
-#         process_transaction([message])
-#     start_polling()
 
 
 def on_message(ws, message):
-    print("received websocket messages")
+    # print("received websocket messages")
     data = json.loads(message)
     push(data)
     # queue.append(data)
@@ -184,7 +160,6 @@ def on_message(ws, message):
     # else:
     #     queue.pop(0)
     #     queue.append(data)
-
 
 def on_error(ws, error):
     print(f"WebSocket error: {error}")
@@ -212,9 +187,10 @@ def start_ws():
                                 on_error=on_error,
                                 on_close=on_close)
     ws.on_open = on_open
-    websocket.enableTrace(True)
+    # websocket.enableTrace(True)
     print("Starting WebSocket connection to:", BITCOIN_WS_URL) 
     ws.run_forever()
+
 
 
 def process_transaction(transactions):
