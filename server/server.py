@@ -28,6 +28,9 @@ nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
 queue_lock = threading.Lock()
+paused = False
+msgBuf = []
+
 
 file_index = 0
 
@@ -138,8 +141,8 @@ def start_polling():
             message = shift()
             if message is None:
                 continue
-            print("message: ", message)
-            process_transaction([message])
+            # print("message: ", message)
+            process_message([message])
             time.sleep(0.5)  # Polling interval
 
     if polling_ref is not None:
@@ -154,19 +157,17 @@ def on_message(ws, message):
     # print("received websocket messages")
     data = json.loads(message)
     push(data)
-    # queue.append(data)
-    # if len(queue) < MAX_SIZE:
-    #     queue.append(data)
-    # else:
-    #     queue.pop(0)
-    #     queue.append(data)
+
 
 def on_error(ws, error):
     print(f"WebSocket error: {error}")
 
 
 def on_close(ws):
-    print("### closed ###")
+    global polling_ref
+    print("WebSocket closed")
+    if polling_ref is not None:
+        polling_ref.cancel()
 
 
 def on_open(ws):
@@ -192,9 +193,17 @@ def start_ws():
     ws.run_forever()
 
 
+def process_message(msg):
+    global paused, msgBuf
+
+    if paused:
+        msgBuf.append(msg)
+    else:
+        process_transaction(msg)
+
 
 def process_transaction(transactions):
-    print ("---------------------------")
+    print ("-----------------------------")
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
 
@@ -248,7 +257,7 @@ def process_transaction(transactions):
                 
                 node_positions[tx_id] = None # Track initial position
 
-                # print(f"Added transaction node: {tx_id}")
+                print(f"Added transaction node: {tx_id}")
                 numNodes += 1
 
 
@@ -302,8 +311,8 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
-                        # print(f"Added new input node: {currID}")
-                        # print(f"Added input edge: {currID} -> {tx_id}")
+                        print(f"Added new input node: {currID}")
+                        print(f"Added input edge: {currID} -> {tx_id}")
 
                     else:
                         existInput['type'] = 'InOut'
@@ -320,7 +329,7 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
 
-                        # print('Joined input node:', currID)
+                        print('Joined input node:', currID)
                 inVals += size
 
                         
@@ -372,8 +381,8 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
-                        # print(f"Added new output node: {currID}")
-                        # print(f"Added output edge: {tx_id} -> {currID}")
+                        print(f"Added new output node: {currID}")
+                        print(f"Added output edge: {tx_id} -> {currID}")
 
                     else:
                         existOutput['type'] = 'InOut'
@@ -389,7 +398,7 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
 
-                        # print('Joined output node:', currID)
+                        print('Joined output node:', currID)
                 outVals += size
 
             # Update transaction node values
@@ -455,8 +464,8 @@ def compute_graph(new_nodes, new_edges):
             verbose=True
         )
         positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
-        # print (("----------------------"))
-        # print ("positions: ", positions)
+        print (("----------------------"))
+        print ("positions: ", positions)
 
         # changed_nodes = []
         
@@ -489,6 +498,10 @@ def compute_graph(new_nodes, new_edges):
             all_nodes_set.add(edge['target'])
 
         all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
+
+        print ("length of edges: ", len(new_edges))
+        print ("length of nodes in all_nodes_set: ", len(all_nodes_set))
+        print ("length of nodes: ", len(all_nodes))
 
          # list of addresses needing balance queries
         addresses_to_query = []
@@ -580,10 +593,10 @@ def compute_graph(new_nodes, new_edges):
                        'type': node['type'], 
                        'size': node['size'],
                        'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None
-                     } for node in all_nodes if node['id'] in positions],
-            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
+                     } for node in new_nodes if node['id'] in positions],
+            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
         }
-
+        print ("graph_data: ", graph_data)
         return graph_data
 
     except Exception as e:
@@ -645,6 +658,10 @@ def periodic_broadcast():
         transactions = queue[:]
         # new_nodes, new_edges = process_transaction(transactions)
         # graph_data = compute_graph(new_nodes, new_edges)
+        if not nodes and not edges:
+            print("Graph has no nodes or edges yet.")
+            time.sleep(broadcast_interval)
+            continue
         graph_data = compute_graph(nodes, edges)
         socketio.emit('graph_data', graph_data)
         print("emitted to client")
@@ -656,6 +673,18 @@ def periodic_broadcast():
         # counter += 1
 
         time.sleep(broadcast_interval)
+
+# def periodic_broadcast():
+#     while True:
+#         with queue_lock:
+#             if not nodes and not edges:
+#                 print("Graph has no nodes or edges yet.")
+#                 time.sleep(broadcast_interval)
+#                 continue
+#             graph_data = compute_graph(nodes, edges)
+#         socketio.emit('graph_data', graph_data)
+#         print("emitted to client")
+#         time.sleep(broadcast_interval)
 
 
 
@@ -675,7 +704,7 @@ def send_json_files():
 if __name__ == '__main__':
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    # threading.Thread(target=start_polling).start()
-    # threading.Thread(target=periodic_broadcast).start()
+    # socketio.start_background_task(periodic_broadcast)
+    threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)

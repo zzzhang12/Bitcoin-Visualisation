@@ -306,21 +306,73 @@ function updateGraph(newGraphData) {
     // simulation.alpha(1).restart();
 }
 
+// function ticked() {
+//     // node.each(function(d) {
+//     //     console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
+//     // });
+//     link
+//         .attr("x1", d => d.source.x - offsetX)
+//         .attr("y1", d => d.source.y - offsetY)
+//         .attr("x2", d => d.target.x - offsetX)
+//         .attr("y2", d => d.target.y - offsetY);
+
+//     node
+//         .attr("cx", d => d.x - offsetX)
+//         .attr("cy", d => d.y - offsetY);
+// }
+
+
 function ticked() {
-    // node.each(function(d) {
-    //     console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
-    // });
+    // Debugging: Log nodes and links
+    console.log("Nodes during tick:", node.data());
+    console.log("Links during tick:", link.data());
+
     link
-        .attr("x1", d => d.source.x - offsetX)
-        .attr("y1", d => d.source.y - offsetY)
-        .attr("x2", d => d.target.x - offsetX)
-        .attr("y2", d => d.target.y - offsetY);
+        .attr("x1", d => {
+            if (!d.source || d.source.x === undefined) {
+                console.error("Undefined source or source.x for link", d);
+                return 0;
+            }
+            return d.source.x - offsetX;
+        })
+        .attr("y1", d => {
+            if (!d.source || d.source.y === undefined) {
+                console.error("Undefined source or source.y for link", d);
+                return 0;
+            }
+            return d.source.y - offsetY;
+        })
+        .attr("x2", d => {
+            if (!d.target || d.target.x === undefined) {
+                console.error("Undefined target or target.x for link", d);
+                return 0;
+            }
+            return d.target.x - offsetX;
+        })
+        .attr("y2", d => {
+            if (!d.target || d.target.y === undefined) {
+                console.error("Undefined target or target.y for link", d);
+                return 0;
+            }
+            return d.target.y - offsetY;
+        });
 
     node
-        .attr("cx", d => d.x - offsetX)
-        .attr("cy", d => d.y - offsetY);
+        .attr("cx", d => {
+            if (d.x === undefined) {
+                console.error("Undefined x for node", d);
+                return 0;
+            }
+            return d.x - offsetX;
+        })
+        .attr("cy", d => {
+            if (d.y === undefined) {
+                console.error("Undefined y for node", d);
+                return 0;
+            }
+            return d.y - offsetY;
+        });
 }
-
 
 // Function to display transaction values for edges and address balance for nodes
 function displayValue(type, value, x, y) {
