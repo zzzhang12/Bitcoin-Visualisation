@@ -88,6 +88,7 @@ txTotalFee = 0
 txMaxFee = 0
 txTotalSize = 0
 txMaxSize = 0
+numTx = 0
 
 def push(msg):
     global queue
@@ -175,8 +176,8 @@ def on_open(ws):
         print("Connected to external Bitcoin WebSocket service")
         ws.send(json.dumps({"op": "unconfirmed_sub"}))
         print("subscribed to unconfirmed transactions")
-        # ws.send(json.dumps({"op": "blocks_sub"}))
-        # print("subscribed to new block notifications")
+        ws.send(json.dumps({"op": "blocks_sub"}))
+        print("subscribed to new block notifications")
         start_polling()
 
     threading.Thread(target=run).start()
@@ -199,11 +200,15 @@ def process_message(msg):
     if paused:
         msgBuf.append(msg)
     else:
-        process_transaction(msg)
+        # print (msg)
+        if msg[0]["op"] == "utx":
+            process_transaction(msg)
+        elif msg[0]["op"] == "block":
+            process_block(msg)
 
 
 def process_transaction(transactions):
-    print ("-----------------------------")
+    # print ("-----------------------------")
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
 
@@ -257,7 +262,7 @@ def process_transaction(transactions):
                 
                 node_positions[tx_id] = None # Track initial position
 
-                print(f"Added transaction node: {tx_id}")
+                # print(f"Added transaction node: {tx_id}")
                 numNodes += 1
 
 
@@ -311,8 +316,8 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
-                        print(f"Added new input node: {currID}")
-                        print(f"Added input edge: {currID} -> {tx_id}")
+                        # print(f"Added new input node: {currID}")
+                        # print(f"Added input edge: {currID} -> {tx_id}")
 
                     else:
                         existInput['type'] = 'InOut'
@@ -329,7 +334,7 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
 
-                        print('Joined input node:', currID)
+                        # print('Joined input node:', currID)
                 inVals += size
 
                         
@@ -381,8 +386,8 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
-                        print(f"Added new output node: {currID}")
-                        print(f"Added output edge: {tx_id} -> {currID}")
+                        # print(f"Added new output node: {currID}")
+                        # print(f"Added output edge: {tx_id} -> {currID}")
 
                     else:
                         existOutput['type'] = 'InOut'
@@ -398,7 +403,7 @@ def process_transaction(transactions):
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
 
-                        print('Joined output node:', currID)
+                        # print('Joined output node:', currID)
                 outVals += size
 
             # Update transaction node values
@@ -423,6 +428,59 @@ def process_transaction(transactions):
         print("Error processing transactions:", str(e))
         traceback.print_exc()
 
+
+def process_block(msg):
+    global nodes, edges, node_ids, nx_graph
+    global numNodes, numTx
+    global paused, blkTimer, blkStart
+
+    paused = True
+    print(f'New block {msg["x"]["height"]} received')
+
+    # Update timers and alerts (if needed)
+    blkStart = time.time()
+    # Clear and set blkTimer (you need to implement timeBlock logic if necessary)
+    # blkTimer = setInterval(timeBlock, 1000, [blkStart])
+
+    txs = msg["x"]["txIndexes"]
+
+    preBlockTxCount = numTx
+    nodes_to_drop = set()
+
+    for tx_id in txs:
+        if tx_id in node_ids:
+            # Drop all connected nodes
+            nodes_to_drop.update(drop_connected(tx_id))
+            # Drop tx node itself
+            numTx -= 1
+            numNodes -= 1
+            nodes_to_drop.add(tx_id)
+
+    print(f'{preBlockTxCount - numTx} txs removed')
+
+    # Send nodes to drop to client
+    socketio.emit('drop_nodes', list(nodes_to_drop))
+    paused = False
+
+
+def drop_connected(tx_id):
+    nodes_to_drop = set()
+    txnbrs = nx_graph.adj[tx_id]
+
+    for txnbr in txnbrs:
+        is_to_drop = True
+        nbrsnbrs = nx_graph.adj[txnbr]
+
+        for nbrsnbr in nbrsnbrs:
+            for edg in nx_graph.edges(nbrsnbr):
+                if edg[0] != tx_id and edg[1] != tx_id and nx_graph.edges[edg]['type'] != 'addr_link':
+                    is_to_drop = False
+
+        if is_to_drop:
+            nodes_to_drop.add(txnbr)
+            nx_graph.remove_node(txnbr)
+
+    return nodes_to_drop
 
 
 def get_address_balances(addresses):
@@ -465,7 +523,7 @@ def compute_graph(new_nodes, new_edges):
         )
         positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
         print (("----------------------"))
-        print ("positions: ", positions)
+        # print ("positions: ", positions)
 
         # changed_nodes = []
         
@@ -499,9 +557,9 @@ def compute_graph(new_nodes, new_edges):
 
         all_nodes = [node for node in nodes if node['id'] in all_nodes_set]
 
-        print ("length of edges: ", len(new_edges))
-        print ("length of nodes in all_nodes_set: ", len(all_nodes_set))
-        print ("length of nodes: ", len(all_nodes))
+        # print ("length of edges: ", len(new_edges))
+        # print ("length of nodes in all_nodes_set: ", len(all_nodes_set))
+        # print ("length of nodes: ", len(all_nodes))
 
          # list of addresses needing balance queries
         addresses_to_query = []
@@ -596,7 +654,7 @@ def compute_graph(new_nodes, new_edges):
                      } for node in new_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
         }
-        print ("graph_data: ", graph_data)
+        # print ("graph_data: ", graph_data)
         return graph_data
 
     except Exception as e:
