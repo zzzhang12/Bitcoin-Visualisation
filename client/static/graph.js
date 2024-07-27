@@ -39,6 +39,11 @@ function runWebSocket() {
     socket.on('connection_response', function(msg) {
         console.log('Server response:', msg);
     });
+    
+    socket.on('reload', function() {
+        console.log("Reloading page because the server state has been reset");
+        location.reload();  // This reloads the iframe or page
+    });
 };
 
 

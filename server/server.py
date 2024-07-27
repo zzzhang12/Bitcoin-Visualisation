@@ -22,7 +22,6 @@ MAX_SIZE = 100
 nodes = []
 edges = []
 node_ids = set()
-clients = set()
 broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
@@ -89,6 +88,27 @@ txMaxFee = 0
 txTotalSize = 0
 txMaxSize = 0
 numTx = 0
+
+
+def reset_server_state():
+    global nodes, edges, node_ids, nx_graph, numNodes, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, node_positions
+
+    nodes = []
+    edges = []
+    node_ids = set()
+    nx_graph.clear()  
+    numNodes = 0
+    txTotalVal = 0
+    txMaxVal = 0
+    txTotalFee = 0
+    txMaxFee = 0
+    txTotalSize = 0
+    txMaxSize = 0
+    numTx = 0
+    
+
+    print("Server state has been reset.")
+
 
 def push(msg):
     global queue
@@ -264,6 +284,7 @@ def process_transaction(transactions):
 
                 # print(f"Added transaction node: {tx_id}")
                 numNodes += 1
+                print (numNodes)
 
 
             inVals = 0
@@ -316,6 +337,7 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
+                        print (numNodes)
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
 
@@ -386,6 +408,7 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
+                        print (numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
 
@@ -711,18 +734,26 @@ def handle_disconnect():
 def periodic_broadcast():
     global nodes, edges
     while True:
-        if not queue:
-            continue
-        transactions = queue[:]
-        # new_nodes, new_edges = process_transaction(transactions)
-        # graph_data = compute_graph(new_nodes, new_edges)
-        if not nodes and not edges:
-            print("Graph has no nodes or edges yet.")
-            time.sleep(broadcast_interval)
-            continue
-        graph_data = compute_graph(nodes, edges)
-        socketio.emit('graph_data', graph_data)
-        print("emitted to client")
+        with queue_lock:
+            if not queue:
+                continue
+            # new_nodes, new_edges = process_transaction(transactions)
+            # graph_data = compute_graph(new_nodes, new_edges)
+            if not nodes and not edges:
+                print("Graph has no nodes or edges yet.")
+                time.sleep(broadcast_interval)
+                continue
+
+            # Check if the number of nodes exceeds the threshold
+            if numNodes > 50:
+                print("Number of nodes exceeds threshold, resetting server state.")
+                reset_server_state()
+                socketio.emit('reload')
+                continue
+
+            graph_data = compute_graph(nodes, edges)
+            socketio.emit('graph_data', graph_data)
+            print("emitted to client")
 
          # Save graph_data to a local JSON file with sequential names
         # filename = f"{counter}.json"
