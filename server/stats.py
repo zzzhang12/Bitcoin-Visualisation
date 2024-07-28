@@ -12,6 +12,7 @@ address_set = set()
 new_addresses = set()
 
 def get_address_balances(addresses):
+    print ("length of addresses: ", len(addresses))
     url = f"https://blockchain.info/multiaddr?active={'|'.join(addresses)}&n=1"
     response = requests.get(url)
     if response.status_code == 200:
@@ -31,7 +32,6 @@ def on_message(ws, message):
         tx = data['x']
         inputs = tx['inputs']
         outputs = tx['out']
-        
 
         for currInput in inputs:
             addr = currInput['prev_out']['addr']
@@ -41,6 +41,11 @@ def on_message(ws, message):
                 if addr not in address_set:
                     new_addresses.add(addr)
                     address_set.add(addr)
+
+                    if len(new_addresses) >= 10:
+                        balances = get_address_balances(list(new_addresses))
+                        new_addresses = set()
+                        address_balances.extend(balances)
  
         for currOutput in outputs:
             addr = currOutput['addr']
@@ -51,10 +56,10 @@ def on_message(ws, message):
                     new_addresses.add(addr)
                     address_set.add(addr)
 
-        if len(new_addresses) >= 10:
-            balances = get_address_balances(list(new_addresses))
-            new_addresses = set()
-            address_balances.extend(balances)
+                if len(new_addresses) >= 10:
+                    balances = get_address_balances(list(new_addresses))
+                    new_addresses = set()
+                    address_balances.extend(balances)
     
     if len(transaction_values) >= 100:
         balances = get_address_balances(list(new_addresses))
@@ -91,12 +96,14 @@ def start_ws():
 
 
 def calculate_statistics():
-    global transaction_values
-    mean_tx = np.mean(transaction_values) / 1e8 
-    std_dev_tx = np.std(transaction_values)/ 1e8 
+    global transaction_values, address_balances
+    mean_tx = np.mean(transaction_values)
+    std_dev_tx = np.std(transaction_values) 
 
-    mean_balance = np.mean(address_balances) / 1e8 
-    std_dev_balance = np.std(address_balances) / 1e8 
+    # Log-transform address balance
+    log_balances = np.log1p(address_balances)  # log1p is used to handle zero balances
+    mean_balance = np.mean(log_balances)
+    std_dev_balance = np.std(log_balances)
 
     print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}")
     print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}")

@@ -21,7 +21,7 @@ queue = []
 MAX_SIZE = 100
 nodes = []
 edges = []
-node_ids = set()
+node_ids = set()   # for tracking nodes
 broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
@@ -29,9 +29,10 @@ node_positions = {}
 queue_lock = threading.Lock()
 paused = False
 msgBuf = []
-mean = 0 # Mean of transaction values
-std_dev = 0 # Standard deviation of transaction values 
-
+mean_tx = 0 # Mean of transaction values
+std_dev_tx = 0 # Standard deviation of transaction values 
+mean_balance = 0 # Mean of address balances
+std_dev_balance = 0 # Standard deviation of address balances
 
 file_index = 0
 
@@ -93,11 +94,13 @@ numTx = 0
 
 
 def load_transaction_stats():
-    global mean, std_dev
+    global mean_tx, std_dev_tx, mean_balance, std_dev_balance
     with open('./server/transaction_stats.json') as f:
         transaction_stats = json.load(f)
-        mean = transaction_stats.get('mean', 0)
-        std_dev = transaction_stats.get('std_dev', 1)
+        mean_tx = transaction_stats.get('mean_tx')
+        std_dev_tx = transaction_stats.get('std_dev_tx')
+        mean_balance = transaction_stats.get('mean_balance')
+        std_dev_balance = transaction_stats.get('std_dev_balance')
 
 
 def reset_server_state():
@@ -285,7 +288,7 @@ def process_transaction(transactions):
                 currID = f"{currInput['prev_out']['tx_index']}:{currInput['prev_out']['n']}"
                 addr = currInput['prev_out']['addr']
                 size = currInput['prev_out']['value']
-                z_score = calculate_z_score(size)
+                z_score_tx = calculate_z_score(size, "tx")
                 orig_in_color = '#FF9933'
                 in_color = '#FF9933'
                 
@@ -305,7 +308,8 @@ def process_transaction(transactions):
                             'label': f"{currInput['prev_out']['value'] * 1000 / 100000000:.2f}mB{from_text}",
                             'addr': addr, 
                             'size': size,
-                            'z_score': z_score,
+                            'z_score_tx': z_score_tx,
+                            'z_score_balance': 0, # initialized to 0. will be retrieved in compute_graph()
                             'orig_in_color': orig_in_color,
                             'color': in_color, 
                             'type': 'input'
@@ -359,7 +363,7 @@ def process_transaction(transactions):
                 currOutput['tx_index'] = random.randint(0, 100000000)
                 currID = f"{currOutput['tx_index']}:{currOutput['n']}"
                 size = currOutput['value']
-                z_score = calculate_z_score(size)
+                z_score_tx = calculate_z_score(size, "tx")
                 addr = currOutput['addr']
                 to_text = f" to {currOutput['addr']}"
 
@@ -379,7 +383,8 @@ def process_transaction(transactions):
                             'addr': addr, 
                             'tag' :currOutput.get('addr_tag'), 
                             'size': size, 
-                            'z_score': z_score,
+                            'z_score_tx': z_score_tx,
+                            'z_score_balance': 0, # initialized to 0. will be retrieved in compute_graph()
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
                             'type': 'output'
@@ -482,9 +487,12 @@ def process_block(msg):
     paused = False
 
 
-def calculate_z_score(value):
-    global mean, std_dev
-    return (value - mean) / std_dev
+def calculate_z_score(value, type):
+    global mean_tx, std_dev_tx, mean_balance, std_dev_balance
+    if type == "tx":
+        return (value - mean_tx) / std_dev_tx
+    elif type == "balance":
+        return (value - mean_balance) / std_dev_balance
 
 
 def drop_connected(tx_id):
@@ -674,8 +682,9 @@ def compute_graph(new_nodes, new_edges):
                        'color': node['color'], 
                        'type': node['type'], 
                        'size': node['size'],
-                       'z_score': node['z_score'] if node['type'] != 'tx' else None,
-                       'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None
+                       'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' else None,
+                       'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None,
+                       'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' else None
                      } for node in new_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
         }

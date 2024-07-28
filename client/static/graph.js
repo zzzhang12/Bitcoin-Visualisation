@@ -239,7 +239,7 @@ function updateGraph(newGraphData) {
         .style("stroke-width", d => {
             const zScore = d.source.z_score || d.target.z_score || 0.5; 
             const strokeWidth = mapZScoreToThickness(zScore);
-            console.log(` stroke width: ${strokeWidth}`);  // Print the stroke width
+            // console.log(` stroke width: ${strokeWidth}`);  // Print the stroke width
             return strokeWidth;
             // return mapZScoreToThickness(zScore);
         })
