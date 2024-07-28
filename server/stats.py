@@ -12,7 +12,7 @@ address_set = set()
 new_addresses = set()
 
 def get_address_balances(addresses):
-    print ("length of addresses: ", len(addresses))
+    # print ("length of addresses: ", len(addresses))
     url = f"https://blockchain.info/multiaddr?active={'|'.join(addresses)}&n=1"
     response = requests.get(url)
     if response.status_code == 200:
@@ -42,7 +42,7 @@ def on_message(ws, message):
                     new_addresses.add(addr)
                     address_set.add(addr)
 
-                    if len(new_addresses) >= 10:
+                    if len(new_addresses) >= 100:
                         balances = get_address_balances(list(new_addresses))
                         new_addresses = set()
                         address_balances.extend(balances)
@@ -56,12 +56,12 @@ def on_message(ws, message):
                     new_addresses.add(addr)
                     address_set.add(addr)
 
-                if len(new_addresses) >= 10:
+                if len(new_addresses) >= 100:
                     balances = get_address_balances(list(new_addresses))
                     new_addresses = set()
                     address_balances.extend(balances)
     
-    if len(transaction_values) >= 100:
+    if len(transaction_values) >= 10000:
         balances = get_address_balances(list(new_addresses))
         address_balances.extend(balances)
         ws.close()
@@ -101,14 +101,14 @@ def calculate_statistics():
     std_dev_tx = np.std(transaction_values) 
 
     # Log-transform address balance
-    log_balances = np.log1p(address_balances)  # log1p is used to handle zero balances
+    log_balances = np.log1p(address_balances)
     mean_balance = np.mean(log_balances)
     std_dev_balance = np.std(log_balances)
 
     print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}")
     print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}")
-    # with open('./server/transaction_stats.json', 'w') as f:
-    #     json.dump({'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance}, f)
+    with open('./server/transaction_stats.json', 'w') as f:
+        json.dump({'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance}, f)
 
 
 if __name__ == "__main__":
