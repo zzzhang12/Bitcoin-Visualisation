@@ -7,7 +7,6 @@ BITCOIN_WS_URL = "wss://ws.blockchain.info/inv"
 
 transaction_values = []
 
-
 def on_message(ws, message):
     global transaction_values
     data = json.loads(message)
@@ -22,7 +21,7 @@ def on_message(ws, message):
             if addr:
                 size = currInput['prev_out']['value']
                 transaction_values.append(size)
-        
+ 
         for currOutput in outputs:
             addr = currOutput['addr']
             if addr:
@@ -40,6 +39,7 @@ def on_error(ws, error):
 def on_close(ws, close_status_code, close_msg):
     global polling_ref
     print(f"WebSocket closed with status: {close_status_code} and message: {close_msg}")
+    calculate_statistics()
 
 
 def on_open(ws):
@@ -60,12 +60,13 @@ def start_ws():
     ws.run_forever()
 
 
+def calculate_statistics():
+    global transaction_values
+    mean = np.mean(transaction_values)
+    std_dev = np.std(transaction_values)
+    print(f"Calculated MEAN: {mean}, STD_DEV: {std_dev}")
+    with open('./server/transaction_stats.json', 'w') as f:
+        json.dump({'mean': mean, 'std_dev': std_dev}, f)
+
 if __name__ == "__main__":
     start_ws()
-    while len(transaction_values) < 10000:
-        continue
-    
-    MEAN = np.mean(transaction_values)
-    STD_DEV = np.std(transaction_values)
-    
-    print(f"Mean: {MEAN}, Standard Deviation: {STD_DEV}")

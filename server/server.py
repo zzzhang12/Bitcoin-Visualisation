@@ -8,8 +8,8 @@ import traceback
 from flask_socketio import SocketIO, emit
 import time
 import random 
-import math
 import requests
+import numpy as np
 
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -29,6 +29,8 @@ node_positions = {}
 queue_lock = threading.Lock()
 paused = False
 msgBuf = []
+mean = 0 # Mean of transaction values
+std_dev = 0 # Standard deviation of transaction values 
 
 
 file_index = 0
@@ -90,6 +92,14 @@ txMaxSize = 0
 numTx = 0
 
 
+def load_transaction_stats():
+    global mean, std_dev
+    with open('./server/transaction_stats.json') as f:
+        transaction_stats = json.load(f)
+        mean = transaction_stats.get('mean', 0)
+        std_dev = transaction_stats.get('std_dev', 1)
+
+
 def reset_server_state():
     global nodes, edges, node_ids, nx_graph, numNodes, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, node_positions
 
@@ -105,7 +115,6 @@ def reset_server_state():
     txTotalSize = 0
     txMaxSize = 0
     numTx = 0
-    
 
     print("Server state has been reset.")
 
@@ -124,31 +133,13 @@ def push(msg):
             queue.pop(idx)
             queue.append(msg)
 
+
 def shift():
     if queue:
         return queue.pop(0)
     return None
 
 polling_ref = None
-
-# def start_polling():
-#     global polling_ref
-#     if polling_ref is not None:
-#         polling_ref.cancel()
-#     polling_ref = None
-
-#     def poll():
-#         print ("inside poll()")
-#         if len(queue) == 0:
-#             return
-#         message = shift()
-#         print ("message: ", message)
-#         if message is None:
-#             return
-#         process_transaction([message])
-
-#     polling_ref = threading.Timer(0.5, poll)
-#     polling_ref.start()
 
 
 def start_polling():
@@ -284,7 +275,7 @@ def process_transaction(transactions):
 
                 # print(f"Added transaction node: {tx_id}")
                 numNodes += 1
-                print (numNodes)
+                # print (numNodes)
 
 
             inVals = 0
@@ -294,6 +285,7 @@ def process_transaction(transactions):
                 currID = f"{currInput['prev_out']['tx_index']}:{currInput['prev_out']['n']}"
                 addr = currInput['prev_out']['addr']
                 size = currInput['prev_out']['value']
+                z_score = calculate_z_score(size)
                 orig_in_color = '#FF9933'
                 in_color = '#FF9933'
                 
@@ -313,6 +305,7 @@ def process_transaction(transactions):
                             'label': f"{currInput['prev_out']['value'] * 1000 / 100000000:.2f}mB{from_text}",
                             'addr': addr, 
                             'size': size,
+                            'z_score': z_score,
                             'orig_in_color': orig_in_color,
                             'color': in_color, 
                             'type': 'input'
@@ -337,7 +330,7 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
-                        print (numNodes)
+                        # print (numNodes)
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
 
@@ -366,6 +359,8 @@ def process_transaction(transactions):
                 currOutput['tx_index'] = random.randint(0, 100000000)
                 currID = f"{currOutput['tx_index']}:{currOutput['n']}"
                 size = currOutput['value']
+                z_score = calculate_z_score(size)
+                addr = currOutput['addr']
                 to_text = f" to {currOutput['addr']}"
 
                 orig_out_color = '#003399'
@@ -381,9 +376,10 @@ def process_transaction(transactions):
                         node = {
                             'id': currID, 
                             'label': f"{currOutput['value'] * 1000 / 100000000:.2f}mB{to_text}",
-                            'addr': currOutput['addr'], 
+                            'addr': addr, 
                             'tag' :currOutput.get('addr_tag'), 
                             'size': size, 
+                            'z_score': z_score,
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
                             'type': 'output'
@@ -408,7 +404,7 @@ def process_transaction(transactions):
                         node_positions[tx_id] = None # Track initial position
 
                         numNodes += 1
-                        print (numNodes)
+                        # print (numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
 
@@ -484,6 +480,11 @@ def process_block(msg):
     # Send nodes to drop to client
     socketio.emit('drop_nodes', list(nodes_to_drop))
     paused = False
+
+
+def calculate_z_score(value):
+    global mean, std_dev
+    return (value - mean) / std_dev
 
 
 def drop_connected(tx_id):
@@ -673,6 +674,7 @@ def compute_graph(new_nodes, new_edges):
                        'color': node['color'], 
                        'type': node['type'], 
                        'size': node['size'],
+                       'z_score': node['z_score'] if node['type'] != 'tx' else None,
                        'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None
                      } for node in new_nodes if node['id'] in positions],
             'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
@@ -745,7 +747,7 @@ def periodic_broadcast():
                 continue
 
             # Check if the number of nodes exceeds the threshold
-            if numNodes > 50:
+            if numNodes > 1000:
                 print("Number of nodes exceeds threshold, resetting server state.")
                 reset_server_state()
                 socketio.emit('reload')
@@ -791,6 +793,7 @@ def send_json_files():
 # compute_graph(test_nodes, test_edges)
 
 if __name__ == '__main__':
+    load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
     # socketio.start_background_task(periodic_broadcast)
