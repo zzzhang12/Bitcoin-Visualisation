@@ -118,8 +118,8 @@ function renderGraph(graphData) {
      offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 3;
-    const scaleFactorY = 3;
+    const scaleFactorX = 4;
+    const scaleFactorY = 4;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -235,7 +235,14 @@ function updateGraph(newGraphData) {
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
-        .style("stroke-width", 0.5)
+        // .style("stroke-width", 0.5)
+        .style("stroke-width", d => {
+            const zScore = d.source.z_score || d.target.z_score || 0.5; 
+            const strokeWidth = mapZScoreToThickness(zScore);
+            console.log(` stroke width: ${strokeWidth}`);  // Print the stroke width
+            return strokeWidth;
+            // return mapZScoreToThickness(zScore);
+        })
         .on("mouseover", function(event, d) {
             let value;
             if (d.type === 'in_link') {
@@ -311,6 +318,22 @@ function updateGraph(newGraphData) {
     // simulation.alpha(1).restart();
 }
 
+
+// Function to map z-score to edge thickness
+function mapZScoreToThickness(zScore) {
+    const minThickness = 0.3;
+    const maxThickness = 3.0; 
+
+    const logScale = d3.scaleLog()
+        .domain([0.1, 10]) 
+        .range([minThickness, maxThickness])
+        .clamp(true);
+
+    const adjustedZScore = Math.abs(zScore) + 0.1;
+
+    return logScale(adjustedZScore);
+}
+
 // function ticked() {
 //     // node.each(function(d) {
 //     //     console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
@@ -329,8 +352,8 @@ function updateGraph(newGraphData) {
 
 function ticked() {
     // Debugging: Log nodes and links
-    console.log("Nodes during tick:", node.data());
-    console.log("Links during tick:", link.data());
+    // console.log("Nodes during tick:", node.data());
+    // console.log("Links during tick:", link.data());
 
     link
         .attr("x1", d => {

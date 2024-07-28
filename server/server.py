@@ -14,7 +14,7 @@ import numpy as np
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
-# WebSocket to receive Bitcoin transactions
+# WebSocket to receive Bitcoin transactionss
 BITCOIN_WS_URL = "wss://ws.blockchain.info/inv"
 
 queue = []
@@ -765,20 +765,7 @@ def periodic_broadcast():
 
         time.sleep(broadcast_interval)
 
-# def periodic_broadcast():
-#     while True:
-#         with queue_lock:
-#             if not nodes and not edges:
-#                 print("Graph has no nodes or edges yet.")
-#                 time.sleep(broadcast_interval)
-#                 continue
-#             graph_data = compute_graph(nodes, edges)
-#         socketio.emit('graph_data', graph_data)
-#         print("emitted to client")
-#         time.sleep(broadcast_interval)
-
-
-
+## For Testing only
 def send_json_files():
     global file_index, json_files
     while file_index < len(json_files):
@@ -787,7 +774,7 @@ def send_json_files():
             socketio.emit('graph_data', graph_data)
             print("emitted to client")
         file_index += 1
-        time.sleep(broadcast_interval)  # Adjust the delay as needed
+        time.sleep(broadcast_interval) 
 
 # # Test the function
 # compute_graph(test_nodes, test_edges)
@@ -796,7 +783,6 @@ if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    # socketio.start_background_task(periodic_broadcast)
     threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)
