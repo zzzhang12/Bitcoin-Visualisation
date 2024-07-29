@@ -208,10 +208,19 @@ function updateGraph(newGraphData) {
 
     const nodeEnter = node.enter().append("circle")
         .attr("class", "node")
-        .attr("r", d => d.type === 'tx' ? 3 : 0.5)
+        .attr("r", d => d.type === 'tx' ? 3 : 1)
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
-        .style("fill", d => d.color)
+        // .style("fill", d => d.color)
+        .style("fill", d => {
+            if (d.type === 'input') {
+                return mapZScoreToColor(d.z_score_balance, d.color);
+            } else if (d.type === 'output') {
+                return mapZScoreToColor(d.z_score_balance, d.color);
+            } else {
+                return d.color;
+            }
+        })
         .call(d3.drag()
             .on("start", dragStarted)
             .on("drag", dragged)
@@ -332,6 +341,25 @@ function mapZScoreToThickness(zScore) {
     const adjustedZScore = Math.abs(zScore) + 0.1;
 
     return logScale(adjustedZScore);
+}
+
+
+function mapZScoreToColor(zScore, baseColor) {
+    // Define a scale for color saturation/vibrancy
+    const scale = d3.scaleLinear()
+        .domain([-3, 0, 3])
+        .range([0.3, 1, 1.7]) // Adjust these values for desired effect
+        .clamp(true);
+
+    const intensity = scale(zScore);
+
+    // Convert hex color to HSL
+    const baseHSL = d3.hsl(baseColor);
+
+    // Adjust lightness based on z-score
+    baseHSL.l = baseHSL.l * intensity;
+
+    return baseHSL.toString();
 }
 
 // function ticked() {
