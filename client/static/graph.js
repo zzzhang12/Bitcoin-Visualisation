@@ -205,6 +205,8 @@ function updateGraph(newGraphData) {
     // Remove exiting nodes
     node.exit().remove();
 
+    node.raise();
+
     // const updatedNodes = node.data().concat(nodes);
     // node = node.data(updatedNodes, d => d.id);
 

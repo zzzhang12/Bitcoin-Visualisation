@@ -280,6 +280,10 @@ def process_transaction(transactions):
                 # print(f"Added transaction node: {tx_id}")
                 numNodes += 1
                 # print (numNodes)
+                graph_data = compute_graph(nodes, edges)
+                if graph_data:
+                    socketio.emit('graph_data', graph_data)
+                    print("emitted to client after processing transaction")
 
 
             inVals = 0
@@ -339,6 +343,11 @@ def process_transaction(transactions):
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
 
+                        graph_data = compute_graph(nodes, edges)
+                        if graph_data:
+                            socketio.emit('graph_data', graph_data)
+                            print("emitted to client after processing transaction")
+
                     else:
                         existInput['type'] = 'InOut'
 
@@ -355,6 +364,10 @@ def process_transaction(transactions):
                         nx_graph.add_edge(currID, tx_id)
 
                         # print('Joined input node:', currID)
+                        graph_data = compute_graph(nodes, edges)
+                        if graph_data:
+                            socketio.emit('graph_data', graph_data)
+                            print("emitted to client after processing transaction")
                 inVals += size
 
                         
@@ -413,6 +426,10 @@ def process_transaction(transactions):
                         # print (numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
+                        graph_data = compute_graph(nodes, edges)
+                        if graph_data:
+                            socketio.emit('graph_data', graph_data)
+                            print("emitted to client after processing transaction")
 
                     else:
                         existOutput['type'] = 'InOut'
@@ -429,6 +446,10 @@ def process_transaction(transactions):
                         nx_graph.add_edge(tx_id, currID)
 
                         # print('Joined output node:', currID)
+                        graph_data = compute_graph(nodes, edges)
+                        if graph_data:
+                            socketio.emit('graph_data', graph_data)
+                            print("emitted to client after processing transaction")
                 outVals += size
 
             # Update transaction node values
@@ -448,7 +469,7 @@ def process_transaction(transactions):
 
             i += 1
              
-        # # Compute positions and send graph data after processing each transaction
+        # Compute positions and send graph data after processing each transaction
         # graph_data = compute_graph(nodes, edges)
         # if graph_data:
         #     socketio.emit('graph_data', graph_data)
@@ -467,7 +488,7 @@ def process_block(msg):
     global paused, blkTimer, blkStart
 
     paused = True
-    print(f'New block {msg["x"]["height"]} received')
+    print(f'New block {msg[0]["x"]["height"]} received')
 
     # Update timers and alerts (if needed)
     blkStart = time.time()
@@ -801,6 +822,6 @@ if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)
