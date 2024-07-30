@@ -190,12 +190,16 @@ function updateGraph(newGraphData) {
     // Update positions of existing nodes
     nodesToUpdate.forEach(updatedNode => {
         const nodeToUpdate = node.data().find(d => d.id === updatedNode.id);
-        nodeToUpdate.x = updatedNode.x;
-        nodeToUpdate.y = updatedNode.y;
+        if (nodeToUpdate) {
+            nodeToUpdate.x = updatedNode.x;
+            nodeToUpdate.y = updatedNode.y;
+        }
     });
 
-    // Update node data with new nodes
+    // Combine the existing nodes with the new nodes
     const updatedNodes = node.data().concat(nodesToAdd);
+
+    // Update node data binding with new nodes
     node = node.data(updatedNodes, d => d.id);
 
     // Remove exiting nodes
@@ -235,9 +239,16 @@ function updateGraph(newGraphData) {
 
     node = nodeEnter.merge(node);
 
-    // Update link data with new links
-    const updatedLinks = link.data().concat(linksToAdd);
-    link = link.data(updatedLinks, d => `${d.source}-${d.target}`);
+    // Update link data binding
+    const nodeById = new Map(updatedNodes.map(d => [d.id, d]));
+    newGraphData.edges.forEach(d => {
+        d.source = nodeById.get(d.source) || d.source;
+        d.target = nodeById.get(d.target) || d.target;
+    });
+
+    // Combine the existing links with the new links
+    link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
+
     link.exit().remove();
 
     const linkEnter = link.enter().append("line")
@@ -260,7 +271,7 @@ function updateGraph(newGraphData) {
                 // value = nodeById.get(d.target.id).size;
                 value = d.target.size;
             }
-            value = (value / 100000000).toPrecision(4);
+            // value = (value / 100000000).toPrecision(4);
             displayValue('transaction', value, event.pageX, event.pageY);
         });
 
@@ -378,10 +389,29 @@ function mapZScoreToColor(zScore, baseColor) {
 
 
 function ticked() {
-    // Debugging: Log nodes and links
+    // // Debugging: Log nodes and links
     // console.log("Nodes during tick:", node.data());
     // console.log("Links during tick:", link.data());
 
+    node.each(function(d) {
+        console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
+    });
+
+    node
+    .attr("cx", d => {
+        if (d.x === undefined) {
+            console.error("Undefined x for node", d);
+            return 0;
+        }
+        return d.x - offsetX;
+    })
+    .attr("cy", d => {
+        if (d.y === undefined) {
+            console.error("Undefined y for node", d);
+            return 0;
+        }
+        return d.y - offsetY;
+    });
     link
         .attr("x1", d => {
             if (!d.source || d.source.x === undefined) {
@@ -410,22 +440,6 @@ function ticked() {
                 return 0;
             }
             return d.target.y - offsetY;
-        });
-
-    node
-        .attr("cx", d => {
-            if (d.x === undefined) {
-                console.error("Undefined x for node", d);
-                return 0;
-            }
-            return d.x - offsetX;
-        })
-        .attr("cy", d => {
-            if (d.y === undefined) {
-                console.error("Undefined y for node", d);
-                return 0;
-            }
-            return d.y - offsetY;
         });
 }
 
