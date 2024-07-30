@@ -211,7 +211,6 @@ function updateGraph(newGraphData) {
         .attr("r", d => d.type === 'tx' ? 3 : 1)
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
-        // .style("fill", d => d.color)
         .style("fill", d => {
             if (d.type === 'input') {
                 return mapZScoreToColor(d.z_score_balance, d.color);

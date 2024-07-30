@@ -22,11 +22,12 @@ MAX_SIZE = 100
 nodes = []
 edges = []
 node_ids = set()   # for tracking nodes
-broadcast_interval = 2  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
 queue_lock = threading.Lock()
+forceatlas2_lock = threading.Lock()
 paused = False
 msgBuf = []
 mean_tx = 0 # Mean of transaction values
@@ -446,6 +447,13 @@ def process_transaction(transactions):
             txMaxSize = max(txMaxSize, tx_size)
 
             i += 1
+             
+        # # Compute positions and send graph data after processing each transaction
+        # graph_data = compute_graph(nodes, edges)
+        # if graph_data:
+        #     socketio.emit('graph_data', graph_data)
+        #     print("emitted to client after processing transaction")
+
         return new_nodes, new_edges
 
     except Exception as e:
@@ -466,7 +474,7 @@ def process_block(msg):
     # Clear and set blkTimer (you need to implement timeBlock logic if necessary)
     # blkTimer = setInterval(timeBlock, 1000, [blkStart])
 
-    txs = msg["x"]["txIndexes"]
+    txs = msg[0]["x"]["txIndexes"]
 
     preBlockTxCount = numTx
     nodes_to_drop = set()
@@ -546,11 +554,11 @@ def compute_graph(new_nodes, new_edges):
             edgeWeightInfluence=1.0,
             jitterTolerance=1.0,
             barnesHutOptimize=True,
-            barnesHutTheta=1.2,
+            barnesHutTheta=1.0,
             multiThreaded=False,
-            scalingRatio=2.0,
+            scalingRatio=3.0,
             strongGravityMode=False,
-            gravity=1.0,
+            gravity=0.8,
             verbose=True
         )
         positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
@@ -696,7 +704,7 @@ def compute_graph(new_nodes, new_edges):
         traceback.print_exc()
         return {'nodes': [], 'edges': []}
 
-
+    
 def is_different_client(p1, p2):
             x1, y1 = p1
             x2, y2 = p2
@@ -763,6 +771,7 @@ def periodic_broadcast():
                 continue
 
             graph_data = compute_graph(nodes, edges)
+            # graph_data = compute_graph_safe(nodes, edges)
             socketio.emit('graph_data', graph_data)
             print("emitted to client")
 
