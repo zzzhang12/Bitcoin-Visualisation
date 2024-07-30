@@ -255,26 +255,33 @@ function updateGraph(newGraphData) {
 
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
-        .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
+        .style("stroke", d => d.color)
         // .style("stroke-width", 0.5)
         .style("stroke-width", d => {
-            const zScore = d.source.z_score || d.target.z_score || 0.5; 
-            const strokeWidth = mapZScoreToThickness(zScore);
-            // console.log(` stroke width: ${strokeWidth}`);  // Print the stroke width
-            return strokeWidth;
-            // return mapZScoreToThickness(zScore);
+            if (d.type === 'addr_link'){
+                return 0.3
+            }
+            else{
+                const zScore = d.source.z_score || d.target.z_score || 0.5; 
+                const strokeWidth = mapZScoreToThickness(zScore);
+                // console.log(` stroke width: ${strokeWidth}`);  // Print the stroke width
+                return strokeWidth;
+                // return mapZScoreToThickness(zScore);
+            }
         })
         .on("mouseover", function(event, d) {
             let value;
-            if (d.type === 'in_link') {
-                // value = nodeById.get(d.source.id).size;
-                value = d.source.size;
-            } else if (d.type === 'out_link') {
-                // value = nodeById.get(d.target.id).size;
-                value = d.target.size;
+            if (d.type != 'addr_link'){
+                if (d.type === 'in_link') {
+                    // value = nodeById.get(d.source.id).size;
+                    value = d.source.size;
+                } else if (d.type === 'out_link') {
+                    // value = nodeById.get(d.target.id).size;
+                    value = d.target.size;
+                }
+                // value = (value / 100000000).toPrecision(4);
+                displayValue('transaction', value, event.pageX, event.pageY); 
             }
-            // value = (value / 100000000).toPrecision(4);
-            displayValue('transaction', value, event.pageX, event.pageY);
         });
 
     link = linkEnter.merge(link);
@@ -342,7 +349,7 @@ function updateGraph(newGraphData) {
 
 // Function to map z-score to edge thickness
 function mapZScoreToThickness(zScore) {
-    const minThickness = 0.3;
+    const minThickness = 0.2;
     const maxThickness = 3.0; 
 
     const logScale = d3.scaleLog()

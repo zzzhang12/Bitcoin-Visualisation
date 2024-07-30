@@ -22,14 +22,19 @@ MAX_SIZE = 100
 nodes = []
 edges = []
 node_ids = set()   # for tracking nodes
-broadcast_interval = 3  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1.5  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
-queue_lock = threading.Lock()
-forceatlas2_lock = threading.Lock()
+address_dict = {} # track addresses and associated nodes
 paused = False
 msgBuf = []
+
+# Locks
+queue_lock = threading.Lock()
+forceatlas2_lock = threading.Lock()
+
+# Statistics 
 mean_tx = 0 # Mean of transaction values
 std_dev_tx = 0 # Standard deviation of transaction values 
 mean_balance = 0 # Mean of address balances
@@ -227,7 +232,7 @@ def process_transaction(transactions):
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
 
-    global nodes, edges, node_ids, nx_graph
+    global nodes, edges, node_ids, nx_graph, address_dict
     global numNodes, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize
 
     new_nodes = []
@@ -280,10 +285,10 @@ def process_transaction(transactions):
                 # print(f"Added transaction node: {tx_id}")
                 numNodes += 1
                 # print (numNodes)
-                graph_data = compute_graph(nodes, edges)
-                if graph_data:
-                    socketio.emit('graph_data', graph_data)
-                    print("emitted to client after processing transaction")
+                # graph_data = compute_graph(nodes, edges)
+                # if graph_data:
+                #     socketio.emit('graph_data', graph_data)
+                #     print("emitted to client after processing transaction")
 
 
             inVals = 0
@@ -323,6 +328,24 @@ def process_transaction(transactions):
                         new_nodes.append(node)
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
+
+                        if addr in address_dict:
+                            latest_node_id = address_dict[addr][-1]
+                            edge = {
+                                'id': f"{latest_node_id}:{currID}gray",
+                                'source': latest_node_id,
+                                'target': currID,
+                                'color': '#555555',
+                                'type': 'addr_link',
+                                'weight': 30
+                            }
+                            edges.append(edge)
+                            new_edges.append(edge)
+                            # nx_graph.add_edge(latest_node_id, currID)
+                            nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                            address_dict[addr].append(currID)
+                        else:
+                            address_dict[addr] = [currID]
                         
                         edge = {
                             'id': f"{currID}:{tx_id}",
@@ -330,11 +353,13 @@ def process_transaction(transactions):
                             'target': tx_id, 
                             'orig_in_color': orig_in_color,
                             'color': in_color, 
-                            'type': 'in_link'
+                            'type': 'in_link',
+                            'weight': 5
                             }
                         edges.append(edge)
                         new_edges.append(edge)
-                        nx_graph.add_edge(currID, tx_id)
+                        # nx_graph.add_edge(currID, tx_id)
+                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         node_positions[tx_id] = None # Track initial position
 
@@ -343,10 +368,10 @@ def process_transaction(transactions):
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
 
-                        graph_data = compute_graph(nodes, edges)
-                        if graph_data:
-                            socketio.emit('graph_data', graph_data)
-                            print("emitted to client after processing transaction")
+                        # graph_data = compute_graph(nodes, edges)
+                        # if graph_data:
+                        #     socketio.emit('graph_data', graph_data)
+                        #     print("emitted to client after processing transaction")
 
                     else:
                         existInput['type'] = 'InOut'
@@ -357,18 +382,20 @@ def process_transaction(transactions):
                             'target': tx_id, 
                             'orig_in_color': orig_in_color,
                             'color': in_color,
-                            'type': 'in_link'
+                            'type': 'in_link',
+                            'weight': 20
                             }
                         edges.append(edge)
                         new_edges.append(edge)
-                        nx_graph.add_edge(currID, tx_id)
+                        # nx_graph.add_edge(currID, tx_id)
+                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         # print('Joined input node:', currID)
-                        graph_data = compute_graph(nodes, edges)
-                        if graph_data:
-                            socketio.emit('graph_data', graph_data)
-                            print("emitted to client after processing transaction")
-                inVals += size
+                        # graph_data = compute_graph(nodes, edges)
+                        # if graph_data:
+                        #     socketio.emit('graph_data', graph_data)
+                        #     print("emitted to client after processing transaction")
+                    inVals += size
 
                         
             outVals = 0
@@ -408,17 +435,37 @@ def process_transaction(transactions):
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
 
+                        if addr in address_dict:
+                            latest_node_id = address_dict[addr][-1]
+                            edge = {
+                                'id': f"{latest_node_id}:{currID}gray",
+                                'source': latest_node_id,
+                                'target': currID,
+                                'color': '#555555',
+                                'type': 'addr_link',
+                                'weight': 30
+                            }
+                            edges.append(edge)
+                            new_edges.append(edge)
+                            # nx_graph.add_edge(latest_node_id, currID)
+                            nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                            address_dict[addr].append(currID)
+                        else:
+                            address_dict[addr] = [currID]
+
                         edge = {
                             'id': f"{tx_id}:{currID}",
                             'source': tx_id, 
                             'target': currID,  
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
-                            'type': 'out_link'
+                            'type': 'out_link',
+                            'weight': 5
                         }
                         edges.append(edge)
                         new_edges.append(edge)
-                        nx_graph.add_edge(tx_id, currID)
+                        # nx_graph.add_edge(tx_id, currID)
+                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         node_positions[tx_id] = None # Track initial position
 
@@ -426,10 +473,10 @@ def process_transaction(transactions):
                         # print (numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
-                        graph_data = compute_graph(nodes, edges)
-                        if graph_data:
-                            socketio.emit('graph_data', graph_data)
-                            print("emitted to client after processing transaction")
+                        # graph_data = compute_graph(nodes, edges)
+                        # if graph_data:
+                        #     socketio.emit('graph_data', graph_data)
+                        #     print("emitted to client after processing transaction")
 
                     else:
                         existOutput['type'] = 'InOut'
@@ -439,18 +486,21 @@ def process_transaction(transactions):
                             'target': currID,  
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
-                            'type': 'out_link'
+                            'type': 'out_link',
+                            'weight': 5
                         }
                         edges.append(edge)
                         new_edges.append(edge)
-                        nx_graph.add_edge(tx_id, currID)
+                        # nx_graph.add_edge(tx_id, currID)
+                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         # print('Joined output node:', currID)
-                        graph_data = compute_graph(nodes, edges)
-                        if graph_data:
-                            socketio.emit('graph_data', graph_data)
-                            print("emitted to client after processing transaction")
-                outVals += size
+                        # graph_data = compute_graph(nodes, edges)
+                        # if graph_data:
+                        #     socketio.emit('graph_data', graph_data)
+                        #     print("emitted to client after processing transaction")
+
+                        outVals += size
 
             # Update transaction node values
             tx_fee = max(inVals - outVals, 0)
@@ -715,7 +765,7 @@ def compute_graph(new_nodes, new_edges):
                        'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None,
                        'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' else None
                      } for node in new_nodes if node['id'] in positions],
-            'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
+            'edges': [{'source': edge['source'], 'target': edge['target'], 'color': edge['color'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
         }
         # print ("graph_data: ", graph_data)
         return graph_data
@@ -822,6 +872,6 @@ if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    # threading.Thread(target=periodic_broadcast).start()
+    threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)
