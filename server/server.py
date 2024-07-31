@@ -631,7 +631,7 @@ def compute_graph(new_nodes, new_edges):
             multiThreaded=False,
             scalingRatio=40.0,
             strongGravityMode=False,
-            gravity=8.0,
+            gravity=10.0,
             verbose=True
         )
         positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)

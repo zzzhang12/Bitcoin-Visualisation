@@ -182,8 +182,6 @@ function updateGraph(newGraphData) {
 
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
     const nodesToUpdate = newGraphData.nodes.filter(node => existingNodes.has(node.id));
-    const linksToAdd = newGraphData.edges;
-    const nodes = newGraphData.nodes;
 
     console.log("number of nodesToAdd: ", nodesToAdd.length)
     
@@ -262,9 +260,9 @@ function updateGraph(newGraphData) {
                 return 0.3
             }
             else{
-                const zScore = d.source.z_score || d.target.z_score || 0.5; 
+                const zScore = d.source.z_score_tx || d.target.z_score_tx || 0.5; 
                 const strokeWidth = mapZScoreToThickness(zScore);
-                // console.log(` stroke width: ${strokeWidth}`);  // Print the stroke width
+                console.log(`Edge stroke width: ${strokeWidth}`);
                 return strokeWidth;
                 // return mapZScoreToThickness(zScore);
             }
@@ -349,7 +347,7 @@ function updateGraph(newGraphData) {
 
 // Function to map z-score to edge thickness
 function mapZScoreToThickness(zScore) {
-    const minThickness = 0.2;
+    const minThickness = 0.4;
     const maxThickness = 3.0; 
 
     const logScale = d3.scaleLog()
@@ -402,9 +400,9 @@ function ticked() {
     // console.log("Nodes during tick:", node.data());
     // console.log("Links during tick:", link.data());
 
-    node.each(function(d) {
-        console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
-    });
+    // node.each(function(d) {
+    //     console.log(`Node ${d.id} position during tick: (${d.x}, ${d.y})`);
+    // });
 
     node
     .attr("cx", d => {
