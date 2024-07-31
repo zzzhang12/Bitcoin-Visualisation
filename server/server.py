@@ -329,23 +329,24 @@ def process_transaction(transactions):
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
 
-                        if addr in address_dict:
-                            latest_node_id = address_dict[addr][-1]
-                            edge = {
-                                'id': f"{latest_node_id}:{currID}gray",
-                                'source': latest_node_id,
-                                'target': currID,
-                                'color': '#555555',
-                                'type': 'addr_link',
-                                'weight': 30
-                            }
-                            edges.append(edge)
-                            new_edges.append(edge)
-                            # nx_graph.add_edge(latest_node_id, currID)
-                            nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
-                            address_dict[addr].append(currID)
-                        else:
-                            address_dict[addr] = [currID]
+                        # # Add grey edges for addresses referenced by >1 input or output
+                        # if addr in address_dict:
+                        #     latest_node_id = address_dict[addr][-1]
+                        #     edge = {
+                        #         'id': f"{latest_node_id}:{currID}gray",
+                        #         'source': latest_node_id,
+                        #         'target': currID,
+                        #         'color': '#555555',
+                        #         'type': 'addr_link',
+                        #         'weight': 30
+                        #     }
+                        #     edges.append(edge)
+                        #     new_edges.append(edge)
+                        #     # nx_graph.add_edge(latest_node_id, currID)
+                        #     nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                        #     address_dict[addr].append(currID)
+                        # else:
+                        #     address_dict[addr] = [currID]
                         
                         edge = {
                             'id': f"{currID}:{tx_id}",
@@ -358,8 +359,8 @@ def process_transaction(transactions):
                             }
                         edges.append(edge)
                         new_edges.append(edge)
-                        # nx_graph.add_edge(currID, tx_id)
-                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                        nx_graph.add_edge(currID, tx_id)
+                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         node_positions[tx_id] = None # Track initial position
 
@@ -387,8 +388,8 @@ def process_transaction(transactions):
                             }
                         edges.append(edge)
                         new_edges.append(edge)
-                        # nx_graph.add_edge(currID, tx_id)
-                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                        nx_graph.add_edge(currID, tx_id)
+                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         # print('Joined input node:', currID)
                         # graph_data = compute_graph(nodes, edges)
@@ -435,23 +436,24 @@ def process_transaction(transactions):
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
 
-                        if addr in address_dict:
-                            latest_node_id = address_dict[addr][-1]
-                            edge = {
-                                'id': f"{latest_node_id}:{currID}gray",
-                                'source': latest_node_id,
-                                'target': currID,
-                                'color': '#555555',
-                                'type': 'addr_link',
-                                'weight': 30
-                            }
-                            edges.append(edge)
-                            new_edges.append(edge)
-                            # nx_graph.add_edge(latest_node_id, currID)
-                            nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
-                            address_dict[addr].append(currID)
-                        else:
-                            address_dict[addr] = [currID]
+                        # #Add grey edges for addresses referenced by >1 input or output
+                        # if addr in address_dict:
+                        #     latest_node_id = address_dict[addr][-1]
+                        #     edge = {
+                        #         'id': f"{latest_node_id}:{currID}gray",
+                        #         'source': latest_node_id,
+                        #         'target': currID,
+                        #         'color': '#555555',
+                        #         'type': 'addr_link',
+                        #         'weight': 30
+                        #     }
+                        #     edges.append(edge)
+                        #     new_edges.append(edge)
+                        #     # nx_graph.add_edge(latest_node_id, currID)
+                        #     nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                        #     address_dict[addr].append(currID)
+                        # else:
+                        #     address_dict[addr] = [currID]
 
                         edge = {
                             'id': f"{tx_id}:{currID}",
@@ -464,8 +466,8 @@ def process_transaction(transactions):
                         }
                         edges.append(edge)
                         new_edges.append(edge)
-                        # nx_graph.add_edge(tx_id, currID)
-                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                        nx_graph.add_edge(tx_id, currID)
+                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         node_positions[tx_id] = None # Track initial position
 
@@ -491,8 +493,8 @@ def process_transaction(transactions):
                         }
                         edges.append(edge)
                         new_edges.append(edge)
-                        # nx_graph.add_edge(tx_id, currID)
-                        nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
+                        nx_graph.add_edge(tx_id, currID)
+                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         # print('Joined output node:', currID)
                         # graph_data = compute_graph(nodes, edges)
@@ -623,13 +625,13 @@ def compute_graph(new_nodes, new_edges):
             linLogMode=False,
             adjustSizes=False,
             edgeWeightInfluence=1.0,
-            jitterTolerance=1.0,
+            jitterTolerance=0.7,
             barnesHutOptimize=True,
             barnesHutTheta=1.0,
             multiThreaded=False,
-            scalingRatio=3.0,
+            scalingRatio=40.0,
             strongGravityMode=False,
-            gravity=0.8,
+            gravity=8.0,
             verbose=True
         )
         positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=2000)
