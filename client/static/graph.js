@@ -233,7 +233,7 @@ function updateGraph(newGraphData) {
         })
         .on("mouseover", function(event, d) {
             if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
-                displayValue('balance', d.balance, event.pageX, event.pageY);
+                displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
             }
         });
 
@@ -262,7 +262,7 @@ function updateGraph(newGraphData) {
             else{
                 const zScore = d.source.z_score_tx || d.target.z_score_tx || 0.5; 
                 const strokeWidth = mapZScoreToThickness(zScore);
-                console.log(`Edge stroke width: ${strokeWidth}`);
+                // console.log(`Edge stroke width: ${strokeWidth}`);
                 return strokeWidth;
                 // return mapZScoreToThickness(zScore);
             }
@@ -277,8 +277,8 @@ function updateGraph(newGraphData) {
                     // value = nodeById.get(d.target.id).size;
                     value = d.target.size;
                 }
-                // value = (value / 100000000).toPrecision(4);
-                displayValue('transaction', value, event.pageX, event.pageY); 
+                value = (value / 100000000).toPrecision(4);
+                displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`); 
             }
         });
 
@@ -451,9 +451,14 @@ function ticked() {
 }
 
 // Function to display transaction values for edges and address balance for nodes
-function displayValue(type, value, x, y) {
+function displayValue(type, value, x, y, id) {
     const displayText = type === 'balance' ? `balance: ${value} BTC` : `value: ${value} BTC`;
+    const safeId = `tooltip-${id.replace(/[^a-zA-Z0-9_-]/g, '-')}`;
+    if (d3.select(`#${safeId}`).node()) {
+        return; // Do not create another tooltip if one already exists
+    }
     const tooltip = d3.select("body").append("div")
+        .attr("id", safeId)
         .attr("class", "tooltip")
         .style("position", "absolute")
         .style("left", x + "px")
@@ -477,7 +482,6 @@ function displayValue(type, value, x, y) {
             .remove();
     }, 1000);
 }
-
 
 
 function dragStarted(event, d) {
