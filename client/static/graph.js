@@ -203,16 +203,13 @@ function updateGraph(newGraphData) {
     // Remove exiting nodes
     node.exit().remove();
 
+    // Nodes displayed above edges
     node.raise();
 
-    // const updatedNodes = node.data().concat(nodes);
-    // node = node.data(updatedNodes, d => d.id);
-
-    // const nodeById = new Map(node.data().map(d => [d.id, d]));
-
+    // Add new nodes 
     const nodeEnter = node.enter().append("circle")
         .attr("class", "node")
-        .attr("r", d => d.type === 'tx' ? 3 : 1)
+        .attr("r", d => d.type === 'tx' ? 4 : 1)
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => {
@@ -283,53 +280,6 @@ function updateGraph(newGraphData) {
         });
 
     link = linkEnter.merge(link);
-
-
-    // // Update node data with new nodes
-    // node = node.data(node.data().concat(nodesToAdd), d => d.id);
-    // node.exit().remove();
-
-    // node = node.enter().append("circle")
-    //     .attr("class", "node")
-    //     .attr("r", d => d.type === 'tx' ? 3 : 0.5)
-    //     // .attr("r", d => 6)  // for testing intersection nodes
-    //     .attr("cx", d => d.x - offsetX)
-    //     .attr("cy", d => d.y - offsetY)
-    //     .style("fill", d => d.color)
-    //     .call(d3.drag()
-    //         .on("start", dragStarted)
-    //         .on("drag", dragged)
-    //         .on("end", dragEnded))
-    //     // .on("click", focusOnNode)
-    //     .on("click", function(event, d) {
-    //         document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
-    //     })
-    //     .merge(node);
-
-    // // Update link data with new links
-    // const nodeById = new Map(node.data().map(d => [d.id, d]));
-    // link = link.data(link.data().concat(linksToAdd), d => `${d.source}-${d.target}`);
-    // link.exit().remove();
-
-    // link = link.enter().append("line")
-    //     .attr("class", "link")
-    //     .style("stroke", d => d.type === 'in_link' ? "#FF9933" : "#003399")
-    //     .style("stroke-width", 0.5) 
-    //     .on("mouseover", function(event, d) {
-    //         let value;
-    //         if (d.type === 'in_link') {
-    //             value = nodeById.get(d.source.id).size;
-    //         } else if (d.type === 'out_link') {
-    //             value = nodeById.get(d.target.id).size;
-    //         }
-    //         value = (value / 100000000).toPrecision(4)
-    //         displayValue(value, event.pageX, event.pageY);
-    //     })
-    //     .merge(link);
-
-    // Separate nodes into movable and static groups
-    const movableNodes = node.filter(d => d.type !== 'intersection');
-    const staticNodes = node.filter(d => d.type === 'intersection');
 
     // simulation = d3.forceSimulation(movableNodes.data())
     //     .force("link", d3.forceLink(newGraphData.edges).id(d => d.id).distance(50))
