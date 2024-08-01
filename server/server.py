@@ -56,10 +56,10 @@ file_index = 0
 #     '10.json'
 # ]
 
-NUM_ROWS = 1
-NUM_COLS = 2
-CLIENT_WIDTH = 853
-CLIENT_HEIGHT = 982
+NUM_ROWS = 4
+NUM_COLS = 4
+CLIENT_WIDTH = 3840
+CLIENT_HEIGHT = 2160
 
 # # Calculate boundary lines based on the number of clients and their sizes
 # HORIZONTAL_BOUNDARIES = [i * CLIENT_HEIGHT for i in range(NUM_COLS)] 
@@ -68,9 +68,31 @@ CLIENT_HEIGHT = 982
 # HORIZONTAL_BOUNDARIES = [(i * CLIENT_HEIGHT) for i in range(-NUM_COLS//2, NUM_COLS//2 + 1) if i != 0]
 # VERTICAL_BOUNDARIES = [(i * CLIENT_WIDTH) for i in range(-NUM_ROWS//2, NUM_ROWS//2 + 1) if i != 0]
 
-HORIZONTAL_BOUNDARIES = [] 
-VERTICAL_BOUNDARIES = [853]
+HORIZONTAL_BOUNDARIES = [0] 
+VERTICAL_BOUNDARIES = [0]
 
+
+def calculate_boundaries():
+    global HORIZONTAL_BOUNDARIES, VERTICAL_BOUNDARIES, NUM_ROWS, NUM_COLS, CLIENT_WIDTH, CLIENT_HEIGHT
+    
+    # Calculate horizontal boundaries
+    step_width = CLIENT_WIDTH
+    for i in range(NUM_COLS // 2):
+        HORIZONTAL_BOUNDARIES.append(step_width * (i + 1))
+        HORIZONTAL_BOUNDARIES.append(-step_width * (i + 1))
+    
+    # Calculate vertical boundaries
+    step_height = CLIENT_HEIGHT
+    for i in range(NUM_ROWS // 2):
+        VERTICAL_BOUNDARIES.append(step_height * (i + 1))
+        VERTICAL_BOUNDARIES.append(-step_height * (i + 1))
+    
+    HORIZONTAL_BOUNDARIES.sort()
+    VERTICAL_BOUNDARIES.sort()
+    
+    print("vertical", VERTICAL_BOUNDARIES)
+    print("horizontal", HORIZONTAL_BOUNDARIES)
+    
 # # Dummy nodes and edges for testing
 # test_nodes = [
 #      {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
@@ -873,6 +895,7 @@ if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=periodic_broadcast).start()
+    calculate_boundaries()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)
