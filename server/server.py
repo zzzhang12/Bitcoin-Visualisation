@@ -22,7 +22,7 @@ MAX_SIZE = 100
 nodes = []
 edges = []
 node_ids = set()   # for tracking nodes
-broadcast_interval = 1.5  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1  # Frequency in seconds to broadcast data to clients
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
@@ -196,8 +196,8 @@ def on_open(ws):
         print("Connected to external Bitcoin WebSocket service")
         ws.send(json.dumps({"op": "unconfirmed_sub"}))
         print("subscribed to unconfirmed transactions")
-        ws.send(json.dumps({"op": "blocks_sub"}))
-        print("subscribed to new block notifications")
+        # ws.send(json.dumps({"op": "blocks_sub"}))
+        # print("subscribed to new block notifications")
         start_polling()
 
     threading.Thread(target=run).start()

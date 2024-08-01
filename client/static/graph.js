@@ -1,8 +1,8 @@
 // Global variables
 var paused = false;
 var msgBuf = [];
-const CLIENT_WIDTH = 853;  
-const CLIENT_HEIGHT = 982;
+const CLIENT_WIDTH = 3840;  
+const CLIENT_HEIGHT = 2160;
 
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
