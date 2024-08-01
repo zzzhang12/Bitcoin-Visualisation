@@ -355,7 +355,9 @@ def process_transaction(transactions):
                             'orig_in_color': orig_in_color,
                             'color': in_color, 
                             'type': 'in_link',
-                            'weight': 5
+                            'weight': 5,
+                            'size': size,
+                            'z_score_tx': z_score_tx
                             }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -384,7 +386,9 @@ def process_transaction(transactions):
                             'orig_in_color': orig_in_color,
                             'color': in_color,
                             'type': 'in_link',
-                            'weight': 20
+                            'weight': 20,
+                            'size': size,
+                            'z_score_tx': z_score_tx
                             }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -462,7 +466,9 @@ def process_transaction(transactions):
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
                             'type': 'out_link',
-                            'weight': 5
+                            'weight': 5,
+                            'size': size,
+                            'z_score_tx': z_score_tx
                         }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -489,7 +495,9 @@ def process_transaction(transactions):
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
                             'type': 'out_link',
-                            'weight': 5
+                            'weight': 5,
+                            'size': size,
+                            'z_score_tx': z_score_tx
                         }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -670,59 +678,66 @@ def compute_graph(new_nodes, new_edges):
             new_balances = get_address_balances(addresses_to_query)
             address_cache.update(new_balances)
 
-
         new_edges_split = []
         for edge in new_edges:
-            source_pos = positions[edge['source']]
-            target_pos = positions[edge['target']]
+            if edge['source'] in positions and edge['target'] in positions:
+                source_pos = positions[edge['source']]
+                target_pos = positions[edge['target']]
 
-            # Handle Spanning Edges
-            if is_different_client(source_pos, target_pos):
-                intersections = []
+                # Handle Spanning Edges
+                if is_different_client(source_pos, target_pos):
+                    intersections = []
 
-                # Calculate intersections with vertical boundaries
-                for boundary in VERTICAL_BOUNDARIES:
-                    if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
-                        intersection = compute_intersection(source_pos, target_pos, boundary, True)
-                        if intersection:
-                            intersections.append(intersection)
+                    # Calculate intersections with vertical boundaries
+                    for boundary in VERTICAL_BOUNDARIES:
+                        if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
+                            intersection = compute_intersection(source_pos, target_pos, boundary, True)
+                            if intersection:
+                                intersections.append(intersection)
 
-                # Calculate intersections with horizontal boundaries
-                for boundary in HORIZONTAL_BOUNDARIES:
-                    if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
-                        intersection = compute_intersection(source_pos, target_pos, boundary, False)
-                        if intersection:
-                            intersections.append(intersection)
+                    # Calculate intersections with horizontal boundaries
+                    for boundary in HORIZONTAL_BOUNDARIES:
+                        if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
+                            intersection = compute_intersection(source_pos, target_pos, boundary, False)
+                            if intersection:
+                                intersections.append(intersection)
 
-                print ("intersections: ", intersections)
-                # Sort intersections by their distance from the source node
-                intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
+                    print ("intersections: ", intersections)
+                    # Sort intersections by their distance from the source node
+                    intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
 
-                last_node_id = edge['source']
+                    last_node_id = edge['source']
 
-                for i, intersection in enumerate(intersections):
-                    intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
-                    positions[intersection_id] = intersection
+                    for i, intersection in enumerate(intersections):
+                        intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
+                        positions[intersection_id] = intersection
 
-                    new_edges_split.append({'source': last_node_id, 'target': intersection_id, 'type': edge['type']})
-                    # all_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
+                        new_edges_split.append({
+                            'source': last_node_id,
+                            'target': intersection_id,
+                            'type': edge['type'],
+                            'color': edge['color'],
+                            'size': edge['size'],
+                            'z_score_tx': edge['z_score_tx']
+                        })
+                        # all_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
 
-                    last_node_id = intersection_id
+                        last_node_id = intersection_id
 
-                new_edges_split.append({'source': last_node_id, 'target': edge['target'], 'type': edge['type']})
-            else:
-                new_edges_split.append(edge)
+                    new_edges_split.append({
+                        'source': last_node_id,
+                        'target': edge['target'],
+                        'type': edge['type'],
+                        'color': edge['color'],
+                        'size': edge['size'],
+                        'z_score_tx': edge['z_score_tx']
+                    })
+                else:
+                    new_edges_split.append(edge)
 
         # graph_data = {
         #     'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1], 'color': node['color'], 'type': node['type']} for node in new_nodes if node['id'] in positions],
         #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges_split]
-        # }
-
-        # print(f"Final graph data: {graph_data}")
-
-        # graph_data = {
-        #     'nodes': [{'id': node['id'], 'x': positions[node['id']][0], 'y': positions[node['id']][1],  'color': node['color'], 'type': node['type'], 'size': node['size']} for node in all_nodes if node['id'] in positions],
-        #     'edges': [{'source': edge['source'], 'target': edge['target'], 'type': edge['type']} for edge in new_edges]
         # }
 
         graph_data = {
@@ -737,7 +752,13 @@ def compute_graph(new_nodes, new_edges):
                        'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' else None
                      } for node in new_nodes if node['id'] in positions],
             # 'edges': [{'source': edge['source'], 'target': edge['target'], 'color': edge['color'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
-            'edges': [{'source': edge['source'], 'target': edge['target'], 'color': edge['color'], 'type': edge['type']} for edge in new_edges_split if edge['source'] in positions and edge['target'] in positions]
+            'edges': [{'source': edge['source'], 
+                       'target': edge['target'], 
+                       'color': edge['color'], 
+                       'type': edge['type'],
+                       'size': edge['size'],
+                       'z_score_tx': edge['z_score_tx']} 
+                       for edge in new_edges_split]
         }
         # print ("graph_data: ", graph_data)
         return graph_data
@@ -749,24 +770,24 @@ def compute_graph(new_nodes, new_edges):
 
     
 def is_different_client(p1, p2):
-            x1, y1 = p1
-            x2, y2 = p2
-            return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
+    x1, y1 = p1
+    x2, y2 = p2
+    return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
 
 
 def compute_intersection(p1, p2, boundary, is_vertical):
-            x1, y1 = p1
-            x2, y2 = p2
-            if is_vertical:
-                if x1 == x2:
-                    return None  # Avoid division by zero
-                y = y1 + (boundary - x1) * (y2 - y1) / (x2 - x1)
-                return (boundary, y)
-            else:
-                if y1 == y2:
-                    return None  # Avoid division by zero
-                x = x1 + (boundary - y1) * (x2 - x1) / (y2 - y1)
-                return (x, boundary)
+    x1, y1 = p1
+    x2, y2 = p2
+    if is_vertical:
+        if x1 == x2:
+            return None  # Avoid division by zero
+        y = y1 + (boundary - x1) * (y2 - y1) / (x2 - x1)
+        return (boundary, y)
+    else:
+        if y1 == y2:
+            return None  # Avoid division by zero
+        x = x1 + (boundary - y1) * (x2 - x1) / (y2 - y1)
+        return (x, boundary)
 
 
 @app.route('/static/<path:path>', methods=['GET'])
@@ -844,6 +865,6 @@ if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
-    # threading.Thread(target=periodic_broadcast).start()
+    threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)

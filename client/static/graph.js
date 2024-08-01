@@ -260,7 +260,8 @@ function updateGraph(newGraphData) {
                 return 0.3
             }
             else{
-                const zScore = d.source.z_score_tx || d.target.z_score_tx || 0.5; 
+                // const zScore = d.source.z_score_tx || d.target.z_score_tx || 0.5; 
+                const zScore = d.z_score_tx || 0.5; 
                 const strokeWidth = mapZScoreToThickness(zScore);
                 // console.log(`Edge stroke width: ${strokeWidth}`);
                 return strokeWidth;
@@ -270,13 +271,14 @@ function updateGraph(newGraphData) {
         .on("mouseover", function(event, d) {
             let value;
             if (d.type != 'addr_link'){
-                if (d.type === 'in_link') {
-                    // value = nodeById.get(d.source.id).size;
-                    value = d.source.size;
-                } else if (d.type === 'out_link') {
-                    // value = nodeById.get(d.target.id).size;
-                    value = d.target.size;
-                }
+                // if (d.type === 'in_link') {
+                //     // value = nodeById.get(d.source.id).size;
+                //     value = d.source.size;
+                // } else if (d.type === 'out_link') {
+                //     // value = nodeById.get(d.target.id).size;
+                //     value = d.target.size;
+                // }
+                value = d.size;
                 value = (value / 100000000).toPrecision(4);
                 displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`); 
             }
