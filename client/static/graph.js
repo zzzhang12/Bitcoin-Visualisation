@@ -64,11 +64,11 @@ function processMessage(msg){
     }
 }
 
-// d3.json("static/test_data_4.json").then(function(graphData) {
-//     renderGraph(graphData);
-// }).catch(function(error) {
-//     console.error("Error loading the graph data: ", error);
-// });
+d3.json("static/test_data_4.json").then(function(graphData) {
+    renderGraph(graphData);
+}).catch(function(error) {
+    console.error("Error loading the graph data: ", error);
+});
 
 
 function initializeGraph() {
@@ -114,12 +114,12 @@ function renderGraph(graphData) {
      offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
-     offsetX = 0 
-     offsetY = 0  // uncomment when testing only 1 client
+    //  offsetX = 0 
+    //  offsetY = 0  // uncomment when testing only 1 client
 
     // Scaling nodes
-    const scaleFactorX = 4;
-    const scaleFactorY = 4;
+    const scaleFactorX = 1;
+    const scaleFactorY = 1;
 
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
@@ -135,7 +135,7 @@ function renderGraph(graphData) {
         return xInRange && yInRange;
     });
 
-    // console.log("Filtered nodes:", filteredNodes);
+    console.log("Filtered nodes:", filteredNodes);
 
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
     // console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
@@ -146,12 +146,12 @@ function renderGraph(graphData) {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
         const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
-        // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+        console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
 
         return sourceInFilteredNodes && targetInFilteredNodes;
     });
 
-    // console.log('Filtered edges:', filteredEdges);
+    console.log('Filtered edges:', filteredEdges);
 
     if (!svg) {
         initializeGraph();
@@ -164,8 +164,8 @@ function renderGraph(graphData) {
         d.target = nodeById.get(d.target);
     });
 
-    updateGraph(graphData);  // for testing with only client
-    // updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    // updateGraph(graphData);  // for testing with only client
+    updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
@@ -213,13 +213,16 @@ function updateGraph(newGraphData) {
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => {
-            if (d.type === 'input') {
-                return mapZScoreToColor(d.z_score_balance, d.color);
-            } else if (d.type === 'output') {
-                return mapZScoreToColor(d.z_score_balance, d.color);
-            } else {
-                return d.color;
+            if (d.z_score_balance){
+                if (d.type === 'input') {
+                    return mapZScoreToColor(d.z_score_balance, d.color);
+                } else if (d.type === 'output') {
+                    return mapZScoreToColor(d.z_score_balance, d.color);
+                } else {
+                    return d.color;
+                } 
             }
+            return d.color;
         })
         .call(d3.drag()
             .on("start", dragStarted)
