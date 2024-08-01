@@ -22,7 +22,8 @@ MAX_SIZE = 100
 nodes = []
 edges = []
 node_ids = set()   # for tracking nodes
-broadcast_interval = 1.5  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 3  # Frequency in seconds to broadcast data to clients
+scale_factor = 4
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
@@ -625,7 +626,7 @@ def update_cache(address, transaction_value):
 
 
 def compute_graph(new_nodes, new_edges):
-    global nx_graph, node_positions
+    global nx_graph, node_positions, scale_factor
 
     try:
         forceatlas2 = ForceAtlas2(
@@ -720,7 +721,7 @@ def compute_graph(new_nodes, new_edges):
                             'size': edge['size'],
                             'z_score_tx': edge['z_score_tx']
                         })
-                        # all_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
+                        new_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
 
                         last_node_id = intersection_id
 
@@ -742,12 +743,14 @@ def compute_graph(new_nodes, new_edges):
 
         graph_data = {
             'nodes': [{'id': node['id'], 
-                       'x': positions[node['id']][0], 
-                       'y': positions[node['id']][1], 
+                    #    'x': positions[node['id']][0], 
+                    #    'y': positions[node['id']][1], 
+                       'x': positions[node['id']][0] * scale_factor, 
+                       'y': positions[node['id']][1] * scale_factor, 
                        'color': node['color'], 
                        'type': node['type'], 
-                       'size': node['size'],
-                       'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' else None,
+                       'size': node['size'] if node['type'] != 'intersection' else None,
+                       'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                        'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None,
                        'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' else None
                      } for node in new_nodes if node['id'] in positions],
@@ -772,6 +775,11 @@ def compute_graph(new_nodes, new_edges):
 def is_different_client(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
+    print ("x1:", x1, "x2: ", x2, "y1: ", y1, "y2: ", y2)
+    print ("x1:",x1 // CLIENT_WIDTH)
+    print ("x2:", x2 // CLIENT_WIDTH)
+    print ("y1:", y1 // CLIENT_HEIGHT)
+    print ("y2:", y2 // CLIENT_HEIGHT)
     return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
 
 

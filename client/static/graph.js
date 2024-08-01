@@ -64,11 +64,11 @@ function processMessage(msg){
     }
 }
 
-d3.json("static/test_data_4.json").then(function(graphData) {
-    renderGraph(graphData);
-}).catch(function(error) {
-    console.error("Error loading the graph data: ", error);
-});
+// d3.json("static/test_data_4.json").then(function(graphData) {
+//     renderGraph(graphData);
+// }).catch(function(error) {
+//     console.error("Error loading the graph data: ", error);
+// });
 
 
 function initializeGraph() {
@@ -125,7 +125,6 @@ function renderGraph(graphData) {
         node.x = node.x * scaleFactorX;
         node.y = node.y * scaleFactorY;
     });
-
     
     // Calculate the filtered nodes based on the client viewport
     let filteredNodes = graphData.nodes.filter(node => {
@@ -138,15 +137,23 @@ function renderGraph(graphData) {
     console.log("Filtered nodes:", filteredNodes);
 
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
-    // console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
-    // console.log(`Client y range: [${offsetY}, ${offsetY + CLIENT_HEIGHT}]`);
-    
+    console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
+    console.log(`Client y range: [${offsetY}, ${offsetY + CLIENT_HEIGHT}]`);
+
+    // // Convert edges to reference the node objects
+    // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
+    // graphData.edges.forEach(d => {
+    //     d.source = nodeById.get(d.source);
+    //     d.target = nodeById.get(d.target);
+    // });
+
+
     // Filter edges based on the filtered nodes
     const filteredEdges = graphData.edges.filter(edge => {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
         const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
-        console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+        // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
 
         return sourceInFilteredNodes && targetInFilteredNodes;
     });
@@ -157,13 +164,6 @@ function renderGraph(graphData) {
         initializeGraph();
     }
 
-    // Convert edges to reference the node objects
-    const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
-    graphData.edges.forEach(d => {
-        d.source = nodeById.get(d.source);
-        d.target = nodeById.get(d.target);
-    });
-
     // updateGraph(graphData);  // for testing with only client
     updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
@@ -171,7 +171,7 @@ function renderGraph(graphData) {
 
 
 function updateGraph(newGraphData) {
-    // console.log("Updating graph with new data:", newGraphData);
+    console.log("Updating graph with new data:", newGraphData);
 
     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
         console.error("New graph data is not correctly structured:", newGraphData);
@@ -198,7 +198,8 @@ function updateGraph(newGraphData) {
     const updatedNodes = node.data().concat(nodesToAdd);
 
     // Update node data binding with new nodes
-    node = node.data(updatedNodes, d => d.id);
+    // node = node.data(updatedNodes, d => d.id);
+    node = node.data(newGraphData.nodes, d => d.id);
 
     // Remove exiting nodes
     node.exit().remove();
@@ -240,7 +241,8 @@ function updateGraph(newGraphData) {
     node = nodeEnter.merge(node);
 
     // Update link data binding
-    const nodeById = new Map(updatedNodes.map(d => [d.id, d]));
+    const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
+    // const nodeById = new Map(updatedNodes.map(d => [d.id, d]));
     newGraphData.edges.forEach(d => {
         d.source = nodeById.get(d.source) || d.source;
         d.target = nodeById.get(d.target) || d.target;
@@ -271,18 +273,12 @@ function updateGraph(newGraphData) {
         .on("mouseover", function(event, d) {
             let value;
             if (d.type != 'addr_link'){
-                // if (d.type === 'in_link') {
-                //     // value = nodeById.get(d.source.id).size;
-                //     value = d.source.size;
-                // } else if (d.type === 'out_link') {
-                //     // value = nodeById.get(d.target.id).size;
-                //     value = d.target.size;
-                // }
                 value = d.size;
                 value = (value / 100000000).toPrecision(4);
                 displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`); 
             }
         });
+
 
     link = linkEnter.merge(link);
 
