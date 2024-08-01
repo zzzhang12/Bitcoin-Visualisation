@@ -57,9 +57,9 @@ file_index = 0
 # ]
 
 NUM_ROWS = 4
-NUM_COLS = 4
-CLIENT_WIDTH = 3840
-CLIENT_HEIGHT = 2160
+NUM_COLS = 16
+CLIENT_WIDTH = 1920
+CLIENT_HEIGHT = 1080
 
 # # Calculate boundary lines based on the number of clients and their sizes
 # HORIZONTAL_BOUNDARIES = [i * CLIENT_HEIGHT for i in range(NUM_COLS)] 
@@ -68,8 +68,8 @@ CLIENT_HEIGHT = 2160
 # HORIZONTAL_BOUNDARIES = [(i * CLIENT_HEIGHT) for i in range(-NUM_COLS//2, NUM_COLS//2 + 1) if i != 0]
 # VERTICAL_BOUNDARIES = [(i * CLIENT_WIDTH) for i in range(-NUM_ROWS//2, NUM_ROWS//2 + 1) if i != 0]
 
-HORIZONTAL_BOUNDARIES = [0] 
-VERTICAL_BOUNDARIES = [0]
+HORIZONTAL_BOUNDARIES = [-13440, -11520, -9600, -7680, -5760, -3840, -1920, 0, 1920, 3840, 5760, 7680, 9600, 11520, 13440] 
+VERTICAL_BOUNDARIES = [-1080, 0, 1080]
 
 
 def calculate_boundaries():
@@ -687,7 +687,8 @@ def compute_graph(new_nodes, new_edges):
 
         # Check each node address
         for node in new_nodes:
-            if (node['type'] != "tx"):
+            # print ("node", node)
+            if (node['type'] != "tx" and node['type'] != "intersection"):
                 address = node['addr']
                 # If it's not in cache, needs querying
                 if address and address not in address_cache:
@@ -725,7 +726,7 @@ def compute_graph(new_nodes, new_edges):
                             if intersection:
                                 intersections.append(intersection)
 
-                    print ("intersections: ", intersections)
+                    # print ("intersections: ", intersections)
                     # Sort intersections by their distance from the source node
                     intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
 
@@ -773,8 +774,8 @@ def compute_graph(new_nodes, new_edges):
                        'type': node['type'], 
                        'size': node['size'] if node['type'] != 'intersection' else None,
                        'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' and node['type'] != 'intersection' else None,
-                       'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' else None,
-                       'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' else None
+                       'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' and node['type'] != 'intersection' else None,
+                       'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None
                      } for node in new_nodes if node['id'] in positions],
             # 'edges': [{'source': edge['source'], 'target': edge['target'], 'color': edge['color'], 'type': edge['type']} for edge in new_edges if edge['source'] in positions and edge['target'] in positions]
             'edges': [{'source': edge['source'], 
@@ -797,11 +798,11 @@ def compute_graph(new_nodes, new_edges):
 def is_different_client(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    print ("x1:", x1, "x2: ", x2, "y1: ", y1, "y2: ", y2)
-    print ("x1:",x1 // CLIENT_WIDTH)
-    print ("x2:", x2 // CLIENT_WIDTH)
-    print ("y1:", y1 // CLIENT_HEIGHT)
-    print ("y2:", y2 // CLIENT_HEIGHT)
+    # print ("x1:", x1, "x2: ", x2, "y1: ", y1, "y2: ", y2)
+    # print ("x1:",x1 // CLIENT_WIDTH)
+    # print ("x2:", x2 // CLIENT_WIDTH)
+    # print ("y1:", y1 // CLIENT_HEIGHT)
+    # print ("y2:", y2 // CLIENT_HEIGHT)
     return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
 
 
