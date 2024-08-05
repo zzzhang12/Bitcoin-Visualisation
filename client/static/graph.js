@@ -1,8 +1,11 @@
 // Global variables
 var paused = false;
 var msgBuf = [];
-const CLIENT_WIDTH = 3840;  
-const CLIENT_HEIGHT = 2160;
+const CLIENT_WIDTH = 1920;  
+const CLIENT_HEIGHT = 1080;
+
+// const CLIENT_WIDTH = 853;  
+// const CLIENT_HEIGHT = 982; // For local testing
 
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
@@ -18,11 +21,13 @@ function init() {
 
 
 function runWebSocket() {
-    socket = io("http://146.169.209.45:3000/",{
+    // socket = io("http://146.169.209.45:3000/",{
+    //     withCredentials: true,
+    //     }
+    // )
+    socket = io("http://localhost:3000",{
         withCredentials: true,
-        // transports: ['websocket', 'polling']
-        }
-    )
+    }) // For local testing
     socket.on('connect', function() {
         console.log("Connected to server WebSocket");
     });
@@ -111,7 +116,8 @@ function renderGraph(graphData) {
     const col = parseInt(getUrlParameter('col'), 10);
 
      // Calculate offsets based on col and row
-     offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;
+    //  offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
+     offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
     //  offsetX = 0 
@@ -126,10 +132,33 @@ function renderGraph(graphData) {
         node.y = node.y * scaleFactorY;
     });
     
-    // Calculate the filtered nodes based on the client viewport
+    // x and y value ranges based on client position
+    let xMax, xMin, yMax, yMin
+    // if (col == 0){
+    //     // const xInRange = node.x >= -0.5 * CLIENT_WIDTH && node.x <= 0.5 * CLIENT_WIDTH
+    //     xMax = 0.5 * CLIENT_WIDTH
+    //     xMin = -0.5 * CLIENT_WIDTH
+    // }
+    // else{
+    //     xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
+    //     xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    // }
+    // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
+    // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
+
+    // For local testing with 2 horizontally placed clients
+    xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
+    xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
+    yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
+
+    // Calculate the filtered nodes
     let filteredNodes = graphData.nodes.filter(node => {
-        const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
-        const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
+
+        const xInRange = node.x >= xMin && node.x <= xMax
+        const yInRange = node.y >= yMin && node.y <= yMax
+        // const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
+        // const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
         // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
         return xInRange && yInRange;
     });
@@ -137,9 +166,8 @@ function renderGraph(graphData) {
     console.log("Filtered nodes:", filteredNodes);
 
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
-    console.log(`Client x range: [${offsetX}, ${offsetX + CLIENT_WIDTH}]`);
-    console.log(`Client y range: [${offsetY}, ${offsetY + CLIENT_HEIGHT}]`);
-
+    console.log(`Client x range: [${xMin}, ${xMax}]`);
+    console.log(`Client y range: [${yMin}, ${yMax}]`);
     // // Convert edges to reference the node objects
     // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
     // graphData.edges.forEach(d => {

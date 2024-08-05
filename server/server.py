@@ -57,7 +57,7 @@ file_index = 0
 # ]
 
 NUM_ROWS = 4
-NUM_COLS = 16
+NUM_COLS = 3
 CLIENT_WIDTH = 1920
 CLIENT_HEIGHT = 1080
 
@@ -68,49 +68,9 @@ CLIENT_HEIGHT = 1080
 # HORIZONTAL_BOUNDARIES = [(i * CLIENT_HEIGHT) for i in range(-NUM_COLS//2, NUM_COLS//2 + 1) if i != 0]
 # VERTICAL_BOUNDARIES = [(i * CLIENT_WIDTH) for i in range(-NUM_ROWS//2, NUM_ROWS//2 + 1) if i != 0]
 
-HORIZONTAL_BOUNDARIES = [-13440, -11520, -9600, -7680, -5760, -3840, -1920, 0, 1920, 3840, 5760, 7680, 9600, 11520, 13440] 
+HORIZONTAL_BOUNDARIES = [-960, 0, 960] 
 VERTICAL_BOUNDARIES = [-1080, 0, 1080]
-
-
-def calculate_boundaries():
-    global HORIZONTAL_BOUNDARIES, VERTICAL_BOUNDARIES, NUM_ROWS, NUM_COLS, CLIENT_WIDTH, CLIENT_HEIGHT
-    
-    # Calculate horizontal boundaries
-    step_width = CLIENT_WIDTH
-    for i in range(NUM_COLS // 2):
-        HORIZONTAL_BOUNDARIES.append(step_width * (i + 1))
-        HORIZONTAL_BOUNDARIES.append(-step_width * (i + 1))
-    
-    # Calculate vertical boundaries
-    step_height = CLIENT_HEIGHT
-    for i in range(NUM_ROWS // 2):
-        VERTICAL_BOUNDARIES.append(step_height * (i + 1))
-        VERTICAL_BOUNDARIES.append(-step_height * (i + 1))
-    
-    HORIZONTAL_BOUNDARIES.sort()
-    VERTICAL_BOUNDARIES.sort()
-    
-    print("vertical", VERTICAL_BOUNDARIES)
-    print("horizontal", HORIZONTAL_BOUNDARIES)
-    
-# # Dummy nodes and edges for testing
-# test_nodes = [
-#      {"id": "n1", "x": 100, "y": 100, "color": "#ffffff", "type": "tx"},
-#     {"id": "n2", "x": 800, "y": 100, "color": "#FF9933", "type": "input"},
-#     {"id": "n3", "x": 900, "y": 100, "color": "#003399", "type": "output"},
-#     {"id": "n4", "x": 1000, "y": 100, "color": "#ffffff", "type": "tx"}
-# ]
-
-# test_edges = [
-#     {"source": "n1", "target": "n2", "type": "out_link"},  
-#     {"source": "n3", "target": "n4", "type": "out_link"},  
-#     {"source": "n1", "target": "n3", "type": "out_link"}, 
-#     {"source": "n2", "target": "n4", "type": "out_link"}  
-# ]
-
-# # Add dummy positions to nodes
-# positions = {node['id']: (node['x'], node['y']) for node in test_nodes}
-
+   
 # Global variables
 numNodes = 0
 txTotalVal = 0
@@ -187,6 +147,7 @@ def start_polling():
                 continue
             # print("message: ", message)
             process_message([message])
+            # print ("length of queue: ", len(queue))
             time.sleep(0.5)  # Polling interval
 
     if polling_ref is not None:
@@ -766,8 +727,6 @@ def compute_graph(new_nodes, new_edges):
 
         graph_data = {
             'nodes': [{'id': node['id'], 
-                    #    'x': positions[node['id']][0], 
-                    #    'y': positions[node['id']][1], 
                        'x': positions[node['id']][0] * scale_factor, 
                        'y': positions[node['id']][1] * scale_factor, 
                        'color': node['color'], 
@@ -798,11 +757,6 @@ def compute_graph(new_nodes, new_edges):
 def is_different_client(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
-    # print ("x1:", x1, "x2: ", x2, "y1: ", y1, "y2: ", y2)
-    # print ("x1:",x1 // CLIENT_WIDTH)
-    # print ("x2:", x2 // CLIENT_WIDTH)
-    # print ("y1:", y1 // CLIENT_HEIGHT)
-    # print ("y2:", y2 // CLIENT_HEIGHT)
     return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
 
 
@@ -835,9 +789,6 @@ def index():
 def handle_connect():
     print('Client connected') 
     emit('connection_response', {'data': 'Connected to server'})
-    # global file_index
-    # file_index = 0 
-    # socketio.start_background_task(send_json_files)
 
 
 @socketio.on('disconnect')
