@@ -22,7 +22,7 @@ MAX_SIZE = 100
 nodes = []
 edges = []
 node_ids = set()   # for tracking nodes
-broadcast_interval = 1.5  # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1.5 # Frequency in seconds to broadcast data to clients
 scale_factor = 4
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
@@ -68,7 +68,7 @@ CLIENT_HEIGHT = 1080
 # HORIZONTAL_BOUNDARIES = [(i * CLIENT_HEIGHT) for i in range(-NUM_COLS//2, NUM_COLS//2 + 1) if i != 0]
 # VERTICAL_BOUNDARIES = [(i * CLIENT_WIDTH) for i in range(-NUM_ROWS//2, NUM_ROWS//2 + 1) if i != 0]
 
-HORIZONTAL_BOUNDARIES = [-960, 0, 960] 
+HORIZONTAL_BOUNDARIES = [-960, 960] 
 VERTICAL_BOUNDARIES = [-1080, 0, 1080]
    
 # Global variables
@@ -617,7 +617,7 @@ def compute_graph(new_nodes, new_edges):
             linLogMode=False,
             adjustSizes=False,
             edgeWeightInfluence=1.0,
-            jitterTolerance=0.7,
+            jitterTolerance=0.6,
             barnesHutOptimize=True,
             barnesHutTheta=1.0,
             multiThreaded=False,
