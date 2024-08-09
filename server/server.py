@@ -211,7 +211,7 @@ def process_transaction(transactions):
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
 
-    global nodes, edges, node_ids, nx_graph, address_dict
+    global nodes, edges, node_ids, nx_graph, address_dict, address_cache
     global numNodes, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize
 
     new_nodes = []
@@ -306,7 +306,7 @@ def process_transaction(transactions):
                         nodes.append(node)
                         new_nodes.append(node)
                         node_ids.add(currID)
-                        nx_graph.add_node(currID)
+                        nx_graph.add_node(currID)  
 
                         # # Add grey edges for addresses referenced by >1 input or output
                         # if addr in address_dict:
@@ -513,6 +513,25 @@ def process_transaction(transactions):
         # if graph_data:
         #     socketio.emit('graph_data', graph_data)
         #     print("emitted to client after processing transaction")
+        
+        # Get balance of each address
+        addresses_to_query = []
+        for node in new_nodes:
+            # only input and output nodes can have addresses
+            if (node['type'] != "tx" and node['type'] != "intersection"):
+                address = node['addr']
+                if address: 
+                    # if address is not in cache, append it to the list to be queried using API
+                    if address not in address_cache:
+                        addresses_to_query.append(address)
+                    # if address is already in cache, update the cached value
+                    else:
+                        transaction_value = node['size']
+                        update_cache(address, transaction_value)
+
+        if addresses_to_query:
+            new_balances = get_address_balances(addresses_to_query)
+            address_cache.update(new_balances)
 
         return new_nodes, new_edges
 
@@ -751,7 +770,7 @@ def update_cache(address, transaction_value):
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions, scale_factor
     total_iterations = 2000
-    batch_size = 100
+    batch_size = 50
     # nx_graph_copy = copy.deepcopy(nx_graph)
 
     try:
@@ -772,12 +791,12 @@ def compute_graph(new_nodes, new_edges):
 
         for i in range(0, total_iterations, batch_size):
             positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=batch_size)
-            print ("\n")
-            print ("length of positions: ", len(positions))
+            # print ("\n")
+            # print ("length of positions: ", len(positions))
             # print (positions)
 
             partial_graph_data = create_graph_data(new_nodes, new_edges, positions)
-            
+
             start_time = time.time()
             socketio.emit('graph_data', partial_graph_data)
             end_time = time.time()
@@ -795,33 +814,6 @@ def compute_graph(new_nodes, new_edges):
 
 def create_graph_data(new_nodes, new_edges, positions):
     global scale_factor
-
-    addresses_to_query = []
-
-    # Check each node address
-    num_exist = 0
-    num_new = 0
-    for node in new_nodes:
-        if (node['type'] != "tx" and node['type'] != "intersection"):
-            address = node['addr']
-            if address: 
-                if address not in address_cache:
-                    addresses_to_query.append(address)
-                    num_new += 1
-                else:
-                    transaction_value = node['size']
-                    update_cache(address, transaction_value)
-                    num_exist += 1
-    print ("number of address balances in cache: ", num_exist)
-
-    if addresses_to_query:
-        print ("number of addresses to query: ", num_new)
-        new_start = time.time()
-        new_balances = get_address_balances(addresses_to_query)
-        address_cache.update(new_balances)
-        new_end = time.time()
-        new_time = new_end - new_start
-        print (f"Quering took {new_time:.4f} seconds")
 
     new_edges_split = []
     for edge in new_edges:
