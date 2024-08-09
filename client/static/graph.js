@@ -93,13 +93,6 @@ function initializeGraph() {
 
     link = g.selectAll(".link");
     node = g.selectAll(".node");
-
-    // simulation = d3.forceSimulation()
-    //     .force("link", d3.forceLink().id(d => d.id).distance(100))
-    //     .force("charge", d3.forceManyBody().strength(-30))
-    //     .force("center", d3.forceCenter(width / 2, height / 2))
-    //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 15 : 10))
-    //     .on("tick", ticked);
 }
 
 
@@ -157,6 +150,7 @@ function renderGraph(graphData) {
     xMin = -10000
     yMax = 10000
     yMin = -10000
+
     // Calculate the filtered nodes
     let filteredNodes = graphData.nodes.filter(node => {
 
@@ -234,7 +228,7 @@ function updateGraph(newGraphData) {
 
     // Transition existing nodes to new positions using attrTween
     node.transition()
-        .duration(1500) // Adjust the duration as needed
+        .duration(1500)
         .attrTween("cx", function(d) {
             const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
             const endPos = d.x - offsetX;
@@ -275,10 +269,6 @@ function updateGraph(newGraphData) {
             }
             return d.color;
         })
-        .call(d3.drag()
-            .on("start", dragStarted)
-            .on("drag", dragged)
-            .on("end", dragEnded))
         .on("click", function (event, d) {
             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
         })
@@ -305,7 +295,7 @@ function updateGraph(newGraphData) {
 
     // Transition existing links to new positions using attrTween
     link.transition()
-        .duration(1500) // Adjust the duration as needed
+        .duration(1500)
         .attrTween("x1", function(d) {
             const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
             const endPos = d.source.x - offsetX;
@@ -364,150 +354,6 @@ function updateGraph(newGraphData) {
 
     ticked();
 }
-// function updateGraph(newGraphData) {
-//     console.log("Updating graph with new data:", newGraphData);
-
-//     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
-//         console.error("New graph data is not correctly structured:", newGraphData);
-//         return;
-//     }
-
-//     const existingNodes = new Set(node.data().map(d => d.id));
-
-//     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
-//     const nodesToUpdate = newGraphData.nodes.filter(node => existingNodes.has(node.id));
-
-//     console.log("number of nodesToAdd: ", nodesToAdd.length)
-    
-//     // // Update positions of existing nodes
-//     // nodesToUpdate.forEach(updatedNode => {
-//     //     const nodeToUpdate = node.data().find(d => d.id === updatedNode.id);
-//     //     if (nodeToUpdate) {
-//     //         nodeToUpdate.x = updatedNode.x;
-//     //         nodeToUpdate.y = updatedNode.y;
-//     //     }
-//     // });
-
-//     // Update positions of existing nodes with transition
-//     nodesToUpdate.forEach(updatedNode => {
-//         const nodeToUpdate = node.data().find(d => d.id === updatedNode.id);
-//         if (nodeToUpdate) {
-//             d3.select(nodeToUpdate)
-//                 .transition()
-//                 .duration(750) // Adjust the duration as needed
-//                 .attr("cx", updatedNode.x - offsetX)
-//                 .attr("cy", updatedNode.y - offsetY);
-//         }
-//     });
-
-//     // Combine the existing nodes with the new nodes
-//     const updatedNodes = node.data().concat(nodesToAdd);
-
-//     // Update node data binding with new nodes
-//     // node = node.data(updatedNodes, d => d.id);
-//     node = node.data(newGraphData.nodes, d => d.id);
-
-//     // Remove exiting nodes
-//     node.exit().remove();
-
-//     // Nodes displayed above edges
-//     node.raise();
-
-//     // Add new nodes 
-//     const nodeEnter = node.enter().append("circle")
-//         .attr("class", "node")
-//         .attr("r", d => d.type === 'tx' ? 4 : 1)
-//         .attr("cx", d => d.x - offsetX)
-//         .attr("cy", d => d.y - offsetY)
-//         .style("fill", d => {
-//             if (d.z_score_balance){
-//                 if (d.type === 'input') {
-//                     return mapZScoreToColor(d.z_score_balance, d.color);
-//                 } else if (d.type === 'output') {
-//                     return mapZScoreToColor(d.z_score_balance, d.color);
-//                 } else {
-//                     return d.color;
-//                 } 
-//             }
-//             return d.color;
-//         })
-//         .call(d3.drag()
-//             .on("start", dragStarted)
-//             .on("drag", dragged)
-//             .on("end", dragEnded))
-//         .on("click", function(event, d) {
-//             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
-//         })
-//         .on("mouseover", function(event, d) {
-//             if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
-//                 displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
-//             }
-//         });
-
-//     node = nodeEnter.merge(node);
-
-//     // Update link data binding
-//     const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-//     // const nodeById = new Map(updatedNodes.map(d => [d.id, d]));
-//     newGraphData.edges.forEach(d => {
-//         d.source = nodeById.get(d.source) || d.source;
-//         d.target = nodeById.get(d.target) || d.target;
-//     });
-
-//     // Combine the existing links with the new links
-//     link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-
-//     link.exit().remove();
-
-//     const linkEnter = link.enter().append("line")
-//         .attr("class", "link")
-//         .style("stroke", d => d.color)
-//         // .style("stroke-width", 0.5)
-//         .style("stroke-width", d => {
-//             if (d.type === 'addr_link'){
-//                 return 0.3
-//             }
-//             else{
-//                 // const zScore = d.source.z_score_tx || d.target.z_score_tx || 0.5; 
-//                 const zScore = d.z_score_tx || 0.5; 
-//                 const strokeWidth = mapZScoreToThickness(zScore);
-//                 // console.log(`Edge stroke width: ${strokeWidth}`);
-//                 return strokeWidth;
-//                 // return mapZScoreToThickness(zScore);
-//             }
-//         })
-//         .on("mouseover", function(event, d) {
-//             let value;
-//             if (d.type != 'addr_link'){
-//                 value = d.size;
-//                 value = (value / 100000000).toPrecision(4);
-//                 displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`); 
-//             }
-//         });
-
-
-//     link = linkEnter.merge(link);
-
-//     // Transition existing links to new positions
-//     link.transition()
-//         .duration(750) // Adjust the duration as needed
-//         .attr("x1", d => d.source.x - offsetX)
-//         .attr("y1", d => d.source.y - offsetY)
-//         .attr("x2", d => d.target.x - offsetX)
-//         .attr("y2", d => d.target.y - offsetY);
-
-//     // simulation = d3.forceSimulation(movableNodes.data())
-//     //     .force("link", d3.forceLink(newGraphData.edges).id(d => d.id).distance(50))
-//     //     .force("charge", d3.forceManyBody().strength(-100))
-//     //     .force("center", d3.forceCenter((window.innerWidth / 2) - offsetX, (window.innerHeight / 2) - offsetY))
-//     //     .force("collision", d3.forceCollide().radius(d => d.type === 'tx' ? 20 : 5))
-//     //     .on("tick", ticked);
-//     ticked();
-
-//     // simulation.nodes(node.data());
-//     // simulation.force("link").links(link.data());
-//     // simulation.alpha(1).restart();
-// }
 
 
 // Function to map z-score to edge thickness
@@ -615,6 +461,7 @@ function ticked() {
         });
 }
 
+
 // Function to display transaction values for edges and address balance for nodes
 function displayValue(type, value, x, y, id) {
     const displayText = type === 'balance' ? `balance: ${value} BTC` : `value: ${value} BTC`;
@@ -646,89 +493,4 @@ function displayValue(type, value, x, y, id) {
             .style("opacity", 0)
             .remove();
     }, 1000);
-}
-
-
-function dragStarted(event, d) {
-    // if (!event.active) simulation.alphaTarget(0.3).restart();
-    d.fx = d.x;
-    d.fy = d.y;
-}
-
-function dragged(event, d) {
-    d.fx = event.x;
-    d.fy = event.y;
-
-    // Move connected nodes
-    node.each(function(n) {
-        if (n.id !== d.id && isConnected(d, n)) {
-            n.fx = event.x;
-            n.fy = event.y;
-        }
-    });
-    simulation.alpha(1).restart();
-}
-
-function dragEnded(event, d) {
-    if (!event.active) simulation.alphaTarget(0);
-    d.fx = null;
-    d.fy = null;
-
-    // Unfix connected nodes
-    node.each(function(n) {
-        if (n.id !== d.id && isConnected(d, n)) {
-            n.fx = null;
-            n.fy = null;
-        }
-    });
-}
-
-// function dragStarted(event, d) {
-//     d3.select(this).raise().attr("stroke", "black");
-// }
-
-
-// function dragged(event, d) {
-//     d.x = event.x;
-//     d.y = event.y;
-
-//     d3.select(this)
-//         .attr("cx", d.x - offsetX)
-//         .attr("cy", d.y - offsetY);
-
-//     updateConnectedNodesAndLinks();
-// }
-
-// function dragEnded(event, d) {
-//     d3.select(this).attr("stroke", null);
-// }
-
-// function updateConnectedNodesAndLinks() {
-//     node.each(function(d) {
-//         d3.select(this)
-//             .attr("cx", d.x - offsetX)
-//             .attr("cy", d.y - offsetY);
-//     });
-
-//     link.each(function(d) {
-//         d3.select(this)
-//             .attr("x1", d.source.x - offsetX)
-//             .attr("y1", d.source.y - offsetY)
-//             .attr("x2", d.target.x - offsetX)
-//             .attr("y2", d.target.y - offsetY);
-//     });
-// }
-
-
-// function focusOnNode(event, d) {
-//     const scale = 3.5;
-//     const transform = d3.zoomIdentity
-//         .translate(window.innerWidth / 2, window.innerHeight / 2)
-//         .scale(scale)
-//         .translate(-d.x, -d.y);
-//     svg.transition().duration(750).call(d3.zoom().transform, transform);
-// }
-
-function isConnected(a, b) {
-    return link.data().some(d => (d.source.id === a.id && d.target.id === b.id) || (d.source.id === b.id && d.target.id === a.id));
 }

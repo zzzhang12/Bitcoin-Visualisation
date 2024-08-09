@@ -17,6 +17,7 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 # WebSocket to receive Bitcoin transactionss
 BITCOIN_WS_URL = "wss://ws.blockchain.info/inv"
 
+# Global Variables
 queue = []
 MAX_SIZE = 100
 nodes = []
@@ -56,18 +57,11 @@ file_index = 0
 #     '10.json'
 # ]
 
+# Canvas sizes
 NUM_ROWS = 4
 NUM_COLS = 3
 CLIENT_WIDTH = 1920
 CLIENT_HEIGHT = 1080
-
-# # Calculate boundary lines based on the number of clients and their sizes
-# HORIZONTAL_BOUNDARIES = [i * CLIENT_HEIGHT for i in range(NUM_COLS)] 
-# VERTICAL_BOUNDARIES = [i * CLIENT_WIDTH for i in range(NUM_ROWS)]
-
-# HORIZONTAL_BOUNDARIES = [(i * CLIENT_HEIGHT) for i in range(-NUM_COLS//2, NUM_COLS//2 + 1) if i != 0]
-# VERTICAL_BOUNDARIES = [(i * CLIENT_WIDTH) for i in range(-NUM_ROWS//2, NUM_ROWS//2 + 1) if i != 0]
-
 HORIZONTAL_BOUNDARIES = [-960, 960] 
 VERTICAL_BOUNDARIES = [-1080, 0, 1080]
    
@@ -840,14 +834,11 @@ def send_json_files():
         file_index += 1
         time.sleep(broadcast_interval) 
 
-# # Test the function
-# compute_graph(test_nodes, test_edges)
 
 if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     threading.Thread(target=start_ws).start()
     threading.Thread(target=periodic_broadcast).start()
-    # calculate_boundaries()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)
