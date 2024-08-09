@@ -212,13 +212,13 @@ function updateGraph(newGraphData) {
             x: element.attr("cx"),
             y: element.attr("cy")
         });
-        console.log(`Captured position for node ID: ${d.id} - x: ${element.attr("cx")}, y: ${element.attr("cy")}`);
+        // console.log(`Captured position for node ID: ${d.id} - x: ${element.attr("cx")}, y: ${element.attr("cy")}`);
     });
 
     const existingNodes = new Set(node.data().map(d => d.id));
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
 
-    console.log("number of nodesToAdd: ", nodesToAdd.length);
+    // console.log("number of nodesToAdd: ", nodesToAdd.length);
 
     // Update node data binding with new nodes
     node = node.data(newGraphData.nodes, d => d.id);
@@ -241,15 +241,15 @@ function updateGraph(newGraphData) {
         })
         .on("start", function(d) {
             const currentPos = currentPositions.get(d.id);
-            if (currentPos) {
-                console.log(`Node transition start - ID: ${d.id}, x: ${currentPos.x}, y: ${currentPos.y}`);
-            } else {
-                console.log(`Node transition start - ID: ${d.id}, no initial position`);
-            }
+            // if (currentPos) {
+            //     console.log(`Node transition start - ID: ${d.id}, x: ${currentPos.x}, y: ${currentPos.y}`);
+            // } else {
+            //     console.log(`Node transition start - ID: ${d.id}, no initial position`);
+            // }
         })
-        .on("end", function(d) {
-            console.log(`Node transition end - ID: ${d.id}, x: ${d.x - offsetX}, y: ${d.y - offsetY}`);
-        });
+        // .on("end", function(d) {
+        //     console.log(`Node transition end - ID: ${d.id}, x: ${d.x - offsetX}, y: ${d.y - offsetY}`);
+        // });
 
     // Add new nodes
     const nodeEnter = node.enter().append("circle")
@@ -319,15 +319,15 @@ function updateGraph(newGraphData) {
         .on("start", function(d) {
             const sourcePos = currentPositions.get(d.source.id);
             const targetPos = currentPositions.get(d.target.id);
-            if (sourcePos && targetPos) {
-                console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${sourcePos.x}, y1: ${sourcePos.y}, x2: ${targetPos.x}, y2: ${targetPos.y}`);
-            } else {
-                console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, no initial position`);
-            }
+            // if (sourcePos && targetPos) {
+            //     console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${sourcePos.x}, y1: ${sourcePos.y}, x2: ${targetPos.x}, y2: ${targetPos.y}`);
+            // } else {
+            //     console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, no initial position`);
+            // }
         })
-        .on("end", function(d) {
-            console.log(`Link transition end - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${d.source.x - offsetX}, y1: ${d.source.y - offsetY}, x2: ${d.target.x - offsetX}, y2: ${d.target.y - offsetY}`);
-        });
+        // .on("end", function(d) {
+        //     console.log(`Link transition end - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${d.source.x - offsetX}, y1: ${d.source.y - offsetY}, x2: ${d.target.x - offsetX}, y2: ${d.target.y - offsetY}`);
+        // });
 
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
