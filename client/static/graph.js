@@ -234,7 +234,7 @@ function updateGraph(newGraphData) {
 
     // Transition existing nodes to new positions using attrTween
     node.transition()
-        .duration(750) // Adjust the duration as needed
+        .duration(1500) // Adjust the duration as needed
         .attrTween("cx", function(d) {
             const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
             const endPos = d.x - offsetX;
@@ -305,7 +305,7 @@ function updateGraph(newGraphData) {
 
     // Transition existing links to new positions using attrTween
     link.transition()
-        .duration(750) // Adjust the duration as needed
+        .duration(1500) // Adjust the duration as needed
         .attrTween("x1", function(d) {
             const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
             const endPos = d.source.x - offsetX;
