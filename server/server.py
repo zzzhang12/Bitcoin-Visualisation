@@ -770,7 +770,7 @@ def update_cache(address, transaction_value):
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions, scale_factor
     total_iterations = 2000
-    batch_size = 50
+    batch_size = 20
     # nx_graph_copy = copy.deepcopy(nx_graph)
 
     try:
@@ -802,7 +802,7 @@ def compute_graph(new_nodes, new_edges):
             end_time = time.time()
             emit_duration = end_time - start_time
             print(f"Emitted partial graph data after {i + batch_size} iterations in {emit_duration:.4f} seconds")
-            time.sleep(1)
+            time.sleep(1.2)
 
         return create_graph_data(new_nodes, new_edges, positions)
 
@@ -887,6 +887,7 @@ def create_graph_data(new_nodes, new_edges, positions):
     }
     return graph_data
    
+
 def is_different_client(p1, p2):
     x1, y1 = p1
     x2, y2 = p2
@@ -916,6 +917,11 @@ def static_proxy(path):
 @app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
+
+
+@app.route('/static_graph', methods=['GET'])
+def static_graph():
+    return render_template('static_graph.html')
 
 
 @socketio.on('connect')

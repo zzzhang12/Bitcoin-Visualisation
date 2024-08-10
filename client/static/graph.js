@@ -59,6 +59,131 @@ function getUrlParameter(name) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
+// Bind Controller
+function bindEvents(blkid, client){
+    console.log('Binding events with blkid:', blkid, 'and client:', client);
+
+    // Establish connection to controller
+    var peer = new Peer({ key: "g9o1meczkw9x80k9" });
+
+    var conn = peer.connect('controller');
+
+    // Update DOM with connection string
+    conn.on('open', function(){
+        console.log('Connection to ' + conn.peer + ' from ' + peer.id);
+        // document.getElementById('peerID').innerHTML = 'ConnectionID:' + peer.id;
+
+        conn.send({ peertype: 'info', peerpayload: client });   // Send which node it is
+        conn.send({ peertype: 'block', peerpayload: blkid });
+    });
+
+    conn.on('close', function(){
+        // document.getElementById('peerID').innerHTML = 'Not connected to controller';
+    });
+
+    // Simple messaging protocol
+    conn.on('data', function(data) {
+        if (data.type == 'newBlock' && data.value >= 0)
+            window.open("/Web/Bitcoin/App.cshtml?block=" + data.value, '_self');
+
+        if (data.type == 'newBlock' && data.value < 0)
+            window.open("/Web/Bitcoin/App.cshtml", '_self');
+
+        if (data.type == 'connComp') {
+            if (data.value)
+                minDegs = 2;
+            else
+                minDegs = 0;
+            applyFilters();
+            renderGraph();
+        }
+
+        // if (data.type == 'minValConstraint') {
+        //     minValConstraint = data.value;
+        //     applyFilters();
+        //     renderGraph();
+        // }
+
+        // if(data.type == 'maxValConstraint') {
+        //     maxValConstraint = data.value;
+        //     applyFilters();
+        //     renderGraph();
+        // }
+
+        // if (data.type == 'minFeeConstraint') {
+        //     minFeeConstraint = data.value;
+        //     applyFilters();
+        //     renderGraph();
+        // }
+
+        // if(data.type == 'maxFeeConstraint') {
+        //     maxFeeConstraint = data.value;
+        //     applyFilters();
+        //     renderGraph();
+        // }
+
+        // if(data.type == 'addrFilter') {
+        //     addrFilter = data.value;
+        //     applyFilters();
+        //     renderGraph();
+        // }
+
+        // if(data.type == 'txFilter') {
+        //     txFilter = data.value;
+        //     applyFilters();
+        //     renderGraph();
+        // }
+
+        if (data.type == 'saveSnapshot') {
+            saveGraphSnapshot();
+        }
+    });
+}
+
+function saveGraphSnapshot() {
+    const graphData = {
+        nodes: [],
+        edges: []
+    };
+
+    // Capture the current state of nodes
+    node.each(function(d) {
+        graphData.nodes.push({
+            id: d.id,
+            x: d.x,
+            y: d.y,
+            color: d.color,
+            type: d.type,
+            size: d.size,
+            z_score_tx: d.z_score_tx,
+            balance: d.balance,
+            z_score_balance: d.z_score_balance,
+            fillColor: mapZScoreToColor(d.z_score_balance, d.color)
+        });
+    });
+
+    // Capture the current state of edges
+    link.each(function(d) {
+        graphData.edges.push({
+            source: d.source.id,
+            target: d.target.id,
+            color: d.color,
+            type: d.type,
+            size: d.size,
+            z_score_tx: d.z_score_tx,
+            strokeWidth: mapZScoreToThickness(d.z_score_tx)
+        });
+    });
+
+    // Save the graphData as a JSON file
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graphData));
+    const downloadAnchorNode = document.createElement('a');
+    downloadAnchorNode.setAttribute("href", dataStr);
+    downloadAnchorNode.setAttribute("download", "graph_snapshot.json");
+    document.body.appendChild(downloadAnchorNode);
+    downloadAnchorNode.click();
+    downloadAnchorNode.remove();
+}
 
 function processMessage(msg){
     if (paused) {
@@ -591,10 +716,10 @@ function mapZScoreToThickness(zScore) {
 
 
 function mapZScoreToColor(zScore, baseColor) {
-    // Define a scale for color saturation/vibrancy
+    // Scale for color saturation/vibrancy
     const scale = d3.scaleLinear()
         .domain([-3, 0, 3])
-        .range([0.3, 1, 1.7]) // Adjust these values for desired effect
+        .range([0.3, 1, 1.7])
         .clamp(true);
 
     const intensity = scale(zScore);
