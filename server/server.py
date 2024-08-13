@@ -803,7 +803,7 @@ def compute_graph(new_nodes, new_edges):
             end_time = time.time()
             emit_duration = end_time - start_time
             print(f"Emitted partial graph data after {i + batch_size} iterations in {emit_duration:.4f} seconds")
-            time.sleep(1.8)
+            time.sleep(7)
 
         return create_graph_data(new_nodes, new_edges, positions)
 

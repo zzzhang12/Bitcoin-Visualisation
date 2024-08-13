@@ -573,6 +573,7 @@ function updateGraph(newGraphData) {
     });
 
     const existingNodes = new Set(node.data().map(d => d.id));
+    const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`));
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
 
     // console.log("number of nodesToAdd: ", nodesToAdd.length);
@@ -580,13 +581,25 @@ function updateGraph(newGraphData) {
     // Update node data binding with new nodes
     node = node.data(newGraphData.nodes, d => d.id);
 
+
+    // For testing only
+    let nodeTransitionStartCount = 0;
+    let nodeTransitionEndCount = 0;
+    let edgeTransitionStartCount = 0;
+    let edgeTransitionEndCount = 0;
+
+    const totalNodeTransitions = existingNodes.size;
+    const totalEdgeTransitions = existingEdges.size;
+
+    console.log("Num of nodes: ", totalNodeTransitions, "Num of edges: ", totalEdgeTransitions)
+
     // Remove exiting nodes
     node.exit().remove();
 
     if (existingNodes.size > 0){
         // Transition existing nodes to new positions using attrTween
         node.transition()
-            .duration(1600)
+            .duration(1300)
             .attrTween("cx", function(d) {
                 const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
                 const endPos = d.x - offsetX;
@@ -598,93 +611,83 @@ function updateGraph(newGraphData) {
                 return d3.interpolate(startPos, endPos);
             })
             .on("start", function(d) {
-                const currentPos = currentPositions.get(d.id);
-                if (currentPos) {
-                    console.log(`Node transition start - ID: ${d.id}, x: ${currentPos.x}, y: ${currentPos.y}`);
-                } else {
-                    console.log(`Node transition start - ID: ${d.id}, no initial position`);
+                nodeTransitionStartCount++;
+                if (nodeTransitionStartCount === 1) {
+                    console.log("All node transitions started");
                 }
             })
             .on("end", function(d) {
-                console.log(`Node transition end - ID: ${d.id}, x: ${d.x - offsetX}, y: ${d.y - offsetY}`);
-                addNewNodes()
+                nodeTransitionEndCount++;
+                if (nodeTransitionEndCount >= totalNodeTransitions) {
+                    console.log("All node transitions ended");
+                }
+                // addNewNodes()
+            });
+       
+
+            // Update link data binding
+            const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
+            newGraphData.edges.forEach(d => {
+                d.source = nodeById.get(d.source) || d.source;
+                d.target = nodeById.get(d.target) || d.target;
             });
 
-        // Update link data binding
-        const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-        newGraphData.edges.forEach(d => {
-            d.source = nodeById.get(d.source) || d.source;
-            d.target = nodeById.get(d.target) || d.target;
-        });
+            // Combine the existing links with the new links
+            link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
 
-        // Combine the existing links with the new links
-        link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-        // console.log("----link data----",link.data())
+            // Remove exiting links
+            link.exit().remove();
 
-        // Remove exiting links
-        link.exit().remove();
+            edgeTransition();
 
-        // Transition existing links to new positions using attrTween
-        link.transition()
-        .duration(1600)
-        .attrTween("x1", function(d) {
-            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
-            const endPos = d.source.x - offsetX;
-            return d3.interpolate(startPos, endPos);
-        })
-        .attrTween("y1", function(d) {
-            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
-            const endPos = d.source.y - offsetY;
-            return d3.interpolate(startPos, endPos);
-        })
-        .attrTween("x2", function(d) {
-            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
-            const endPos = d.target.x - offsetX;
-            return d3.interpolate(startPos, endPos);
-        })
-        .attrTween("y2", function(d) {
-            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
-            const endPos = d.target.y - offsetY;
-            return d3.interpolate(startPos, endPos);
-        })
-        .on("start", function(d) {
-            const sourcePos = currentPositions.get(d.source.id);
-            const targetPos = currentPositions.get(d.target.id);
-            if (sourcePos && targetPos) {
-                console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${sourcePos.x}, y1: ${sourcePos.y}, x2: ${targetPos.x}, y2: ${targetPos.y}`);
-            } else {
-                console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, no initial position`);
+
+        function edgeTransition(){
+            // Transition existing links to new positions using attrTween
+            link.transition()
+                .duration(1500)
+                .attrTween("x1", function(d) {
+                    const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
+                    const endPos = d.source.x - offsetX;
+                    return d3.interpolate(startPos, endPos);
+                })
+                .attrTween("y1", function(d) {
+                    const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
+                    const endPos = d.source.y - offsetY;
+                    return d3.interpolate(startPos, endPos);
+                })
+                .attrTween("x2", function(d) {
+                    const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
+                    const endPos = d.target.x - offsetX;
+                    return d3.interpolate(startPos, endPos);
+                })
+                .attrTween("y2", function(d) {
+                    const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
+                    const endPos = d.target.y - offsetY;
+                    return d3.interpolate(startPos, endPos);
+                })
+                .on("start", function(d) {
+                    edgeTransitionStartCount++;
+                    if (edgeTransitionStartCount === 1) {
+                        console.log("All edge transitions started");
+                    }
+                })
+                .on("end", function(d) {
+                    edgeTransitionEndCount++;
+                    if (edgeTransitionEndCount >= totalEdgeTransitions) {
+                        console.log("All edge transitions ended");
+                        addNewNodesAndEdges();
+                    }
+                });
             }
-        })
-        .on("end", function(d) {
-            console.log(`Link transition end - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${d.source.x - offsetX}, y1: ${d.source.y - offsetY}, x2: ${d.target.x - offsetX}, y2: ${d.target.y - offsetY}`);
-            addNewEdges()
-        });
     }
+    
 
     else{
-        addNewNodes();
-
-        // Update link data binding
-        const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-        newGraphData.edges.forEach(d => {
-            d.source = nodeById.get(d.source) || d.source;
-            d.target = nodeById.get(d.target) || d.target;
-        });
-
-        // Combine the existing links with the new links
-        link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-        // console.log("----link data----",link.data())
-
-        // Remove exiting links
-        link.exit().remove();
-        
-        addNewEdges();
-
+        addNewNodesAndEdges();
     }
 
     // Add new nodes
-    function addNewNodes(){
+    function addNewNodesAndEdges(){
         console.log("--------------Adding new nodes------------")
         const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
@@ -710,11 +713,22 @@ function updateGraph(newGraphData) {
             }
         });
 
-    node = nodeEnter.merge(node);
-    }
+        node = nodeEnter.merge(node);
 
+        // Update link data binding
+        const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
+        newGraphData.edges.forEach(d => {
+            d.source = nodeById.get(d.source) || d.source;
+            d.target = nodeById.get(d.target) || d.target;
+        });
 
-    function addNewEdges(){
+        // Combine the existing links with the new links
+        link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
+        // console.log("----link data----",link.data())
+
+        // Remove exiting links
+        link.exit().remove();
+
         console.log("--------------Adding new edges---------")
         const linkEnter = link.enter().append("line")
         .attr("class", "link")
@@ -737,11 +751,10 @@ function updateGraph(newGraphData) {
             }
         });
 
-    link = linkEnter.merge(link);
+        link = linkEnter.merge(link);
     }
 
     node.raise()
-
     ticked();
 }
 
