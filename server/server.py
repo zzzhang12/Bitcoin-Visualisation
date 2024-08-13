@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, send_from_directory, render_template
+from flask import Flask, jsonify, send_from_directory, render_template, request
 import json
 import networkx as nx
 from fa2_modified import ForceAtlas2
@@ -11,6 +11,7 @@ import random
 import requests
 import numpy as np
 import copy
+import os
 
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -922,6 +923,29 @@ def index():
 @app.route('/static_graph', methods=['GET'])
 def static_graph():
     return render_template('static_graph.html')
+
+
+@app.route('/save_snapshot', methods=['POST'])
+def save_snapshot():
+    graph_data = request.json
+    file_path = os.path.join(app.static_folder, 'saved_graph.json')
+    try:
+        with open(file_path, 'w') as f:
+            json.dump(graph_data, f)
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/get_snapshot', methods=['GET'])
+def get_snapshot():
+    file_path = os.path.join(app.static_folder, 'saved_graph.json')
+    try:
+        with open(file_path, 'r') as f:
+            graph_data = json.load(f)
+        return jsonify(graph_data)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 
 @socketio.on('connect')

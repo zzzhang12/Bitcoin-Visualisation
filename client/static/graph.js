@@ -140,6 +140,8 @@ function bindEvents(blkid, client){
     });
 }
 
+document.getElementById('saveGraphSnapshot').addEventListener('click', saveGraphSnapshot);
+
 function saveGraphSnapshot() {
     const graphData = {
         nodes: [],
@@ -158,7 +160,7 @@ function saveGraphSnapshot() {
             z_score_tx: d.z_score_tx,
             balance: d.balance,
             z_score_balance: d.z_score_balance,
-            fillColor: mapZScoreToColor(d.z_score_balance, d.color)
+            color: d.color
         });
     });
 
@@ -175,15 +177,27 @@ function saveGraphSnapshot() {
         });
     });
 
-    // Save the graphData as a JSON file
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(graphData));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "graph_snapshot.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    // Send the graphData to the server
+    fetch('/save_snapshot', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(graphData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === "success") {
+            console.log("Graph snapshot saved successfully.");
+        } else {
+            console.error("Failed to save graph snapshot.");
+        }
+    })
+    .catch(error => {
+        console.error("Error saving graph snapshot:", error);
+    });
 }
+
 
 function processMessage(msg){
     if (paused) {
@@ -602,12 +616,10 @@ function updateGraph(newGraphData) {
         .style("fill", d => {
             if (d.z_score_balance) {
                 if (d.type === 'input') {
-                    return mapZScoreToColor(d.z_score_balance, d.color);
+                    d.color = mapZScoreToColor(d.z_score_balance, d.color);
                 } else if (d.type === 'output') {
-                    return mapZScoreToColor(d.z_score_balance, d.color);
-                } else {
-                    return d.color;
-                }
+                    d.color = mapZScoreToColor(d.z_score_balance, d.color);
+                } 
             }
             return d.color;
         })
@@ -631,7 +643,7 @@ function updateGraph(newGraphData) {
 
     // Combine the existing links with the new links
     link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-    console.log("----link data----",link.data())
+    // console.log("----link data----",link.data())
 
     // Remove exiting links
     link.exit().remove();
@@ -694,6 +706,8 @@ function updateGraph(newGraphData) {
         });
 
     link = linkEnter.merge(link);
+
+    node.raise()
 
     ticked();
 }
