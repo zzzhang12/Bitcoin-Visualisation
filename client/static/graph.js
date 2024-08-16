@@ -234,7 +234,7 @@ function initializeGraph() {
     node = g.selectAll(".node");
 }
 
-
+var count = 0
 function renderGraph(graphData) {
     console.log("Attempting to render graph");
     // console.log("Received graph data structure:", graphData);
@@ -331,8 +331,9 @@ function renderGraph(graphData) {
         initializeGraph();
     }
 
+    count++
     // updateGraph(graphData);  // for testing with only client
-    updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    updateGraph({nodes: filteredNodes, edges: filteredEdges}, count);
 }
 
 
@@ -553,7 +554,7 @@ function renderGraph(graphData) {
 //     }
 // }
 
-function updateGraph(newGraphData) {
+function updateGraph(newGraphData, count) {
     console.log("Updating graph with new data:", newGraphData);
 
     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
@@ -572,9 +573,17 @@ function updateGraph(newGraphData) {
         // console.log(`Captured position for node ID: ${d.id} - x: ${element.attr("cx")}, y: ${element.attr("cy")}`);
     });
 
-    const existingNodes = new Set(node.data().map(d => d.id));
-    const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`));
+    // const existingNodes = new Set(node.data().map(d => d.id));
+    // const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`));
+    const newNodesSet = new Set(newGraphData.nodes.map(d => d.id));
+    const existingNodes = new Set(node.data().map(d => d.id).filter(id => newNodesSet.has(id)));
+
+    const newEdgesSet = new Set(newGraphData.edges.map(d => `${d.source}-${d.target}`));
+    const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`).filter(id => newEdgesSet.has(id)));
+
+
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
+    const edgesToAdd = newGraphData.edges.filter(edge => !existingEdges.has(`${edge.source}-${edge.target}`));
 
     // console.log("number of nodesToAdd: ", nodesToAdd.length);
 
@@ -599,7 +608,7 @@ function updateGraph(newGraphData) {
     if (existingNodes.size > 0){
         // Transition existing nodes to new positions using attrTween
         node.transition()
-            .duration(1300)
+            .duration(1000)
             .attrTween("cx", function(d) {
                 const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
                 const endPos = d.x - offsetX;
@@ -613,14 +622,16 @@ function updateGraph(newGraphData) {
             .on("start", function(d) {
                 nodeTransitionStartCount++;
                 if (nodeTransitionStartCount === 1) {
-                    console.log("All node transitions started");
+                    console.log("---All node transitions started---");
                 }
+                console.log(`Node transition started - ID: ${d.id}`);
             })
             .on("end", function(d) {
                 nodeTransitionEndCount++;
                 if (nodeTransitionEndCount >= totalNodeTransitions) {
-                    console.log("All node transitions ended");
+                    console.log("---All node transitions ended---");
                 }
+                console.log(`Node transition ended - ID: ${d.id}`);
                 // addNewNodes()
             });
        
@@ -644,7 +655,7 @@ function updateGraph(newGraphData) {
         function edgeTransition(){
             // Transition existing links to new positions using attrTween
             link.transition()
-                .duration(1500)
+                .duration(1000)
                 .attrTween("x1", function(d) {
                     const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
                     const endPos = d.source.x - offsetX;
@@ -670,9 +681,11 @@ function updateGraph(newGraphData) {
                     if (edgeTransitionStartCount === 1) {
                         console.log("All edge transitions started");
                     }
+                    console.log(`Edge transition started - Source: ${d.source.id}, Target: ${d.target.id}`);
                 })
                 .on("end", function(d) {
                     edgeTransitionEndCount++;
+                    console.log(`Edge transition ended - Source: ${d.source.id}, Target: ${d.target.id}`);
                     if (edgeTransitionEndCount >= totalEdgeTransitions) {
                         console.log("All edge transitions ended");
                         addNewNodesAndEdges();
@@ -691,7 +704,8 @@ function updateGraph(newGraphData) {
         console.log("--------------Adding new nodes------------")
         const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
-        .attr("r", d => d.type === 'tx' ? 4 : 1)
+        // .attr("r", d => d.type === 'tx' ? 4 : 1)
+        .attr("r", d => 5)
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => {
@@ -711,7 +725,10 @@ function updateGraph(newGraphData) {
             if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
                 displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
             }
-        });
+        })
+        .each(function(d) {
+            console.log(`New node added - ${d.id}}`);
+        });;
 
         node = nodeEnter.merge(node);
 
@@ -733,14 +750,19 @@ function updateGraph(newGraphData) {
         const linkEnter = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => d.color)
+        .style("stroke", d => {
+            if (count !== 1) return '#008000'
+            else return d.color
+        })
         .style("stroke-width", d => {
-            if (d.type === 'addr_link') {
-                return 0.3;
-            } else {
-                const zScore = d.z_score_tx || 0.5;
-                const strokeWidth = mapZScoreToThickness(zScore);
-                return strokeWidth;
-            }
+            // if (d.type === 'addr_link') {
+            //     return 0.3;
+            // } else {
+            //     const zScore = d.z_score_tx || 0.5;
+            //     const strokeWidth = mapZScoreToThickness(zScore);
+            //     return strokeWidth;
+            // }
+            return 2
         })
         .on("mouseover", function (event, d) {
             let value;
@@ -749,9 +771,13 @@ function updateGraph(newGraphData) {
                 value = (value / 100000000).toPrecision(4);
                 displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`);
             }
-        });
+        })
+        .each(function(d) {
+            console.log(`New edge added - Source: ${d.source.id}, Target: ${d.target.id}`);
+        });;
 
         link = linkEnter.merge(link);
+        console.log("All new nodes and edges have been added.");
     }
 
     node.raise()
