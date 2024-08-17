@@ -606,34 +606,38 @@ function updateGraph(newGraphData, count) {
     node.exit().remove();
 
     if (existingNodes.size > 0){
-        // Transition existing nodes to new positions using attrTween
-        node.transition()
-            .duration(1000)
-            .attrTween("cx", function(d) {
-                const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
-                const endPos = d.x - offsetX;
-                return d3.interpolate(startPos, endPos);
-            })
-            .attrTween("cy", function(d) {
-                const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
-                const endPos = d.y - offsetY;
-                return d3.interpolate(startPos, endPos);
-            })
-            .on("start", function(d) {
-                nodeTransitionStartCount++;
-                if (nodeTransitionStartCount === 1) {
-                    console.log("---All node transitions started---");
-                }
-                console.log(`Node transition started - ID: ${d.id}`);
-            })
-            .on("end", function(d) {
-                nodeTransitionEndCount++;
-                if (nodeTransitionEndCount >= totalNodeTransitions) {
-                    console.log("---All node transitions ended---");
-                }
-                console.log(`Node transition ended - ID: ${d.id}`);
-                // addNewNodes()
-            });
+        nodeTransition();
+        
+        function nodeTransition(){
+            // Transition existing nodes to new positions using attrTween
+            node.transition()
+                .duration(1000)
+                .attrTween("cx", function(d) {
+                    const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
+                    const endPos = d.x - offsetX;
+                    return d3.interpolate(startPos, endPos);
+                })
+                .attrTween("cy", function(d) {
+                    const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
+                    const endPos = d.y - offsetY;
+                    return d3.interpolate(startPos, endPos);
+                })
+                .on("start", function(d) {
+                    nodeTransitionStartCount++;
+                    if (nodeTransitionStartCount === 1) {
+                        console.log("---All node transitions started---");
+                    }
+                    console.log(`Node transition started - ID: ${d.id}`);
+                })
+                .on("end", function(d) {
+                    nodeTransitionEndCount++;
+                    if (nodeTransitionEndCount >= totalNodeTransitions) {
+                        console.log("---All node transitions ended---");
+                    }
+                    console.log(`Node transition ended - ID: ${d.id}`);
+                    // addNewNodes()
+                });
+        }
        
 
             // Update link data binding
@@ -686,12 +690,17 @@ function updateGraph(newGraphData, count) {
                 .on("end", function(d) {
                     edgeTransitionEndCount++;
                     console.log(`Edge transition ended - Source: ${d.source.id}, Target: ${d.target.id}`);
-                    if (edgeTransitionEndCount >= totalEdgeTransitions) {
-                        console.log("All edge transitions ended");
-                        addNewNodesAndEdges();
-                    }
+                    // if (edgeTransitionEndCount >= totalEdgeTransitions) {
+                    //     console.log("All edge transitions ended");
+                    //     addNewNodesAndEdges();
+                    // }
                 });
             }
+
+            Promise.all([nodeTransition, edgeTransition]).then(() => {
+                console.log("All transitions completed, adding new nodes and edges.");
+                addNewNodesAndEdges();
+            });
     }
     
 
