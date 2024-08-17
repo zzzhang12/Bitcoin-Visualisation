@@ -938,7 +938,8 @@ def static_graph():
 @app.route('/save_snapshot', methods=['POST'])
 def save_snapshot():
     graph_data = request.json
-    file_path = os.path.join(app.static_folder, 'saved_graph.json')
+    filename = request.args.get('filename', 'saved_graph.json')
+    file_path = os.path.join(app.static_folder, filename)
     print ("---RECEIVED COMMAND TO SAVE SNAPSHOT-----")
     try:
         with open(file_path, 'w') as f:

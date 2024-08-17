@@ -186,8 +186,13 @@ function saveGraphSnapshot() {
         });
     });
 
+    // Generate a timestamped filename
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
+    const filename = `graph_snapshot_${timestamp}.json`;
+
     // Send the graphData to the server
-    fetch('/save_snapshot', {
+    fetch(`/save_snapshot?filename=${filename}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -197,7 +202,7 @@ function saveGraphSnapshot() {
     .then(response => response.json())
     .then(data => {
         if (data.status === "success") {
-            console.log("Graph snapshot saved successfully.");
+            console.log("Graph snapshot saved successfully as ${filename}.");
         } else {
             console.error("Failed to save graph snapshot.");
         }
