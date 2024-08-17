@@ -333,228 +333,12 @@ function renderGraph(graphData) {
 
     count++
     // updateGraph(graphData);  // for testing with only client
-    updateGraph({nodes: filteredNodes, edges: filteredEdges}, count);
+    // updateGraph({nodes: filteredNodes, edges: filteredEdges}, count);
+    updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
 
-// function updateGraph(newGraphData) {
-//     console.log("Updating graph with new data:", newGraphData);
-
-//     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
-//         console.error("New graph data is not correctly structured:", newGraphData);
-//         return;
-//     }
-
-//     // Capture the current positions of existing nodes
-//     const currentPositions = new Map();
-//     node.each(function(d) {
-//         const element = d3.select(this);
-//         currentPositions.set(d.id, {
-//             x: element.attr("cx"),
-//             y: element.attr("cy")
-//         });
-//         // console.log(`Captured position for node ID: ${d.id} - x: ${element.attr("cx")}, y: ${element.attr("cy")}`);
-//     });
-
-//     const existingNodes = new Set(node.data().map(d => d.id));
-//     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
-//     const existingLinks = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`));
-//     const linksToAdd = newGraphData.edges.filter(link => !existingLinks.has(`${link.source.id}-${link.target.id}`));
-
-//     console.log("number of nodesToAdd: ", nodesToAdd.length);
-//     console.log("number of linksToAdd: ", linksToAdd.length);
-
-//     // Update node data binding with new nodes
-//     node = node.data(newGraphData.nodes, d => d.id);
-//     console.log("Node data after binding:", node.data());
-
-//     // Remove exiting nodes
-//     node.exit().remove();
-
-//     if (existingNodes.size > 0) {
-//         // Transition existing nodes to new positions
-//         const nodeTransition = node.transition()
-//             .duration(1500)
-//             .attrTween("cx", function(d) {
-//                 const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
-//                 const endPos = d.x - offsetX;
-//                 return d3.interpolate(startPos, endPos);
-//             })
-//             .attrTween("cy", function(d) {
-//                 const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
-//                 const endPos = d.y - offsetY;
-//                 return d3.interpolate(startPos, endPos);
-//             })
-
-//         nodeTransition.on("end", function() {
-//             const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-//             newGraphData.edges.forEach(d => {
-//                 d.source = nodeById.get(d.source) || d.source;
-//                 d.target = nodeById.get(d.target) || d.target;
-//             });
-//             // Update link data binding
-//             link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-//             link.exit().remove();
-        
-//             // Transition existing links
-//             const linkTransition = link.transition()
-//                 .duration(1500)
-//                 .attrTween("x1", function(d) {
-//                     const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
-//                     const endPos = d.source.x - offsetX;
-//                     return d3.interpolate(startPos, endPos);
-//                 })
-//                 .attrTween("y1", function(d) {
-//                     const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
-//                     const endPos = d.source.y - offsetY;
-//                     return d3.interpolate(startPos, endPos);
-//                 })
-//                 .attrTween("x2", function(d) {
-//                     const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
-//                     const endPos = d.target.x - offsetX;
-//                     return d3.interpolate(startPos, endPos);
-//                 })
-//                 .attrTween("y2", function(d) {
-//                     const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
-//                     const endPos = d.target.y - offsetY;
-//                     return d3.interpolate(startPos, endPos);
-//                 });
-        
-//             linkTransition.on("end", function() {
-//                 // Proceed to add new nodes and edges
-//                 addNewNodesAndEdges();
-//             });
-//         });
-        
-
-//         // // Update link data binding
-//         // const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-//         // newGraphData.edges.forEach(d => {
-//         //     d.source = nodeById.get(d.source) || d.source;
-//         //     d.target = nodeById.get(d.target) || d.target;
-//         // });
-
-//         // console.log("Updated edges with node references:", newGraphData.edges);
-
-//         // link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-
-//         // // Remove exiting links
-//         // link.exit().remove();
-
-//         // // Transition existing links to new positions using attrTween
-//         // const linkTransition = link.transition()
-//         //     .duration(1500) // Adjust the duration as needed
-//         //     .attrTween("x1", function(d) {
-//         //         const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
-//         //         const endPos = d.source.x - offsetX;
-//         //         return d3.interpolate(startPos, endPos);
-//         //     })
-//         //     .attrTween("y1", function(d) {
-//         //         const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
-//         //         const endPos = d.source.y - offsetY;
-//         //         return d3.interpolate(startPos, endPos);
-//         //     })
-//         //     .attrTween("x2", function(d) {
-//         //         const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
-//         //         const endPos = d.target.x - offsetX;
-//         //         return d3.interpolate(startPos, endPos);
-//         //     })
-//         //     .attrTween("y2", function(d) {
-//         //         const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
-//         //         const endPos = d.target.y - offsetY;
-//         //         return d3.interpolate(startPos, endPos);
-//         //     })
-//         //     .on("start", function(d) {
-//         //         const sourcePos = currentPositions.get(d.source.id);
-//         //         const targetPos = currentPositions.get(d.target.id);
-//         //         if (sourcePos && targetPos) {
-//         //             console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${sourcePos.x}, y1: ${sourcePos.y}, x2: ${targetPos.x}, y2: ${targetPos.y}`);
-//         //         } else {
-//         //             console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, no initial position`);
-//         //         }
-//         //     })
-//         //     .on("end", function(d) {
-//         //         console.log(`Link transition end - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${d.source.x - offsetX}, y1: ${d.source.y - offsetY}, x2: ${d.target.x - offsetX}, y2: ${d.target.y - offsetY}`);
-//         //         addNewNodesAndLinks();
-//         //     });
-
-//         //     link = linkTransition.merge(link);
-
-//     } else {
-//         addNewNodesAndLinks();
-//     }
-
-//     function addNewNodesAndLinks() {
-//         console.log("Adding new nodes and links");
-
-//         // Add new nodes
-//         const nodeEnter = node.enter().append("circle")
-//             .attr("class", d => `node node-${d.id}`)
-//             .attr("r", d => d.type === 'tx' ? 4 : 1)
-//             .attr("cx", d => d.x - offsetX)
-//             .attr("cy", d => d.y - offsetY)
-//             .style("fill", d => {
-//                 console.log("-------Adding new nodes-------")
-//                 if (d.z_score_balance) {
-//                     if (d.type === 'input') {
-//                         return mapZScoreToColor(d.z_score_balance, d.color);
-//                     } else if (d.type === 'output') {
-//                         return mapZScoreToColor(d.z_score_balance, d.color);
-//                     } else {
-//                         return d.color;
-//                     }
-//                 }
-//                 return d.color;
-//             })
-//             .on("click", function (event, d) {
-//                 document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
-//             })
-//             .on("mouseover", function (event, d) {
-//                 if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
-//                     displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
-//                 }
-//             });
-
-//         node = nodeEnter.merge(node);
-
-//         console.log("Nodes after merge", node.data());
-
-//         // Add new links
-//         const linkEnter = link.enter().append("line")
-//             .attr("class", "link")
-//             .style("stroke", d => d.color)
-//             .style("stroke-width", d => {
-//                 console.log("--------Adding new Links---------")
-//                 if (d.type === 'addr_link') {
-//                     return 0.3;
-//                 } else {
-//                     const zScore = d.z_score_tx || 0.5;
-//                     const strokeWidth = mapZScoreToThickness(zScore);
-//                     return strokeWidth;
-//                 }
-//             })
-//             .attr("x1", d => d.source.x - offsetX)
-//             .attr("y1", d => d.source.y - offsetY)
-//             .attr("x2", d => d.target.x - offsetX)
-//             .attr("y2", d => d.target.y - offsetY)
-//             .on("mouseover", function (event, d) {
-//                 let value;
-//                 if (d.type != 'addr_link') {
-//                     value = d.size;
-//                     value = (value / 100000000).toPrecision(4);
-//                     displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`);
-//                 }
-//             });
-
-//         link = linkEnter.merge(link);
-
-//         console.log("Links after merge", link.data());
-
-//         ticked();
-//     }
-// }
-
-function updateGraph(newGraphData, count) {
+function updateGraph(newGraphData) {
     console.log("Updating graph with new data:", newGraphData);
 
     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
@@ -573,148 +357,46 @@ function updateGraph(newGraphData, count) {
         // console.log(`Captured position for node ID: ${d.id} - x: ${element.attr("cx")}, y: ${element.attr("cy")}`);
     });
 
-    // const existingNodes = new Set(node.data().map(d => d.id));
-    // const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`));
-    const newNodesSet = new Set(newGraphData.nodes.map(d => d.id));
-    const existingNodes = new Set(node.data().map(d => d.id).filter(id => newNodesSet.has(id)));
-
-    const newEdgesSet = new Set(newGraphData.edges.map(d => `${d.source}-${d.target}`));
-    const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`).filter(id => newEdgesSet.has(id)));
-
-
+    const existingNodes = new Set(node.data().map(d => d.id));
     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
-    const edgesToAdd = newGraphData.edges.filter(edge => !existingEdges.has(`${edge.source}-${edge.target}`));
 
     // console.log("number of nodesToAdd: ", nodesToAdd.length);
 
     // Update node data binding with new nodes
     node = node.data(newGraphData.nodes, d => d.id);
 
-
-    // For testing only
-    let nodeTransitionStartCount = 0;
-    let nodeTransitionEndCount = 0;
-    let edgeTransitionStartCount = 0;
-    let edgeTransitionEndCount = 0;
-
-    const totalNodeTransitions = existingNodes.size;
-    const totalEdgeTransitions = existingEdges.size;
-
-    console.log("Num of nodes: ", totalNodeTransitions, "Num of edges: ", totalEdgeTransitions)
-
     // Remove exiting nodes
     node.exit().remove();
 
-    if (existingNodes.size > 0){
-        nodeTransition();
-        
-        function nodeTransition(){
-            // Transition existing nodes to new positions using attrTween
-            node.transition()
-                .duration(1000)
-                .attrTween("cx", function(d) {
-                    const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
-                    const endPos = d.x - offsetX;
-                    return d3.interpolate(startPos, endPos);
-                })
-                .attrTween("cy", function(d) {
-                    const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
-                    const endPos = d.y - offsetY;
-                    return d3.interpolate(startPos, endPos);
-                })
-                .on("start", function(d) {
-                    nodeTransitionStartCount++;
-                    if (nodeTransitionStartCount === 1) {
-                        console.log("---All node transitions started---");
-                    }
-                    console.log(`Node transition started - ID: ${d.id}`);
-                })
-                .on("end", function(d) {
-                    nodeTransitionEndCount++;
-                    if (nodeTransitionEndCount >= totalNodeTransitions) {
-                        console.log("---All node transitions ended---");
-                    }
-                    console.log(`Node transition ended - ID: ${d.id}`);
-                    // addNewNodes()
-                });
-        }
-       
-
-            // Update link data binding
-            const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-            newGraphData.edges.forEach(d => {
-                d.source = nodeById.get(d.source) || d.source;
-                d.target = nodeById.get(d.target) || d.target;
-            });
-
-            // Combine the existing links with the new links
-            link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-
-            // Remove exiting links
-            link.exit().remove();
-
-            edgeTransition();
-
-
-        function edgeTransition(){
-            // Transition existing links to new positions using attrTween
-            link.transition()
-                .duration(1000)
-                .attrTween("x1", function(d) {
-                    const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
-                    const endPos = d.source.x - offsetX;
-                    return d3.interpolate(startPos, endPos);
-                })
-                .attrTween("y1", function(d) {
-                    const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
-                    const endPos = d.source.y - offsetY;
-                    return d3.interpolate(startPos, endPos);
-                })
-                .attrTween("x2", function(d) {
-                    const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
-                    const endPos = d.target.x - offsetX;
-                    return d3.interpolate(startPos, endPos);
-                })
-                .attrTween("y2", function(d) {
-                    const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
-                    const endPos = d.target.y - offsetY;
-                    return d3.interpolate(startPos, endPos);
-                })
-                .on("start", function(d) {
-                    edgeTransitionStartCount++;
-                    if (edgeTransitionStartCount === 1) {
-                        console.log("All edge transitions started");
-                    }
-                    console.log(`Edge transition started - Source: ${d.source.id}, Target: ${d.target.id}`);
-                })
-                .on("end", function(d) {
-                    edgeTransitionEndCount++;
-                    console.log(`Edge transition ended - Source: ${d.source.id}, Target: ${d.target.id}`);
-                    // if (edgeTransitionEndCount >= totalEdgeTransitions) {
-                    //     console.log("All edge transitions ended");
-                    //     addNewNodesAndEdges();
-                    // }
-                });
-            }
-
-            Promise.all([nodeTransition, edgeTransition]).then(() => {
-                console.log("All transitions completed, adding new nodes and edges.");
-                addNewNodesAndEdges();
-            });
-    }
-    
-
-    else{
-        addNewNodesAndEdges();
-    }
+    // Transition existing nodes to new positions using attrTween
+    node.transition()
+        .duration(1500)
+        .attrTween("cx", function(d) {
+            const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
+            const endPos = d.x - offsetX;
+            return d3.interpolate(startPos, endPos);
+        })
+        .attrTween("cy", function(d) {
+            const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
+            const endPos = d.y - offsetY;
+            return d3.interpolate(startPos, endPos);
+        })
+        .on("start", function(d) {
+            const currentPos = currentPositions.get(d.id);
+            // if (currentPos) {
+            //     console.log(`Node transition start - ID: ${d.id}, x: ${currentPos.x}, y: ${currentPos.y}`);
+            // } else {
+            //     console.log(`Node transition start - ID: ${d.id}, no initial position`);
+            // }
+        })
+        // .on("end", function(d) {
+        //     console.log(`Node transition end - ID: ${d.id}, x: ${d.x - offsetX}, y: ${d.y - offsetY}`);
+        // });
 
     // Add new nodes
-    function addNewNodesAndEdges(){
-        console.log("--------------Adding new nodes------------")
-        const nodeEnter = node.enter().append("circle")
+    const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
-        // .attr("r", d => d.type === 'tx' ? 4 : 1)
-        .attr("r", d => 5)
+        .attr("r", d => d.type === 'tx' ? 4 : 1)
         .attr("cx", d => d.x - offsetX)
         .attr("cy", d => d.y - offsetY)
         .style("fill", d => {
@@ -734,44 +416,71 @@ function updateGraph(newGraphData, count) {
             if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
                 displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
             }
-        })
-        .each(function(d) {
-            console.log(`New node added - ${d.id}}`);
-        });;
-
-        node = nodeEnter.merge(node);
-
-        // Update link data binding
-        const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
-        newGraphData.edges.forEach(d => {
-            d.source = nodeById.get(d.source) || d.source;
-            d.target = nodeById.get(d.target) || d.target;
         });
 
-        // Combine the existing links with the new links
-        link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
-        // console.log("----link data----",link.data())
+    node = nodeEnter.merge(node);
 
-        // Remove exiting links
-        link.exit().remove();
+    // Update link data binding
+    const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
+    newGraphData.edges.forEach(d => {
+        d.source = nodeById.get(d.source) || d.source;
+        d.target = nodeById.get(d.target) || d.target;
+    });
 
-        console.log("--------------Adding new edges---------")
-        const linkEnter = link.enter().append("line")
+    // Combine the existing links with the new links
+    link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
+    // console.log("----link data----",link.data())
+
+    // Remove exiting links
+    link.exit().remove();
+
+    // Transition existing links to new positions using attrTween
+    link.transition()
+        .duration(1500)
+        .attrTween("x1", function(d) {
+            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
+            const endPos = d.source.x - offsetX;
+            return d3.interpolate(startPos, endPos);
+        })
+        .attrTween("y1", function(d) {
+            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
+            const endPos = d.source.y - offsetY;
+            return d3.interpolate(startPos, endPos);
+        })
+        .attrTween("x2", function(d) {
+            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
+            const endPos = d.target.x - offsetX;
+            return d3.interpolate(startPos, endPos);
+        })
+        .attrTween("y2", function(d) {
+            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
+            const endPos = d.target.y - offsetY;
+            return d3.interpolate(startPos, endPos);
+        })
+        .on("start", function(d) {
+            const sourcePos = currentPositions.get(d.source.id);
+            const targetPos = currentPositions.get(d.target.id);
+            // if (sourcePos && targetPos) {
+            //     console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${sourcePos.x}, y1: ${sourcePos.y}, x2: ${targetPos.x}, y2: ${targetPos.y}`);
+            // } else {
+            //     console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, no initial position`);
+            // }
+        })
+        // .on("end", function(d) {
+        //     console.log(`Link transition end - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${d.source.x - offsetX}, y1: ${d.source.y - offsetY}, x2: ${d.target.x - offsetX}, y2: ${d.target.y - offsetY}`);
+        // });
+
+    const linkEnter = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => d.color)
-        .style("stroke", d => {
-            if (count !== 1) return '#008000'
-            else return d.color
-        })
         .style("stroke-width", d => {
-            // if (d.type === 'addr_link') {
-            //     return 0.3;
-            // } else {
-            //     const zScore = d.z_score_tx || 0.5;
-            //     const strokeWidth = mapZScoreToThickness(zScore);
-            //     return strokeWidth;
-            // }
-            return 2
+            if (d.type === 'addr_link') {
+                return 0.3;
+            } else {
+                const zScore = d.z_score_tx || 0.5;
+                const strokeWidth = mapZScoreToThickness(zScore);
+                return strokeWidth;
+            }
         })
         .on("mouseover", function (event, d) {
             let value;
@@ -780,18 +489,255 @@ function updateGraph(newGraphData, count) {
                 value = (value / 100000000).toPrecision(4);
                 displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`);
             }
-        })
-        .each(function(d) {
-            console.log(`New edge added - Source: ${d.source.id}, Target: ${d.target.id}`);
-        });;
+        });
 
-        link = linkEnter.merge(link);
-        console.log("All new nodes and edges have been added.");
-    }
+    link = linkEnter.merge(link);
 
     node.raise()
+
     ticked();
 }
+
+
+
+// function updateGraph(newGraphData, count) {
+//     console.log("Updating graph with new data:", newGraphData);
+
+//     if (!Array.isArray(newGraphData.nodes) || !Array.isArray(newGraphData.edges)) {
+//         console.error("New graph data is not correctly structured:", newGraphData);
+//         return;
+//     }
+
+//     // Capture the current positions of existing nodes
+//     const currentPositions = new Map();
+//     node.each(function(d) {
+//         const element = d3.select(this);
+//         currentPositions.set(d.id, {
+//             x: element.attr("cx"),
+//             y: element.attr("cy")
+//         });
+//         // console.log(`Captured position for node ID: ${d.id} - x: ${element.attr("cx")}, y: ${element.attr("cy")}`);
+//     });
+
+//     // const existingNodes = new Set(node.data().map(d => d.id));
+//     // const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`));
+//     const newNodesSet = new Set(newGraphData.nodes.map(d => d.id));
+//     const existingNodes = new Set(node.data().map(d => d.id).filter(id => newNodesSet.has(id)));
+
+//     const newEdgesSet = new Set(newGraphData.edges.map(d => `${d.source}-${d.target}`));
+//     const existingEdges = new Set(link.data().map(d => `${d.source.id}-${d.target.id}`).filter(id => newEdgesSet.has(id)));
+
+
+//     const nodesToAdd = newGraphData.nodes.filter(node => !existingNodes.has(node.id));
+//     const edgesToAdd = newGraphData.edges.filter(edge => !existingEdges.has(`${edge.source}-${edge.target}`));
+
+//     // console.log("number of nodesToAdd: ", nodesToAdd.length);
+
+//     // Update node data binding with new nodes
+//     node = node.data(newGraphData.nodes, d => d.id);
+
+
+//     // For testing only
+//     let nodeTransitionStartCount = 0;
+//     let nodeTransitionEndCount = 0;
+//     let edgeTransitionStartCount = 0;
+//     let edgeTransitionEndCount = 0;
+
+//     const totalNodeTransitions = existingNodes.size;
+//     const totalEdgeTransitions = existingEdges.size;
+
+//     console.log("Num of nodes: ", totalNodeTransitions, "Num of edges: ", totalEdgeTransitions)
+
+//     // Remove exiting nodes
+//     node.exit().remove();
+
+//     if (existingNodes.size > 0){
+//         nodeTransition();
+
+//         function nodeTransition(){
+//             // Transition existing nodes to new positions using attrTween
+//             node.transition()
+//                 .duration(1000)
+//                 .attrTween("cx", function(d) {
+//                     const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
+//                     const endPos = d.x - offsetX;
+//                     return d3.interpolate(startPos, endPos);
+//                 })
+//                 .attrTween("cy", function(d) {
+//                     const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
+//                     const endPos = d.y - offsetY;
+//                     return d3.interpolate(startPos, endPos);
+//                 })
+//                 .on("start", function(d) {
+//                     nodeTransitionStartCount++;
+//                     if (nodeTransitionStartCount === 1) {
+//                         console.log("---All node transitions started---");
+//                     }
+//                     console.log(`Node transition started - ID: ${d.id}`);
+//                 })
+//                 .on("end", function(d) {
+//                     nodeTransitionEndCount++;
+//                     if (nodeTransitionEndCount >= totalNodeTransitions) {
+//                         console.log("---All node transitions ended---");
+//                     }
+//                     console.log(`Node transition ended - ID: ${d.id}`);
+//                     // addNewNodes()
+//                 });
+//         }
+       
+
+//             // Update link data binding
+//             const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
+//             newGraphData.edges.forEach(d => {
+//                 d.source = nodeById.get(d.source) || d.source;
+//                 d.target = nodeById.get(d.target) || d.target;
+//             });
+
+//             // Combine the existing links with the new links
+//             link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
+
+//             // Remove exiting links
+//             link.exit().remove();
+
+//             edgeTransition();
+
+
+//         function edgeTransition(){
+//             // Transition existing links to new positions using attrTween
+//             link.transition()
+//                 .duration(1000)
+//                 .attrTween("x1", function(d) {
+//                     const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
+//                     const endPos = d.source.x - offsetX;
+//                     return d3.interpolate(startPos, endPos);
+//                 })
+//                 .attrTween("y1", function(d) {
+//                     const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
+//                     const endPos = d.source.y - offsetY;
+//                     return d3.interpolate(startPos, endPos);
+//                 })
+//                 .attrTween("x2", function(d) {
+//                     const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
+//                     const endPos = d.target.x - offsetX;
+//                     return d3.interpolate(startPos, endPos);
+//                 })
+//                 .attrTween("y2", function(d) {
+//                     const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
+//                     const endPos = d.target.y - offsetY;
+//                     return d3.interpolate(startPos, endPos);
+//                 })
+//                 .on("start", function(d) {
+//                     edgeTransitionStartCount++;
+//                     if (edgeTransitionStartCount === 1) {
+//                         console.log("All edge transitions started");
+//                     }
+//                     console.log(`Edge transition started - Source: ${d.source.id}, Target: ${d.target.id}`);
+//                 })
+//                 .on("end", function(d) {
+//                     edgeTransitionEndCount++;
+//                     console.log(`Edge transition ended - Source: ${d.source.id}, Target: ${d.target.id}`);
+//                     // if (edgeTransitionEndCount >= totalEdgeTransitions) {
+//                     //     console.log("All edge transitions ended");
+//                     //     addNewNodesAndEdges();
+//                     // }
+//                 });
+//             }
+
+//             Promise.all([nodeTransition, edgeTransition]).then(() => {
+//                 console.log("All transitions completed, adding new nodes and edges.");
+//                 addNewNodesAndEdges();
+//             });
+//     }
+    
+
+//     else{
+//         addNewNodesAndEdges();
+//     }
+
+//     // Add new nodes
+//     function addNewNodesAndEdges(){
+//         console.log("--------------Adding new nodes------------")
+//         const nodeEnter = node.enter().append("circle")
+//         .attr("class", d => `node node-${d.id}`)
+//         // .attr("r", d => d.type === 'tx' ? 4 : 1)
+//         .attr("r", d => 5)
+//         .attr("cx", d => d.x - offsetX)
+//         .attr("cy", d => d.y - offsetY)
+//         .style("fill", d => {
+//             if (d.z_score_balance) {
+//                 if (d.type === 'input') {
+//                     d.color = mapZScoreToColor(d.z_score_balance, d.color);
+//                 } else if (d.type === 'output') {
+//                     d.color = mapZScoreToColor(d.z_score_balance, d.color);
+//                 } 
+//             }
+//             return d.color;
+//         })
+//         .on("click", function (event, d) {
+//             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
+//         })
+//         .on("mouseover", function (event, d) {
+//             if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
+//                 displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
+//             }
+//         })
+//         .each(function(d) {
+//             console.log(`New node added - ${d.id}}`);
+//         });;
+
+//         node = nodeEnter.merge(node);
+
+//         // Update link data binding
+//         const nodeById = new Map(newGraphData.nodes.map(d => [d.id, d]));
+//         newGraphData.edges.forEach(d => {
+//             d.source = nodeById.get(d.source) || d.source;
+//             d.target = nodeById.get(d.target) || d.target;
+//         });
+
+//         // Combine the existing links with the new links
+//         link = link.data(newGraphData.edges, d => `${d.source.id}-${d.target.id}`);
+//         // console.log("----link data----",link.data())
+
+//         // Remove exiting links
+//         link.exit().remove();
+
+//         console.log("--------------Adding new edges---------")
+//         const linkEnter = link.enter().append("line")
+//         .attr("class", "link")
+//         .style("stroke", d => d.color)
+//         .style("stroke", d => {
+//             if (count !== 1) return '#008000'
+//             else return d.color
+//         })
+//         .style("stroke-width", d => {
+//             // if (d.type === 'addr_link') {
+//             //     return 0.3;
+//             // } else {
+//             //     const zScore = d.z_score_tx || 0.5;
+//             //     const strokeWidth = mapZScoreToThickness(zScore);
+//             //     return strokeWidth;
+//             // }
+//             return 2
+//         })
+//         .on("mouseover", function (event, d) {
+//             let value;
+//             if (d.type != 'addr_link') {
+//                 value = d.size;
+//                 value = (value / 100000000).toPrecision(4);
+//                 displayValue('transaction', value, event.pageX, event.pageY, `${d.source.id}-${d.target.id}`);
+//             }
+//         })
+//         .each(function(d) {
+//             console.log(`New edge added - Source: ${d.source.id}, Target: ${d.target.id}`);
+//         });;
+
+//         link = linkEnter.merge(link);
+//         console.log("All new nodes and edges have been added.");
+//     }
+
+//     node.raise()
+//     ticked();
+// }
 
 
 // Function to map z-score to edge thickness

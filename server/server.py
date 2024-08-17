@@ -30,6 +30,7 @@ scale_factor = 4
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}
 node_positions = {}
+addresses_to_query = []
 address_dict = {} # track addresses and associated nodes
 paused = False
 msgBuf = []
@@ -514,9 +515,11 @@ def process_transaction(transactions):
         # if graph_data:
         #     socketio.emit('graph_data', graph_data)
         #     print("emitted to client after processing transaction")
-        
+
         # Get balance of each address
-        addresses_to_query = []
+        global addresses_to_query
+
+        print ("---------number of global addresses to query-----------", len(addresses_to_query))
         for node in new_nodes:
             # only input and output nodes can have addresses
             if (node['type'] != "tx" and node['type'] != "intersection"):
@@ -530,9 +533,11 @@ def process_transaction(transactions):
                         transaction_value = node['size']
                         update_cache(address, transaction_value)
 
-        if addresses_to_query:
+        if len(addresses_to_query) >= 50:
+            print("-----------quering: ", len(addresses_to_query))
             new_balances = get_address_balances(addresses_to_query)
             address_cache.update(new_balances)
+            addresses_to_query = []
 
         return new_nodes, new_edges
 
@@ -803,7 +808,7 @@ def compute_graph(new_nodes, new_edges):
             end_time = time.time()
             emit_duration = end_time - start_time
             print(f"Emitted partial graph data after {i + batch_size} iterations in {emit_duration:.4f} seconds")
-            time.sleep(7)
+            time.sleep(1.6)
 
         return create_graph_data(new_nodes, new_edges, positions)
 
