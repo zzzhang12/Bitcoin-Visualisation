@@ -49,6 +49,12 @@ function runWebSocket() {
         console.log("Reloading page because the server state has been reset");
         location.reload();  // This reloads the iframe or page
     });
+
+    socket.on('controller_command', function(msg) {
+        if (msg.action === 'saveSnapshot') {
+            saveGraphSnapshot();
+        }
+    });
 };
 
 
@@ -140,9 +146,12 @@ function bindEvents(blkid, client){
     });
 }
 
+
 document.getElementById('saveGraphSnapshot').addEventListener('click', saveGraphSnapshot);
 
+
 function saveGraphSnapshot() {
+    console.log("--------------SAVING GRAPH SNAPSHOT-------------")
     const graphData = {
         nodes: [],
         edges: []
@@ -499,7 +508,6 @@ function updateGraph(newGraphData) {
 }
 
 
-
 // function updateGraph(newGraphData, count) {
 //     console.log("Updating graph with new data:", newGraphData);
 
@@ -741,6 +749,7 @@ function updateGraph(newGraphData) {
 
 
 // Function to map z-score to edge thickness
+
 function mapZScoreToThickness(zScore) {
     const minThickness = 0.4;
     const maxThickness = 3.0; 

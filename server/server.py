@@ -519,7 +519,7 @@ def process_transaction(transactions):
         # Get balance of each address
         global addresses_to_query
 
-        print ("---------number of global addresses to query-----------", len(addresses_to_query))
+        # print ("---------number of global addresses to query-----------", len(addresses_to_query))
         for node in new_nodes:
             # only input and output nodes can have addresses
             if (node['type'] != "tx" and node['type'] != "intersection"):
@@ -534,7 +534,7 @@ def process_transaction(transactions):
                         update_cache(address, transaction_value)
 
         if len(addresses_to_query) >= 50:
-            print("-----------quering: ", len(addresses_to_query))
+            # print("-----------quering: ", len(addresses_to_query))
             new_balances = get_address_balances(addresses_to_query)
             address_cache.update(new_balances)
             addresses_to_query = []
@@ -925,6 +925,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/controller')
+def controller():
+    return render_template('controller.html')
+
+
 @app.route('/static_graph', methods=['GET'])
 def static_graph():
     return render_template('static_graph.html')
@@ -934,6 +939,7 @@ def static_graph():
 def save_snapshot():
     graph_data = request.json
     file_path = os.path.join(app.static_folder, 'saved_graph.json')
+    print ("---RECEIVED COMMAND TO SAVE SNAPSHOT-----")
     try:
         with open(file_path, 'w') as f:
             json.dump(graph_data, f)
@@ -951,6 +957,12 @@ def get_snapshot():
         return jsonify(graph_data)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@socketio.on('controller_command')
+def handle_controller_command(data):
+    print(f"Received controller command: {data['action']}")
+    emit('controller_command', data, broadcast=True)
 
 
 @socketio.on('connect')
