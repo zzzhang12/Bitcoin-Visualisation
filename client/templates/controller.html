@@ -94,10 +94,10 @@
         }
 
         // Attach event listeners to buttons
-        // document.getElementById('startVisualization').addEventListener('click', () => {
-        //     socket.emit('controller_command', { action: 'startVisualization' });
-        //     console.log('Sent start visualization command');
-        // });
+        document.getElementById('startVisualization').addEventListener('click', () => {
+            socket.emit('controller_command', { action: 'startVisualization' });
+            console.log('Sent start visualization command');
+        });
 
         document.getElementById('saveSnapshot').addEventListener('click', () => {
             socket.emit('controller_command', { action: 'saveSnapshot' });
@@ -108,6 +108,7 @@
                 fetchSnapshots();
         });
 
+        
         function fetchSnapshots() {
             fetch('/list_snapshots')
                 .then(response => response.json())

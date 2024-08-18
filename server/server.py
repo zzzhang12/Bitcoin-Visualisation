@@ -34,6 +34,8 @@ addresses_to_query = []
 address_dict = {} # track addresses and associated nodes
 paused = False
 msgBuf = []
+start_visualization = False
+start_lock = threading.Lock()
 
 # Locks
 queue_lock = threading.Lock()
@@ -977,6 +979,15 @@ def handle_controller_command(data):
     emit('controller_command', data, broadcast=True)
 
 
+@socketio.on('controller_command')
+def handle_controller_command(data):
+    global start_visualization
+    if data['action'] == 'startVisualization':
+        with start_lock:
+            start_visualization = True
+        print("Visualization started")
+
+
 @socketio.on('connect')
 def handle_connect():
     print('Client connected') 
@@ -991,6 +1002,11 @@ def handle_disconnect():
 def periodic_broadcast():
     global nodes, edges
     while True:
+        with start_lock:
+            if not start_visualization:
+                time.sleep(0.5)  # Check every second to see if the visualization has started
+                continue
+
         with queue_lock:
             if not queue:
                 continue
