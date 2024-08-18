@@ -932,7 +932,8 @@ def controller():
 
 @app.route('/static_graph', methods=['GET'])
 def static_graph():
-    return render_template('static_graph.html')
+    snapshot = request.args.get('snapshot', 'saved_graph.json')
+    return render_template('static_graph.html', snapshot=snapshot)
 
 
 @app.route('/save_snapshot', methods=['POST'])
@@ -947,6 +948,16 @@ def save_snapshot():
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@app.route('/list_snapshots', methods=['GET'])
+def list_snapshots():
+    snapshots = []
+    static_folder = os.path.join(app.static_folder)
+    for file_name in os.listdir(static_folder):
+        if file_name.startswith("graph_snapshot_") and file_name.endswith(".json"):
+            snapshots.append(file_name)
+    return jsonify(snapshots)
 
 
 @app.route('/get_snapshot', methods=['GET'])

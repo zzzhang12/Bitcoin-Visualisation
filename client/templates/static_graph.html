@@ -35,11 +35,13 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            loadSnapshot();
+            const urlParams = new URLSearchParams(window.location.search);
+            const snapshot = urlParams.get('snapshot') || 'saved_graph.json'; // Fallback to 'saved_graph.json' if not provided
+            loadSnapshot(snapshot);
         });
 
-        function loadSnapshot() {
-            fetch('/get_snapshot')
+        function loadSnapshot(snapshot) {
+            fetch(`/static/${snapshot}`)
                 .then(response => response.json())
                 .then(data => {
                     renderGraph(data);
@@ -62,6 +64,11 @@
             svg.selectAll("*").remove();
 
             const g = svg.append("g");
+
+            // Enable zooming and panning
+            svg.call(d3.zoom().on("zoom", ({ transform }) => {
+                g.attr("transform", transform);
+            }));
 
             // Render nodes
             node = g.selectAll(".node")

@@ -23,7 +23,9 @@
     <h1>Controller</h1>
     <button id="startVisualization">Start Visualization</button>
     <button id="saveSnapshot">Save Graph Snapshot</button>
+    <button id="showSnapshot">Show Snapshot</button>
     <button id="resetGraph">Reset Graph</button>
+    <div id="snapshotList"></div>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
@@ -69,6 +71,37 @@
             console.log('Sent save snapshot command');
         });
 
+        document.getElementById('showSnapshot').addEventListener('click', () => {
+                fetchSnapshots();
+        });
+
+        function fetchSnapshots() {
+            fetch('/list_snapshots')
+                .then(response => response.json())
+                .then(snapshots => {
+                    displaySnapshotList(snapshots);
+                })
+                .catch(error => console.error('Error fetching snapshots:', error));
+        }
+
+        function displaySnapshotList(snapshots) {
+            const snapshotList = document.getElementById('snapshotList');
+            snapshotList.innerHTML = ''; // Clear previous list
+            snapshotList.style.display = 'block';
+
+            snapshots.forEach(snapshot => {
+                const button = document.createElement('button');
+                button.textContent = snapshot;
+                button.addEventListener('click', () => {
+                    displaySnapshot(snapshot);
+                });
+                snapshotList.appendChild(button);
+            });
+        }
+
+        function displaySnapshot(snapshot) {
+            window.open(`/static_graph?snapshot=${snapshot}`, '_blank');
+        }
         // document.getElementById('resetGraph').addEventListener('click', () => {
         //     socket.emit('controller_command', { action: 'resetGraph' });
         //     console.log('Sent reset graph command');
