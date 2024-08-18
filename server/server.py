@@ -777,7 +777,7 @@ def update_cache(address, transaction_value):
 #         return {'nodes': [], 'edges': []}
 
 def compute_graph(new_nodes, new_edges):
-    global nx_graph, node_positions, scale_factor, reset_requested
+    global nx_graph, node_positions, scale_factor
     total_iterations = 2000
     batch_size = 50
     # nx_graph_copy = copy.deepcopy(nx_graph)
@@ -799,11 +799,10 @@ def compute_graph(new_nodes, new_edges):
         )
 
         for i in range(0, total_iterations, batch_size):
-            if reset_requested:
-                print("Reset requested. Aborting compute_graph.")
-                # break
-                return {'nodes': [], 'edges': []}
-            
+            if not nx_graph.nodes or not nx_graph.edges:
+                print("Graph is empty, exiting compute_graph function.")
+                return
+
             positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=batch_size)
             # print ("\n")
             # print ("length of positions: ", len(positions))
@@ -949,7 +948,6 @@ def save_snapshot():
     graph_data = request.json
     filename = request.args.get('filename', 'saved_graph.json')
     file_path = os.path.join(app.static_folder, filename)
-    print ("---RECEIVED COMMAND TO SAVE SNAPSHOT-----")
     try:
         with open(file_path, 'w') as f:
             json.dump(graph_data, f)
@@ -998,13 +996,11 @@ def handle_controller_command(data):
     elif action == 'resetGraph':
         with start_lock:
             if start_visualization:
-                reset_requested = True
+                # reset_requested = True
                 print("Reset graph command received.")
                 reset_server_state()
-                reset_requested = False
-                socketio.emit('reload')
-                
-
+                # reset_requested = False
+                socketio.emit('reload')     
 
 
 @socketio.on('connect')
