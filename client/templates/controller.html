@@ -108,7 +108,12 @@
                 fetchSnapshots();
         });
 
-        
+        document.getElementById('resetGraph').addEventListener('click', () => {
+            socket.emit('controller_command', { action: 'resetGraph' });
+            console.log('Sent reset graph command');
+        });
+
+
         function fetchSnapshots() {
             fetch('/list_snapshots')
                 .then(response => response.json())
@@ -139,10 +144,6 @@
         function displaySnapshot(snapshot) {
             window.open(`/static_graph?snapshot=${snapshot}`, '_blank');
         }
-        // document.getElementById('resetGraph').addEventListener('click', () => {
-        //     socket.emit('controller_command', { action: 'resetGraph' });
-        //     console.log('Sent reset graph command');
-        // });
     </script>
 </body>
 </html>

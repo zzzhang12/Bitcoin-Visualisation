@@ -36,6 +36,7 @@ paused = False
 msgBuf = []
 start_visualization = False
 start_lock = threading.Lock()
+reset_requested = False
 
 # Locks
 queue_lock = threading.Lock()
@@ -776,7 +777,7 @@ def update_cache(address, transaction_value):
 #         return {'nodes': [], 'edges': []}
 
 def compute_graph(new_nodes, new_edges):
-    global nx_graph, node_positions, scale_factor
+    global nx_graph, node_positions, scale_factor, reset_requested
     total_iterations = 2000
     batch_size = 50
     # nx_graph_copy = copy.deepcopy(nx_graph)
@@ -798,6 +799,11 @@ def compute_graph(new_nodes, new_edges):
         )
 
         for i in range(0, total_iterations, batch_size):
+            if reset_requested:
+                print("Reset requested. Aborting compute_graph.")
+                # break
+                return {'nodes': [], 'edges': []}
+            
             positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=batch_size)
             # print ("\n")
             # print ("length of positions: ", len(positions))
@@ -973,19 +979,32 @@ def get_snapshot():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-@socketio.on('controller_command')
-def handle_controller_command(data):
-    print(f"Received controller command: {data['action']}")
-    emit('controller_command', data, broadcast=True)
+# @socketio.on('controller_command')
+# def handle_controller_command(data):
+#     print(f"Received controller command: {data['action']}")
+#     emit('controller_command', data, broadcast=True)
 
 
 @socketio.on('controller_command')
 def handle_controller_command(data):
-    global start_visualization
-    if data['action'] == 'startVisualization':
+    global start_visualization, reset_requested
+
+    action = data.get('action')
+    if action == 'startVisualization':
         with start_lock:
             start_visualization = True
-        print("Visualization started")
+        print("Visualization started.")
+
+    elif action == 'resetGraph':
+        with start_lock:
+            if start_visualization:
+                reset_requested = True
+                print("Reset graph command received.")
+                reset_server_state()
+                reset_requested = False
+                socketio.emit('reload')
+                
+
 
 
 @socketio.on('connect')
@@ -1000,12 +1019,22 @@ def handle_disconnect():
 
 
 def periodic_broadcast():
-    global nodes, edges
+    global nodes, edges, start_visualization, reset_requested
     while True:
         with start_lock:
             if not start_visualization:
                 time.sleep(0.5)  # Check every second to see if the visualization has started
                 continue
+
+        # # Handle reset requests
+        # if not reset_requested: 
+        #     print ("NOT resetting")
+        # if reset_requested:
+        #     print("Reset requested. Performing reset...")
+        #     reset_server_state()
+        #     reset_requested = False
+        #     socketio.emit('reload')
+        #     continue
 
         with queue_lock:
             if not queue:
