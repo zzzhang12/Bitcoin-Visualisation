@@ -88,6 +88,8 @@ function updateStats(statistics) {
     document.getElementById('txAvgFeeDens').innerHTML = (statistics.txTotalFee / statistics.txTotalSize).toLocaleString() + ' sat/byte';
 
     document.getElementById('statNumTx').innerHTML = statistics.numTx.toLocaleString();
+    document.getElementById('statNumIn').innerHTML = statistics.numIn.toLocaleString();
+    document.getElementById('statNumOut').innerHTML = statistics.numOut.toLocaleString();
     document.getElementById('statNumNodes').innerHTML = statistics.numNodes.toLocaleString();
 }
 
