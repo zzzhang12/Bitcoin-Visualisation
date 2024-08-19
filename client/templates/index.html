@@ -8,26 +8,85 @@
             background-color: #000000;
             margin: 0;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #header {
+            background-color: #222;
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            font-size: 24px;
+        }
+        #statsArea {
+            display: flex;
+            justify-content: space-around;
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            flex-wrap: wrap;
         }
         #graphcontainer {
-            width: 100vw;
-            height: 100vh;
+            /* width: 100vw;
+            height: 100vh; */
+            flex: 1;
+            position: relative;
         }
         svg {
             width: 100%;
             height: 100%;
         }
-        #infoBox {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #f9f9f9;
+        .stat-block {
+            margin: 5px 0;
+            text-align: center;
+        }
+        b {
+            color: yellow;
+        }
+        i {
+            color: rgb(128, 128, 128);
         }
     </style>
 </head>
 <body oncontextmenu="return false;">
+    <div id="header">Realtime Bitcoin Transactions</div>
+    <div id="statsArea">
+        <div class="stat-block">
+            <i>TxRate:</i> <div id="statTxRate"></div> tps
+        </div>
+        <div class="stat-block">
+            <b>Value</b><br>
+            <i>Max:</i> <div id="txMaxVal"></div><br>
+            <i>Total:</i> <div id="txTotalVal"></div><br>
+            <i>Avg:</i> <div id="txAvgVal"></div>
+        </div>
+        <div class="stat-block">
+            <b>Fees</b><br>
+            <i>Max:</i> <div id="txMaxFee"></div><br>
+            <i>Total:</i> <div id="txTotalFee"></div><br>
+            <i>Avg:</i> <div id="txAvgFee"></div>
+        </div>
+        <div class="stat-block">
+            <b>Size</b><br>
+            <i>Max:</i> <div id="txMaxSize"></div> bytes<br>
+            <i>Total:</i> <div id="txTotalSize"></div> bytes<br>
+            <i>Avg:</i> <div id="txAvgSize"></div> bytes
+        </div>
+        <div class="stat-block">
+            <b>Fee Density</b><br>
+            <i>Avg:</i> <div id="txAvgFeeDens"></div> sat/byte
+        </div>
+        <div class="stat-block">
+            <i>NumTx:</i> <div id="statNumTx"></div>
+        </div>
+        <div class="stat-block">
+            <i>NumNodes:</i> <div id="statNumNodes"></div>
+        </div>
+    </div>
     <div id="graphcontainer">
         <svg></svg>
     </div>

@@ -528,7 +528,20 @@ def process_transaction(transactions):
             txTotalSize += tx_size
             txMaxSize = max(txMaxSize, tx_size)
 
-            i += 1
+            # After updating the variables, emit the updated statistics
+            statistics = {
+                'numNodes': numNodes,
+                'numTx': numTx,
+                'numIn': numIn,
+                'numOut': numOut,
+                'txTotalVal': txTotalVal,
+                'txMaxVal': txMaxVal,
+                'txTotalFee': txTotalFee,
+                'txMaxFee': txMaxFee,
+                'txTotalSize': txTotalSize,
+                'txMaxSize': txMaxSize
+            }
+            socketio.emit('update_stats', statistics)
              
         # Compute positions and send graph data after processing each transaction
         # graph_data = compute_graph(nodes, edges)
@@ -1008,7 +1021,9 @@ def handle_controller_command(data):
     if action == 'startVisualization':
         with start_lock:
             start_visualization = True
-        print("Visualization started.")
+            threading.Thread(target=start_ws).start()
+            threading.Thread(target=periodic_broadcast).start()
+            print("Visualization started.")
 
     elif action == 'resetGraph':
         with start_lock:
@@ -1087,7 +1102,7 @@ def send_json_files():
 if __name__ == '__main__':
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
-    threading.Thread(target=start_ws).start()
-    threading.Thread(target=periodic_broadcast).start()
+    # threading.Thread(target=start_ws).start()
+    # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
     socketio.run(app, host='0.0.0.0', port=3000)

@@ -41,6 +41,10 @@ function runWebSocket() {
         processMessage(msg);
     });
 
+    socket.on('update_stats', function(statistics) {
+        updateStats(statistics);
+    });
+
     socket.on('connection_response', function(msg) {
         console.log('Server response:', msg);
     });
@@ -63,6 +67,28 @@ function getUrlParameter(name) {
     var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
     var results = regex.exec(location.search);
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+}
+
+
+function updateStats(statistics) {
+    console.log(statistics)
+    document.getElementById('statTxRate').innerHTML = statistics.txRate ? statistics.txRate.toLocaleString() : 'N/A';
+    document.getElementById('txMaxVal').innerHTML = (statistics.txMaxVal / 100000000).toLocaleString() + 'B';
+    document.getElementById('txTotalVal').innerHTML = (statistics.txTotalVal / 100000000).toLocaleString() + 'B';
+    document.getElementById('txAvgVal').innerHTML = ((statistics.txTotalVal / statistics.numTx) * 1000 / 100000000).toLocaleString() + 'mB';
+
+    document.getElementById('txMaxFee').innerHTML = (statistics.txMaxFee * 1000 / 100000000).toLocaleString() + 'mB';
+    document.getElementById('txTotalFee').innerHTML = (statistics.txTotalFee / 100000000).toLocaleString() + 'B';
+    document.getElementById('txAvgFee').innerHTML = ((statistics.txTotalFee / statistics.numTx) * 1000 / 100000000).toLocaleString() + 'mB';
+
+    document.getElementById('txMaxSize').innerHTML = statistics.txMaxSize.toLocaleString();
+    document.getElementById('txTotalSize').innerHTML = statistics.txTotalSize.toLocaleString();
+    document.getElementById('txAvgSize').innerHTML = (statistics.txTotalSize / statistics.numTx).toLocaleString();
+
+    document.getElementById('txAvgFeeDens').innerHTML = (statistics.txTotalFee / statistics.txTotalSize).toLocaleString() + ' sat/byte';
+
+    document.getElementById('statNumTx').innerHTML = statistics.numTx.toLocaleString();
+    document.getElementById('statNumNodes').innerHTML = statistics.numNodes.toLocaleString();
 }
 
 
