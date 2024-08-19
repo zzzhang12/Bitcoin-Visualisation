@@ -72,6 +72,10 @@ HORIZONTAL_BOUNDARIES = [-960, 960]
 VERTICAL_BOUNDARIES = [-1080, 0, 1080]
    
 # Global statistics variables
+lastRateTx = 0
+timeOfLastTx = time.time()
+txRate = 0
+
 numTx = 0
 numIn = 0
 numOut = 0
@@ -99,7 +103,8 @@ def load_transaction_stats():
 
 
 def reset_server_state():
-    global nodes, edges, node_ids, nx_graph, numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, node_positions
+    global nodes, edges, node_ids, nx_graph, node_positions
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate
 
     nodes = []
     edges = []
@@ -116,6 +121,9 @@ def reset_server_state():
     txTotalSize = 0
     txMaxSize = 0
     numTx = 0
+    lastRateTx = 0
+    timeOfLastTx = time.time()
+    txRate = 0
 
     print("Server state has been reset.")
 
@@ -226,7 +234,7 @@ def process_transaction(transactions):
     # print("length of transacions: ", len(transactions))
 
     global nodes, edges, node_ids, nx_graph, address_dict, address_cache
-    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize, lastRateTx, timeOfLastTx, txRate
 
     new_nodes = []
     new_edges = []
@@ -527,6 +535,11 @@ def process_transaction(transactions):
             txTotalSize += tx_size
             txMaxSize = max(txMaxSize, tx_size)
 
+            if numTx - lastRateTx >= 10:
+                txRate = 10 / ((time.time() - timeOfLastTx) / 1000)
+                timeOfLastTx = time.time()
+                lastRateTx = numTx
+
             # After updating the variables, emit the updated statistics
             statistics = {
                 'numNodes': numNodes,
@@ -538,7 +551,8 @@ def process_transaction(transactions):
                 'txTotalFee': txTotalFee,
                 'txMaxFee': txMaxFee,
                 'txTotalSize': txTotalSize,
-                'txMaxSize': txMaxSize
+                'txMaxSize': txMaxSize,
+                'txRate': round(txRate, 2)
             }
             socketio.emit('update_stats', statistics)
              
