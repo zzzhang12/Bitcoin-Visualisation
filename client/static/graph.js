@@ -9,7 +9,8 @@ const CLIENT_HEIGHT = 1080;
 
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
-
+let firstLoaded = false
+let startTime
 
 window.addEventListener("load", init, false);
 
@@ -38,6 +39,11 @@ function runWebSocket() {
 
     socket.on('graph_data', function(msg) {
         console.log('Received graph data:', msg);
+        if (!firstLoaded){
+            console.log("First time loading graph")
+            setTimer();
+            firstLoaded = true
+        }
         processMessage(msg);
     });
 
@@ -70,20 +76,36 @@ function getUrlParameter(name) {
 }
 
 
+function setTimer(){
+    startTime = Date.now();
+    setInterval(updateObsTimer, 1000);
+}
+
+
+function updateObsTimer() {
+    const elapsedTime = Date.now() - startTime;
+    const seconds = Math.floor((elapsedTime / 1000) % 60);
+    const minutes = Math.floor((elapsedTime / (1000 * 60)) % 60);
+    const hours = Math.floor((elapsedTime / (1000 * 60 * 60)) % 24);
+
+    document.getElementById('obsTimer').textContent = 
+        `${hours}h ${minutes}m ${seconds}s`;
+}
+
 function updateStats(statistics) {
     console.log(statistics)
     document.getElementById('statTxRate').innerHTML = statistics.txRate ? statistics.txRate.toLocaleString() : 'N/A';
-    document.getElementById('txMaxVal').innerHTML = (statistics.txMaxVal / 100000000).toLocaleString() + 'B';
+    document.getElementById('txMaxVal').innerHTML = (statistics.txMaxVal / 100000000).toLocaleString() + ' B';
     document.getElementById('txTotalVal').innerHTML = (statistics.txTotalVal / 100000000).toLocaleString() + 'B';
-    document.getElementById('txAvgVal').innerHTML = ((statistics.txTotalVal / statistics.numTx) * 1000 / 100000000).toLocaleString() + 'mB';
+    document.getElementById('txAvgVal').innerHTML = ((statistics.txTotalVal / statistics.numTx) * 1000 / 100000000).toLocaleString() + ' mB';
 
-    document.getElementById('txMaxFee').innerHTML = (statistics.txMaxFee * 1000 / 100000000).toLocaleString() + 'mB';
-    document.getElementById('txTotalFee').innerHTML = (statistics.txTotalFee / 100000000).toLocaleString() + 'B';
-    document.getElementById('txAvgFee').innerHTML = ((statistics.txTotalFee / statistics.numTx) * 1000 / 100000000).toLocaleString() + 'mB';
+    document.getElementById('txMaxFee').innerHTML = (statistics.txMaxFee * 1000 / 100000000).toLocaleString() + ' mB';
+    document.getElementById('txTotalFee').innerHTML = (statistics.txTotalFee / 100000000).toLocaleString() + ' B';
+    document.getElementById('txAvgFee').innerHTML = ((statistics.txTotalFee / statistics.numTx) * 1000 / 100000000).toLocaleString() + ' mB';
 
-    document.getElementById('txMaxSize').innerHTML = statistics.txMaxSize.toLocaleString();
-    document.getElementById('txTotalSize').innerHTML = statistics.txTotalSize.toLocaleString();
-    document.getElementById('txAvgSize').innerHTML = (statistics.txTotalSize / statistics.numTx).toLocaleString();
+    document.getElementById('txMaxSize').innerHTML = statistics.txMaxSize.toLocaleString() + ' bytes'; 
+    document.getElementById('txTotalSize').innerHTML = statistics.txTotalSize.toLocaleString() + ' bytes';
+    document.getElementById('txAvgSize').innerHTML = (statistics.txTotalSize / statistics.numTx).toLocaleString() + ' bytes';
 
     document.getElementById('txAvgFeeDens').innerHTML = (statistics.txTotalFee / statistics.txTotalSize).toLocaleString() + ' sat/byte';
 

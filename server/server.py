@@ -510,8 +510,7 @@ def process_transaction(transactions):
                         # if graph_data:
                         #     socketio.emit('graph_data', graph_data)
                         #     print("emitted to client after processing transaction")
-
-                        outVals += size
+                    outVals += size
 
             # Update transaction node values
             tx_fee = max(inVals - outVals, 0)

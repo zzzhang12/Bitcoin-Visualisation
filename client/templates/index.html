@@ -13,7 +13,6 @@
             height: 100vh;
         }
         #header {
-            background-color: #222;
             color: white;
             padding: 10px;
             font-family: Arial, sans-serif;
@@ -23,7 +22,6 @@
         #statsArea {
             display: flex;
             justify-content: space-around;
-            background-color: #333;
             color: white;
             padding: 10px;
             font-family: Arial, sans-serif;
@@ -50,16 +48,22 @@
         i {
             color: rgb(128, 128, 128);
         }
+        .stat-block div {
+            display: inline;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
     <div id="header">Realtime Bitcoin Transactions</div>
+    <div>
+        Time since observation start: <div id="obsTimer"></div>
+    </div>
     <div id="statsArea">
         <div class="stat-block">
-            <i>TxRate:</i> <div id="statTxRate"></div> tps
-            <i>NumTx:</i> <div id="statNumTx"></div>
-            <i>NumIn:</i> <div id="statNumIn"></div>
-            <i>NumOut:</i> <div id="statNumOut"></div>
+            <i>TxRate:</i> <div id="statTxRate"></div> tps <br>
+            <i>NumTx:</i> <div id="statNumTx"></div><br>
+            <i>NumIn:</i> <div id="statNumIn"></div><br>
+            <i>NumOut:</i> <div id="statNumOut"></div><br>
             <i>NumNodes:</i> <div id="statNumNodes"></div>
         </div>
         <div class="stat-block">
@@ -76,13 +80,13 @@
         </div>
         <div class="stat-block">
             <b>Size</b><br>
-            <i>Max:</i> <div id="txMaxSize"></div> bytes<br>
-            <i>Total:</i> <div id="txTotalSize"></div> bytes<br>
-            <i>Avg:</i> <div id="txAvgSize"></div> bytes
+            <i>Max:</i> <div id="txMaxSize"></div><br>
+            <i>Total:</i> <div id="txTotalSize"></div><br>
+            <i>Avg:</i> <div id="txAvgSize"></div>
         </div>
         <div class="stat-block">
             <b>Fee Density</b><br>
-            <i>Avg:</i> <div id="txAvgFeeDens"></div> sat/byte
+            <i>Avg:</i> <div id="txAvgFeeDens"></div>
         </div>
     </div>
     <div id="graphcontainer">
