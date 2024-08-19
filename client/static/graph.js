@@ -65,6 +65,7 @@ function getUrlParameter(name) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
+
 // Bind Controller
 function bindEvents(blkid, client){
     console.log('Binding events with blkid:', blkid, 'and client:', client);
@@ -147,7 +148,7 @@ function bindEvents(blkid, client){
 }
 
 
-document.getElementById('saveGraphSnapshot').addEventListener('click', saveGraphSnapshot);
+// document.getElementById('saveGraphSnapshot').addEventListener('click', saveGraphSnapshot);
 
 
 function saveGraphSnapshot() {

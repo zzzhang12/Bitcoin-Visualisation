@@ -21,26 +21,26 @@ BITCOIN_WS_URL = "wss://ws.blockchain.info/inv"
 
 # Global Variables
 queue = []
-MAX_SIZE = 100
-nodes = []
-edges = []
+MAX_SIZE = 100 # max queue size
+nodes = [] # all nodes
+edges = [] # all edges
 node_ids = set()   # for tracking nodes
 broadcast_interval = 1 # Frequency in seconds to broadcast data to clients
-scale_factor = 4
+scale_factor = 4 
 nx_graph = nx.Graph()  # Global NetworkX graph instance
-address_cache = {}
+address_cache = {}  # Cache of addresses balances
 node_positions = {}
-addresses_to_query = []
+addresses_to_query = [] # Addresses not in cache, thus need API query
 address_dict = {} # track addresses and associated nodes
 paused = False
 msgBuf = []
-start_visualization = False
-start_lock = threading.Lock()
-reset_requested = False
+start_visualization = False # Initialised to false, True when visualisation started by controller
+
 
 # Locks
 queue_lock = threading.Lock()
 forceatlas2_lock = threading.Lock()
+start_lock = threading.Lock()
 
 # Statistics 
 mean_tx = 0 # Mean of transaction values
@@ -48,8 +48,8 @@ std_dev_tx = 0 # Standard deviation of transaction values
 mean_balance = 0 # Mean of address balances
 std_dev_balance = 0 # Standard deviation of address balances
 
+# For testing - send local files
 file_index = 0
-
 # json_files = [
 #     '1.json',
 #     '2.json',
@@ -71,15 +71,21 @@ CLIENT_HEIGHT = 1080
 HORIZONTAL_BOUNDARIES = [-960, 960] 
 VERTICAL_BOUNDARIES = [-1080, 0, 1080]
    
-# Global variables
+# Global statistics variables
+numTx = 0
+numIn = 0
+numOut = 0
 numNodes = 0
+
 txTotalVal = 0
 txMaxVal = 0
+
 txTotalFee = 0
 txMaxFee = 0
+
 txTotalSize = 0
 txMaxSize = 0
-numTx = 0
+
 
 
 def load_transaction_stats():
@@ -93,13 +99,16 @@ def load_transaction_stats():
 
 
 def reset_server_state():
-    global nodes, edges, node_ids, nx_graph, numNodes, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, node_positions
+    global nodes, edges, node_ids, nx_graph, numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, node_positions
 
     nodes = []
     edges = []
     node_ids = set()
     nx_graph.clear()  
     numNodes = 0
+    numTx = 0
+    numIn = 0
+    numOut = 0
     txTotalVal = 0
     txMaxVal = 0
     txTotalFee = 0
@@ -217,7 +226,7 @@ def process_transaction(transactions):
     # print("length of transacions: ", len(transactions))
 
     global nodes, edges, node_ids, nx_graph, address_dict, address_cache
-    global numNodes, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize
 
     new_nodes = []
     new_edges = []
@@ -267,7 +276,10 @@ def process_transaction(transactions):
                 node_positions[tx_id] = None # Track initial position
 
                 # print(f"Added transaction node: {tx_id}")
+
+                # Update Statistics
                 numNodes += 1
+                numTx += 1
                 # print (numNodes)
                 # graph_data = compute_graph(nodes, edges)
                 # if graph_data:
@@ -350,7 +362,10 @@ def process_transaction(transactions):
 
                         node_positions[tx_id] = None # Track initial position
 
+                        # Update statistics
                         numNodes += 1
+                        numIn += 1
+
                         # print (numNodes)
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
@@ -461,7 +476,9 @@ def process_transaction(transactions):
 
                         node_positions[tx_id] = None # Track initial position
 
+                        # Update statistics
                         numNodes += 1
+                        numOut += 1
                         # print (numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
@@ -985,7 +1002,7 @@ def get_snapshot():
 
 @socketio.on('controller_command')
 def handle_controller_command(data):
-    global start_visualization, reset_requested
+    global start_visualization
 
     action = data.get('action')
     if action == 'startVisualization':
@@ -996,10 +1013,8 @@ def handle_controller_command(data):
     elif action == 'resetGraph':
         with start_lock:
             if start_visualization:
-                # reset_requested = True
                 print("Reset graph command received.")
                 reset_server_state()
-                # reset_requested = False
                 socketio.emit('reload')     
 
 
@@ -1015,22 +1030,12 @@ def handle_disconnect():
 
 
 def periodic_broadcast():
-    global nodes, edges, start_visualization, reset_requested
+    global nodes, edges, start_visualization
     while True:
         with start_lock:
             if not start_visualization:
                 time.sleep(0.5)  # Check every second to see if the visualization has started
                 continue
-
-        # # Handle reset requests
-        # if not reset_requested: 
-        #     print ("NOT resetting")
-        # if reset_requested:
-        #     print("Reset requested. Performing reset...")
-        #     reset_server_state()
-        #     reset_requested = False
-        #     socketio.emit('reload')
-        #     continue
 
         with queue_lock:
             if not queue:
