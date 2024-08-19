@@ -556,6 +556,11 @@ def process_transaction(transactions):
             }
             socketio.emit('update_stats', statistics)
              
+            stat_txVal = {
+                'txAvgVal': txTotalVal / numTx * 1000 / 100000000
+            }
+
+            socketio.emit('stat_update', stat_txVal)
         # Compute positions and send graph data after processing each transaction
         # graph_data = compute_graph(nodes, edges)
         # if graph_data:
@@ -978,6 +983,11 @@ def index():
 @app.route('/controller')
 def controller():
     return render_template('controller.html')
+
+
+@app.route('/tx_size')
+def tx_size():
+    return render_template('tx_size_histogram.html')
 
 
 @app.route('/static_graph', methods=['GET'])
