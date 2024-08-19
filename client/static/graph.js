@@ -11,6 +11,7 @@ let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
 let firstLoaded = false
 let startTime
+let isTopLeft
 
 window.addEventListener("load", init, false);
 
@@ -48,7 +49,10 @@ function runWebSocket() {
     });
 
     socket.on('update_stats', function(statistics) {
-        updateStats(statistics);
+        if (isTopLeft){
+            updateStats(statistics);
+        }
+
     });
 
     socket.on('connection_response', function(msg) {
@@ -90,7 +94,7 @@ function updateObsTimer() {
     const hours = Math.floor((elapsedTime / (1000 * 60 * 60)) % 24);
 
     document.getElementById('obsTimer').textContent = 
-        `${hours}h ${minutes}m ${seconds}s`;
+    `${hours}h ${minutes}m ${seconds}s`;
 }
 
 
@@ -328,6 +332,15 @@ function renderGraph(graphData) {
 
     const row = parseInt(getUrlParameter('row'), 10);
     const col = parseInt(getUrlParameter('col'), 10);
+
+    // Determine if this is the top-left screen
+    isTopLeft = (row === 2 && col === -1);
+    const infoArea = document.getElementById('infoArea');
+    if (isTopLeft) {
+        infoArea.style.visibility = 'visible';
+        infoArea.style.opacity = '1';
+    }
+    
 
      // Calculate offsets based on col and row
     //  offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols

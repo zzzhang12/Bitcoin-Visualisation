@@ -14,25 +14,41 @@
         }
         #header {
             color: white;
-            padding: 10px;
+            position: absolute;
             font-family: Arial, sans-serif;
+            font-size: 300%;
             text-align: center;
-            font-size: 24px;
+            top: 0px;
+            width: 100%;
+            margin: auto;
+        }
+        #graphcontainer {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
         }
         #statsArea {
-            display: flex;
-            justify-content: space-around;
+            position: absolute;
+            top: 100px;
+            left: 10px;
             color: white;
             padding: 10px;
             font-family: Arial, sans-serif;
-            font-size: 16px;
+            font-size: 130%;
+            display: flex;
+            justify-content: space-between;
             flex-wrap: wrap;
-        }
-        #graphcontainer {
-            /* width: 100vw;
-            height: 100vh; */
+            flex-direction: row;
             flex: 1;
-            position: relative;
+            gap: 50px;
+        }
+        #timeArea {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 120%;
         }
         svg {
             width: 100%;
@@ -40,7 +56,7 @@
         }
         .stat-block {
             margin: 5px 0;
-            text-align: center;
+            text-align: left;
         }
         b {
             color: yellow;
@@ -54,42 +70,45 @@
     </style>
 </head>
 <body oncontextmenu="return false;">
-    <div id="header">Realtime Bitcoin Transactions</div>
-    <div>
-        Time since observation start: <div id="obsTimer"></div>
-    </div>
-    <div id="statsArea">
-        <div class="stat-block">
-            <i>TxRate:</i> <div id="statTxRate"></div> tps <br>
-            <i>NumTx:</i> <div id="statNumTx"></div><br>
-            <i>NumIn:</i> <div id="statNumIn"></div><br>
-            <i>NumOut:</i> <div id="statNumOut"></div><br>
-            <i>NumNodes:</i> <div id="statNumNodes"></div>
+    <div id="infoArea" style="visibility: hidden;">
+        <div id="header">Realtime Bitcoin Transactions</div>
+        <div id="timeArea">
+            Time since observation start: <div id="obsTimer"></div>
         </div>
-        <div class="stat-block">
-            <b>Value</b><br>
-            <i>Max:</i> <div id="txMaxVal"></div><br>
-            <i>Total:</i> <div id="txTotalVal"></div><br>
-            <i>Avg:</i> <div id="txAvgVal"></div>
-        </div>
-        <div class="stat-block">
-            <b>Fees</b><br>
-            <i>Max:</i> <div id="txMaxFee"></div><br>
-            <i>Total:</i> <div id="txTotalFee"></div><br>
-            <i>Avg:</i> <div id="txAvgFee"></div>
-        </div>
-        <div class="stat-block">
-            <b>Size</b><br>
-            <i>Max:</i> <div id="txMaxSize"></div><br>
-            <i>Total:</i> <div id="txTotalSize"></div><br>
-            <i>Avg:</i> <div id="txAvgSize"></div>
-        </div>
-        <div class="stat-block">
-            <b>Fee Density</b><br>
-            <i>Avg:</i> <div id="txAvgFeeDens"></div>
+        <div id="statsArea" >
+            <div class="stat-block">
+                <i>TxRate:</i> <div id="statTxRate"></div> tps <br>
+                <i>NumTx:</i> <div id="statNumTx"></div><br>
+                <i>NumIn:</i> <div id="statNumIn"></div><br>
+                <i>NumOut:</i> <div id="statNumOut"></div><br>
+                <i>NumNodes:</i> <div id="statNumNodes"></div>
+            </div>
+            <div class="stat-block">
+                <b>Value</b><br>
+                <i>Max:</i> <div id="txMaxVal"></div><br>
+                <i>Total:</i> <div id="txTotalVal"></div><br>
+                <i>Avg:</i> <div id="txAvgVal"></div>
+            </div>
+            <div class="stat-block">
+                <b>Fees</b><br>
+                <i>Max:</i> <div id="txMaxFee"></div><br>
+                <i>Total:</i> <div id="txTotalFee"></div><br>
+                <i>Avg:</i> <div id="txAvgFee"></div>
+            </div>
+            <div class="stat-block">
+                <b>Size</b><br>
+                <i>Max:</i> <div id="txMaxSize"></div><br>
+                <i>Total:</i> <div id="txTotalSize"></div><br>
+                <i>Avg:</i> <div id="txAvgSize"></div>
+            </div>
+            <div class="stat-block">
+                <b>Fee Density</b><br>
+                <i>Avg:</i> <div id="txAvgFeeDens"></div>
+            </div>
         </div>
     </div>
     <div id="graphcontainer">
+        
         <svg></svg>
     </div>
     <!-- <div id="infoBox"><button id="saveGraphSnapshot">Save Graph Snapshot</button></div> -->
