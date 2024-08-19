@@ -61,6 +61,7 @@ function runWebSocket() {
     });
 
     socket.on('controller_command', function(msg) {
+        console.log("Received controller command")
         if (msg.action === 'saveSnapshot') {
             saveGraphSnapshot();
         }
@@ -92,8 +93,9 @@ function updateObsTimer() {
         `${hours}h ${minutes}m ${seconds}s`;
 }
 
+
 function updateStats(statistics) {
-    console.log(statistics)
+    // console.log(statistics)
     document.getElementById('statTxRate').innerHTML = statistics.txRate ? statistics.txRate.toLocaleString() : 'N/A';
     document.getElementById('txMaxVal').innerHTML = (statistics.txMaxVal / 100000000).toLocaleString() + ' B';
     document.getElementById('txTotalVal').innerHTML = (statistics.txTotalVal / 100000000).toLocaleString() + 'B';
@@ -205,7 +207,22 @@ function saveGraphSnapshot() {
     console.log("--------------SAVING GRAPH SNAPSHOT-------------")
     const graphData = {
         nodes: [],
-        edges: []
+        edges: [],
+        stats: {
+            txRate: document.getElementById('statTxRate').textContent,
+            txMaxVal: document.getElementById('txMaxVal').textContent,
+            txTotalVal: document.getElementById('txTotalVal').textContent,
+            txAvgVal: document.getElementById('txAvgVal').textContent,
+            txMaxFee: document.getElementById('txMaxFee').textContent,
+            txTotalFee: document.getElementById('txTotalFee').textContent,
+            txAvgFee: document.getElementById('txAvgFee').textContent,
+            txMaxSize: document.getElementById('txMaxSize').textContent,
+            txTotalSize: document.getElementById('txTotalSize').textContent,
+            txAvgSize: document.getElementById('txAvgSize').textContent,
+            txAvgFeeDens: document.getElementById('txAvgFeeDens').textContent,
+            numTx: document.getElementById('statNumTx').textContent,
+            numNodes: document.getElementById('statNumNodes').textContent
+        }
     };
 
     // Capture the current state of nodes

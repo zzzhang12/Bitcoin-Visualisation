@@ -974,6 +974,7 @@ def static_graph():
 
 @app.route('/save_snapshot', methods=['POST'])
 def save_snapshot():
+    print ("SAVING SNAPSHOTS")
     graph_data = request.json
     filename = request.args.get('filename', 'saved_graph.json')
     file_path = os.path.join(app.static_folder, filename)
@@ -1014,6 +1015,7 @@ def get_snapshot():
 
 @socketio.on('controller_command')
 def handle_controller_command(data):
+    print ("Received controller command")
     global start_visualization
 
     action = data.get('action')
@@ -1029,7 +1031,9 @@ def handle_controller_command(data):
             if start_visualization:
                 print("Reset graph command received.")
                 reset_server_state()
-                socketio.emit('reload')     
+                socketio.emit('reload')  
+    elif action == 'saveSnapshot':
+          emit('controller_command', data, broadcast=True)
 
 
 @socketio.on('connect')
