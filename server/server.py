@@ -985,9 +985,9 @@ def controller():
     return render_template('controller.html')
 
 
-@app.route('/tx_size')
+@app.route('/tx_value')
 def tx_size():
-    return render_template('tx_size_histogram.html')
+    return render_template('tx_value_histogram.html')
 
 
 @app.route('/static_graph', methods=['GET'])
