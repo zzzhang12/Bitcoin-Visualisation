@@ -25,7 +25,7 @@ MAX_SIZE = 100 # max queue size
 nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
-broadcast_interval = 1 # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1.5 # Frequency in seconds to broadcast data to clients
 scale_factor = 4 
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
@@ -281,7 +281,7 @@ def process_transaction(transactions):
                 node_ids.add(tx_id)
                 nx_graph.add_node(tx_id)
                 
-                node_positions[tx_id] = None # Track initial position
+                # node_positions[tx_id] = (0.0, 0.0) # Track initial position
 
                 # print(f"Added transaction node: {tx_id}")
 
@@ -368,7 +368,7 @@ def process_transaction(transactions):
                         nx_graph.add_edge(currID, tx_id)
                         # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
-                        node_positions[tx_id] = None # Track initial position
+                        # node_positions[tx_id] = (0.0, 0.0) # Track initial position
 
                         # Update statistics
                         numNodes += 1
@@ -482,7 +482,7 @@ def process_transaction(transactions):
                         nx_graph.add_edge(tx_id, currID)
                         # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
-                        node_positions[tx_id] = None # Track initial position
+                        # node_positions[tx_id] = (0.0, 0.0) # Track initial position
 
                         # Update statistics
                         numNodes += 1
@@ -824,13 +824,74 @@ def update_cache(address, transaction_value):
 #         traceback.print_exc()
 #         return {'nodes': [], 'edges': []}
 
+# def compute_graph(new_nodes, new_edges):
+#     global nx_graph, node_positions, scale_factor
+#     total_iterations = 2000
+#     batch_size = 50
+#     # nx_graph_copy = copy.deepcopy(nx_graph)
+
+#     try:
+#         forceatlas2 = ForceAtlas2(
+#             outboundAttractionDistribution=False,
+#             linLogMode=False,
+#             adjustSizes=False,
+#             edgeWeightInfluence=1.0,
+#             jitterTolerance=0.5,
+#             barnesHutOptimize=True,
+#             barnesHutTheta=1.0,
+#             multiThreaded=False,
+#             scalingRatio=40.0,
+#             gravity=10.0,
+#             strongGravityMode=False,
+#             verbose=True
+#         )
+
+#         for i in range(0, total_iterations, batch_size):
+#             if not nx_graph.nodes or not nx_graph.edges:
+#                 print("Graph is empty, exiting compute_graph function.")
+#                 return
+
+#             positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=batch_size)
+#             # print ("\n")
+#             # print ("length of positions: ", len(positions))
+#             # print (positions)
+
+#             partial_graph_data = create_graph_data(new_nodes, new_edges, positions)
+
+#             start_time = time.time()
+#             socketio.emit('graph_data', partial_graph_data)
+#             end_time = time.time()
+#             emit_duration = end_time - start_time
+#             print(f"Emitted partial graph data after {i + batch_size} iterations in {emit_duration:.4f} seconds")
+#             time.sleep(1.6)
+
+#         return create_graph_data(new_nodes, new_edges, positions)
+
+#     except Exception as e:
+#         print("Error rendering graph:", str(e))
+#         traceback.print_exc()
+#         return {'nodes': [], 'edges': []}
+
+
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions, scale_factor
-    total_iterations = 2000
-    batch_size = 50
-    # nx_graph_copy = copy.deepcopy(nx_graph)
+
+    total_iterations = 20
+    batch_size = 1  # Run one iteration at a time
 
     try:
+         # Initialize node_positions if it's not already done, or update with any new nodes
+        if node_positions is None:
+            node_positions = {node: (random.uniform(-1, 1), random.uniform(-1, 1)) for node in nx_graph.nodes()}
+        else:
+            # Ensure all nodes in the graph have a valid entry in node_positions
+            # for node in nx_graph.nodes():
+            for node in new_nodes:
+                node_id = node['id']
+                if node_id not in node_positions or node_positions[node_id] == (0.0, 0.0):
+                    node_positions[node_id] = (random.uniform(-1, 1), random.uniform(-1, 1))
+
+        # Initialize ForceAtlas2 with the desired parameters
         forceatlas2 = ForceAtlas2(
             outboundAttractionDistribution=False,
             linLogMode=False,
@@ -846,32 +907,38 @@ def compute_graph(new_nodes, new_edges):
             verbose=True
         )
 
-        for i in range(0, total_iterations, batch_size):
+        # Loop over the total number of iterations
+        for i in range(total_iterations):
             if not nx_graph.nodes or not nx_graph.edges:
                 print("Graph is empty, exiting compute_graph function.")
                 return
 
-            positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=batch_size)
-            # print ("\n")
-            # print ("length of positions: ", len(positions))
+            # Run ForceAtlas2 for one iteration, starting with the current node positions
+            positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=node_positions, iterations=batch_size)
+
+            # print ("-------------RAW POSITIONS---------------------")
             # print (positions)
 
-            partial_graph_data = create_graph_data(new_nodes, new_edges, positions)
+            # Update the global node positions with the new positions calculated by ForceAtlas2
+            node_positions.update(positions)
+            # print ("------------------------------")
+            # print (node_positions)
 
-            start_time = time.time()
-            socketio.emit('graph_data', partial_graph_data)
-            end_time = time.time()
-            emit_duration = end_time - start_time
-            print(f"Emitted partial graph data after {i + batch_size} iterations in {emit_duration:.4f} seconds")
-            time.sleep(1.6)
+            # Optionally, you can add some debugging or status information here
+            print(f"Completed iteration {i + 1}/{total_iterations}")
 
-        return create_graph_data(new_nodes, new_edges, positions)
+        # After all iterations, create and emit the final graph data
+        final_graph_data = create_graph_data(new_nodes, new_edges, node_positions)
+
+        socketio.emit('graph_data', final_graph_data)
+
+        return final_graph_data
 
     except Exception as e:
         print("Error rendering graph:", str(e))
         traceback.print_exc()
         return {'nodes': [], 'edges': []}
-
+    
 
 def create_graph_data(new_nodes, new_edges, positions):
     global scale_factor
