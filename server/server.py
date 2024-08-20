@@ -1010,13 +1010,28 @@ def save_snapshot():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+# @app.route('/list_snapshots', methods=['GET'])
+# def list_snapshots():
+#     snapshots = []
+#     static_folder = os.path.join(app.static_folder)
+#     for file_name in os.listdir(static_folder):
+#         if file_name.startswith("graph_snapshot_") and file_name.endswith(".json"):
+#             snapshots.append(file_name)
+#     return jsonify(snapshots)
+
 @app.route('/list_snapshots', methods=['GET'])
 def list_snapshots():
     snapshots = []
     static_folder = os.path.join(app.static_folder)
     for file_name in os.listdir(static_folder):
         if file_name.startswith("graph_snapshot_") and file_name.endswith(".json"):
-            snapshots.append(file_name)
+            with open(os.path.join(static_folder, file_name), 'r') as f:
+                graph_data = json.load(f)
+                stats = graph_data.get('stats', {})
+                snapshots.append({
+                    'file_name': file_name,
+                    'stats': stats
+                })
     return jsonify(snapshots)
 
 
@@ -1072,7 +1087,7 @@ def handle_disconnect():
 
 
 def periodic_broadcast():
-    global nodes, edges, start_visualization
+    global nodes, edges, start_visualization, numNodes
     while True:
         with start_lock:
             if not start_visualization:
