@@ -1053,7 +1053,7 @@ def periodic_broadcast():
 def send_json_files():
     global file_index, json_files
     while file_index < len(json_files):
-        time.sleep(broadcast_interval) 
+        time.sleep(broadcast_interval)
         with open(json_files[file_index]) as f:
             graph_data = json.load(f)
             socketio.emit('graph_data', graph_data)

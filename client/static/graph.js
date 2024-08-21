@@ -6,12 +6,15 @@ var msgBuf = [];
 
 const CLIENT_WIDTH = 853;  
 const CLIENT_HEIGHT = 982; // For local testing
+const HORIZONTAL_BOUNDARIES = [-982, 0, 982] 
+const VERTICAL_BOUNDARIES = [-853, 0, 853]
 
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
 let firstLoaded = false
 let startTime
 let isTopLeft
+let xMax, xMin, yMax, yMin
 
 window.addEventListener("load", init, false);
 
@@ -359,7 +362,6 @@ function renderGraph(graphData) {
     });
     
     // x and y value ranges based on client position
-    let xMax, xMin, yMax, yMin
     xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
     xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
     yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
@@ -463,13 +465,16 @@ function updateGraph(newGraphData) {
             return d3.interpolate(startPos, endPos);
         })
         .on("start", function(d) {
-            const currentPos = currentPositions.get(d.id);
+            handleSegmentedTransitions(d, currentPositions.get(d.id), { x: d.x - offsetX, y: d.y - offsetY }, "node");
+        });
+        // .on("start", function(d) {
+        //     const currentPos = currentPositions.get(d.id);
             // if (currentPos) {
             //     console.log(`Node transition start - ID: ${d.id}, x: ${currentPos.x}, y: ${currentPos.y}`);
             // } else {
             //     console.log(`Node transition start - ID: ${d.id}, no initial position`);
             // }
-        })
+        // })
         // .on("end", function(d) {
         //     console.log(`Node transition end - ID: ${d.id}, x: ${d.x - offsetX}, y: ${d.y - offsetY}`);
         // });
@@ -539,14 +544,18 @@ function updateGraph(newGraphData) {
             return d3.interpolate(startPos, endPos);
         })
         .on("start", function(d) {
-            const sourcePos = currentPositions.get(d.source.id);
-            const targetPos = currentPositions.get(d.target.id);
+            handleSegmentedTransitions(d, currentPositions.get(d.source.id), { x: d.source.x - offsetX, y: d.source.y - offsetY }, "link-source");
+            handleSegmentedTransitions(d, currentPositions.get(d.target.id), { x: d.target.x - offsetX, y: d.target.y - offsetY }, "link-target");
+        });
+        // .on("start", function(d) {
+        //     const sourcePos = currentPositions.get(d.source.id);
+        //     const targetPos = currentPositions.get(d.target.id);
             // if (sourcePos && targetPos) {
             //     console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${sourcePos.x}, y1: ${sourcePos.y}, x2: ${targetPos.x}, y2: ${targetPos.y}`);
             // } else {
             //     console.log(`Link transition start - Source: ${d.source.id}, Target: ${d.target.id}, no initial position`);
             // }
-        })
+        // })
         // .on("end", function(d) {
         //     console.log(`Link transition end - Source: ${d.source.id}, Target: ${d.target.id}, x1: ${d.source.x - offsetX}, y1: ${d.source.y - offsetY}, x2: ${d.target.x - offsetX}, y2: ${d.target.y - offsetY}`);
         // });
@@ -577,6 +586,175 @@ function updateGraph(newGraphData) {
     node.raise()
 
     ticked();
+}
+
+
+// Function to calculate and handle segmented transitions
+// function handleSegmentedTransitions(d, startPos, endPos, type) {
+//     const segments = splitIntoSegments(startPos, endPos);
+
+//     segments.forEach((segment, index) => {
+//         if (isInClientRange(segment.start, segment.end)) {
+//             const transitionDuration = 1500 / segments.length;
+//             const transition = type === "node" ? node.transition().duration(transitionDuration) : link.transition().duration(transitionDuration);
+
+//             transition
+//                 .attr("cx", type === "node" ? d => interpolate(segment.start.x, segment.end.x) : null)
+//                 .attr("cy", type === "node" ? d => interpolate(segment.start.y, segment.end.y) : null)
+//                 .attr("x1", type === "link-source" ? d => interpolate(segment.start.x, segment.end.x) : null)
+//                 .attr("y1", type === "link-source" ? d => interpolate(segment.start.y, segment.end.y) : null)
+//                 .attr("x2", type === "link-target" ? d => interpolate(segment.start.x, segment.end.x) : null)
+//                 .attr("y2", type === "link-target" ? d => interpolate(segment.start.y, segment.end.y) : null)
+//                 .on("end", () => {
+//                     if (index < segments.length - 1) {
+//                         handleSegmentedTransitions(d, segment.end, endPos, type);
+//                     }
+//                 });
+//         }
+//     });
+// }
+
+function handleSegmentedTransitions(d, startPos, endPos, axis) {
+    const segments = splitIntoSegments(startPos, endPos);
+
+    if (segments.length > 1) {
+        console.log(`Handling segmented transitions for node ${d.id} on ${axis}-axis.`);
+
+        segments.forEach((segment, index) => {
+            if (isInClientRange(segment.start, segment.end)) {
+                console.log(`Applying transition segment ${index + 1} for node ${d.id} on ${axis}-axis.`);
+                d3.select(this)
+                    .transition()
+                    .duration(1500 / segments.length)
+                    .attr(axis, d3.interpolate(segment.start[axis], segment.end[axis]));
+            }
+        });
+    } else {
+        console.log(`Single transition for node ${d.id} from (${startPos[axis]}) to (${endPos[axis]}) on ${axis}-axis.`);
+        d3.select(this)
+            .transition()
+            .duration(1500)
+            .attr(axis, d3.interpolate(startPos[axis], endPos[axis]));
+    }
+}
+
+// Function to split a transition into segments based on intersections
+// function splitIntoSegments(startPos, endPos) {
+//     let segments = [];
+//     const intersections = calculateIntersections(startPos, endPos);
+//     let lastPos = startPos;
+
+//     intersections.forEach(intersection => {
+//         segments.push({ start: lastPos, end: intersection });
+//         lastPos = intersection;
+//     });
+
+//     segments.push({ start: lastPos, end: endPos });
+//     return segments;
+// }
+
+function splitIntoSegments(startPos, endPos) {
+    const intersections = calculateIntersections(startPos, endPos);
+    let segments = [];
+
+    if (intersections.length === 0) {
+        console.log("No intersections found. Full transition from start to end.");
+        segments.push({ start: startPos, end: endPos });
+    } else {
+        console.log("Intersections found:", intersections);
+        let lastPos = startPos;
+        intersections.forEach((intersection, i) => {
+            console.log(`Segment ${i + 1}: From (${lastPos.x}, ${lastPos.y}) to (${intersection.x}, ${intersection.y})`);
+            segments.push({ start: lastPos, end: intersection });
+            lastPos = intersection;
+        });
+        console.log(`Final segment: From (${lastPos.x}, ${lastPos.y}) to (${endPos.x}, ${endPos.y})`);
+        segments.push({ start: lastPos, end: endPos });
+    }
+
+    return segments;
+}
+
+
+// Function to calculate intersections with boundaries
+function calculateIntersections(startPos, endPos) {
+    const intersections = [];
+    console.log("start pos", startPos)
+    console.log("end pos", endPos)
+    // Calculate intersections with vertical boundaries
+    VERTICAL_BOUNDARIES.forEach(boundary => {
+        console.log("vertical boundary: ", boundary)
+        if (Math.min(startPos.x, endPos.x) < boundary && boundary < Math.max(startPos.x, endPos.x)) {
+            const intersection = computeIntersection(startPos, endPos, boundary, true);
+            if (intersection) {
+                console.log("yes")
+                intersections.push(intersection);
+            }
+        }
+    });
+
+    // Calculate intersections with horizontal boundaries
+    HORIZONTAL_BOUNDARIES.forEach(boundary => {
+        console.log("horizontal boundary: ", boundary)
+        if (Math.min(startPos.y, endPos.y) < boundary && boundary < Math.max(startPos.y, endPos.y)) {
+            const intersection = computeIntersection(startPos, endPos, boundary, false);
+            if (intersection) {
+                console.log("yes")
+                intersections.push(intersection);
+            }
+        }
+    });
+
+    // Sort intersections by distance from the start position
+    intersections.sort((a, b) => {
+        return distance(a) - distance(b)
+    });
+
+    return intersections;
+}
+
+
+// Calculate the Euclidean distance between two points
+function distance(p1, p2) {
+    const dx = p2.x - p1.x;
+    const dy = p2.y - p1.y;
+    return Math.sqrt(dx * dx + dy * dy);
+}
+
+
+// Determine if two positions belong to different clients
+function isDifferentClient(p1, p2) {
+    const x1 = p1.x, y1 = p1.y;
+    const x2 = p2.x, y2 = p2.y;
+    return (Math.floor(x1 / CLIENT_WIDTH) !== Math.floor(x2 / CLIENT_WIDTH)) || 
+           (Math.floor(y1 / CLIENT_HEIGHT) !== Math.floor(y2 / CLIENT_HEIGHT));
+}
+
+
+function isInClientRange(start, end) {
+    const isStartInRange = (start.x >= xMin && start.x <= xMax) &&
+                           (start.y >= yMin && start.y <= yMax);
+
+    const isEndInRange = (end.x >= xMin && end.x <= xMax) &&
+                         (end.y >= yMin && end.y <= yMax);
+    return isStartInRange && isEndInRange;
+}
+
+
+// Compute intersection point of a line segment with a boundary
+function computeIntersection(p1, p2, boundary, isVertical) {
+    const x1 = p1.x, y1 = p1.y;
+    const x2 = p2.x, y2 = p2.y;
+    
+    if (isVertical) {
+        if (x1 === x2) return null; // Avoid division by zero
+        const y = y1 + (boundary - x1) * (y2 - y1) / (x2 - x1);
+        return { x: boundary, y: y };
+    } else {
+        if (y1 === y2) return null; // Avoid division by zero
+        const x = x1 + (boundary - y1) * (x2 - x1) / (y2 - y1);
+        return { x: x, y: boundary };
+    }
 }
 
 
