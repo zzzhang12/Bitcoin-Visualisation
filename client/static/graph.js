@@ -294,11 +294,11 @@ function processMessage(msg){
     }
 }
 
-d3.json("static/test_data_4.json").then(function(graphData) {
-    renderGraph(graphData);
-}).catch(function(error) {
-    console.error("Error loading the graph data: ", error);
-});
+// d3.json("static/test_data_4.json").then(function(graphData) {
+//     renderGraph(graphData);
+// }).catch(function(error) {
+//     console.error("Error loading the graph data: ", error);
+// });
 
 
 function initializeGraph() {

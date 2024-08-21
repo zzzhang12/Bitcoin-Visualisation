@@ -1,0 +1,9 @@
+{
+    "nodes": [
+        {"id": "n1", "x": 900, "y": 200, "color": "#ffffff", "type": "tx"},
+        {"id": "n2", "x": 1200, "y": 100, "color": "#003399", "type": "output"}
+    ],
+    "edges": [
+        {"source": "n1", "target": "n2", "type": "out_link", "color": "#003399"}
+    ]
+}

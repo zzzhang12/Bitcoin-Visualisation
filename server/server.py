@@ -50,18 +50,20 @@ std_dev_balance = 0 # Standard deviation of address balances
 
 # For testing - send local files
 file_index = 0
-# json_files = [
-#     '1.json',
-#     '2.json',
-#     '3.json',
-#     '4.json',
-#     '5.json',
-#     '6.json',
-#     '7.json',
-#     '8.json',
-#     '9.json',
-#     '10.json'
-# ]
+json_files = [
+    'test_data_4.json',
+    'test_data_5.json'
+    # '1.json',
+    # '2.json',
+    # '3.json',
+    # '4.json',
+    # '5.json',
+    # '6.json',
+    # '7.json',
+    # '8.json',
+    # '9.json',
+    # '10.json'
+]
 
 # Canvas sizes
 NUM_ROWS = 4
@@ -977,10 +979,11 @@ def handle_controller_command(data):
     action = data.get('action')
     if action == 'startVisualization':
         with start_lock:
-            start_visualization = True
-            threading.Thread(target=start_ws).start()
-            threading.Thread(target=periodic_broadcast).start()
-            print("Visualization started.")
+            threading.Thread(target=send_json_files).start()
+            # start_visualization = True
+            # threading.Thread(target=start_ws).start()
+            # threading.Thread(target=periodic_broadcast).start()
+            # print("Visualization started.")
 
     elif action == 'resetGraph':
         with start_lock:
@@ -1050,6 +1053,7 @@ def periodic_broadcast():
 def send_json_files():
     global file_index, json_files
     while file_index < len(json_files):
+        time.sleep(broadcast_interval) 
         with open(json_files[file_index]) as f:
             graph_data = json.load(f)
             socketio.emit('graph_data', graph_data)
