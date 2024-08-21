@@ -25,7 +25,7 @@ MAX_SIZE = 100 # max queue size
 nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
-broadcast_interval = 1.5 # Frequency in seconds to broadcast data to clients
+broadcast_interval = 2 # Frequency in seconds to broadcast data to clients
 scale_factor = 4 
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
@@ -280,8 +280,7 @@ def process_transaction(transactions):
                 new_nodes.append(node)
                 node_ids.add(tx_id)
                 nx_graph.add_node(tx_id)
-                
-                # node_positions[tx_id] = (0.0, 0.0) # Track initial position
+                node_positions[tx_id] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
                 # print(f"Added transaction node: {tx_id}")
 
@@ -309,9 +308,6 @@ def process_transaction(transactions):
                 existInput = nx_graph.nodes.get(currID)
 
                 from_text = f" from {currInput['prev_out']['addr']}"
-
-                # if addr is None:
-                #     print(f"Skipping input with None address: {currID}")
 
                 if addr:
                     # if input has not already been seen since start of visualisation,
@@ -368,7 +364,7 @@ def process_transaction(transactions):
                         nx_graph.add_edge(currID, tx_id)
                         # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
-                        # node_positions[tx_id] = (0.0, 0.0) # Track initial position
+                        node_positions[currID] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
                         # Update statistics
                         numNodes += 1
@@ -482,7 +478,7 @@ def process_transaction(transactions):
                         nx_graph.add_edge(tx_id, currID)
                         # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
-                        # node_positions[tx_id] = (0.0, 0.0) # Track initial position
+                        node_positions[currID] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
                         # Update statistics
                         numNodes += 1
@@ -589,8 +585,6 @@ def process_transaction(transactions):
             new_balances = get_address_balances(addresses_to_query)
             address_cache.update(new_balances)
             addresses_to_query = []
-
-        return new_nodes, new_edges
 
     except Exception as e:
         print("Error processing transactions:", str(e))
@@ -876,7 +870,7 @@ def update_cache(address, transaction_value):
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions, scale_factor
 
-    total_iterations = 20
+    total_iterations = 50
     batch_size = 1  # Run one iteration at a time
 
     try:
@@ -889,6 +883,7 @@ def compute_graph(new_nodes, new_edges):
             for node in new_nodes:
                 node_id = node['id']
                 if node_id not in node_positions or node_positions[node_id] == (0.0, 0.0):
+                    print ("initiliase node position")
                     node_positions[node_id] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
         # Initialize ForceAtlas2 with the desired parameters
@@ -903,8 +898,8 @@ def compute_graph(new_nodes, new_edges):
             multiThreaded=False,
             scalingRatio=40.0,
             strongGravityMode=False,
-            gravity=10.0,
-            verbose=True
+            gravity=12.0,
+            verbose=False
         )
 
         # Loop over the total number of iterations
@@ -921,16 +916,14 @@ def compute_graph(new_nodes, new_edges):
 
             # Update the global node positions with the new positions calculated by ForceAtlas2
             node_positions.update(positions)
-            # print ("------------------------------")
-            # print (node_positions)
 
-            # Optionally, you can add some debugging or status information here
-            print(f"Completed iteration {i + 1}/{total_iterations}")
+            # print(f"Completed iteration {i + 1}/{total_iterations}")
 
         # After all iterations, create and emit the final graph data
         final_graph_data = create_graph_data(new_nodes, new_edges, node_positions)
 
         socketio.emit('graph_data', final_graph_data)
+        print(f"Completed {total_iterations} iteration ")
 
         return final_graph_data
 
