@@ -1,11 +1,11 @@
 // Global variables
 var paused = false;
 var msgBuf = [];
-const CLIENT_WIDTH = 1920;  
-const CLIENT_HEIGHT = 1080;
+// const CLIENT_WIDTH = 1920;  
+// const CLIENT_HEIGHT = 1080;
 
-// const CLIENT_WIDTH = 853;  
-// const CLIENT_HEIGHT = 982; // For local testing
+const CLIENT_WIDTH = 853;  
+const CLIENT_HEIGHT = 982; // For local testing
 
 let socket, svg, g, link, node, simulation;
 let offsetX, offsetY
@@ -294,11 +294,11 @@ function processMessage(msg){
     }
 }
 
-// d3.json("static/test_data_4.json").then(function(graphData) {
-//     renderGraph(graphData);
-// }).catch(function(error) {
-//     console.error("Error loading the graph data: ", error);
-// });
+d3.json("static/test_data_4.json").then(function(graphData) {
+    renderGraph(graphData);
+}).catch(function(error) {
+    console.error("Error loading the graph data: ", error);
+});
 
 
 function initializeGraph() {
@@ -340,11 +340,10 @@ function renderGraph(graphData) {
         infoArea.style.visibility = 'visible';
         infoArea.style.opacity = '1';
     }
-    
 
      // Calculate offsets based on col and row
-    //  offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
-     offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
+     offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
+    //  offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
     //  offsetX = 0 
@@ -361,29 +360,16 @@ function renderGraph(graphData) {
     
     // x and y value ranges based on client position
     let xMax, xMin, yMax, yMin
-    // if (col == 0){
-    //     // const xInRange = node.x >= -0.5 * CLIENT_WIDTH && node.x <= 0.5 * CLIENT_WIDTH
-    //     xMax = 0.5 * CLIENT_WIDTH
-    //     xMin = -0.5 * CLIENT_WIDTH
-    // }
-    // else{
-    //     xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
-    //     xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
-    // }
-    // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
-    // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
+    xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
+    xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
+    yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
 
-    // // For local testing with 2 horizontally placed clients
-    // xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
-    // xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
-    // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
-    // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
-
-    // For local testing with 1 client
-    xMax = 10000
-    xMin = -10000
-    yMax = 10000
-    yMin = -10000
+    // // For local testing with 1 client
+    // xMax = 10000
+    // xMin = -10000
+    // yMax = 10000
+    // yMin = -10000
 
     // Calculate the filtered nodes
     let filteredNodes = graphData.nodes.filter(node => {
@@ -396,11 +382,11 @@ function renderGraph(graphData) {
         return xInRange && yInRange;
     });
 
-    // console.log("Filtered nodes:", filteredNodes);
+    console.log("Filtered nodes:", filteredNodes);
 
-    // console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
-    // console.log(`Client x range: [${xMin}, ${xMax}]`);
-    // console.log(`Client y range: [${yMin}, ${yMax}]`);
+    console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
+    console.log(`Client x range: [${xMin}, ${xMax}]`);
+    console.log(`Client y range: [${yMin}, ${yMax}]`);
 
     // // Convert edges to reference the node objects
     // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
@@ -420,7 +406,7 @@ function renderGraph(graphData) {
         return sourceInFilteredNodes && targetInFilteredNodes;
     });
 
-    // console.log('Filtered edges:', filteredEdges);
+    console.log('Filtered edges:', filteredEdges);
 
     if (!svg) {
         initializeGraph();
