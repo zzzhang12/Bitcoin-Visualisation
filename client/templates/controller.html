@@ -109,6 +109,8 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         let socket;
+        let X_OFFSET = 5820
+        let Y_OFFSET = 0
 
         window.addEventListener("load", init, false);
 
@@ -228,6 +230,44 @@
 
 
             button.addEventListener('click', () => {
+                // const url = `/static_graph?snapshot=${snapshot.file_name}`;
+    
+                // const payload = {
+                //     app: {
+                //         states: {
+                //             load: {
+                //                 url: url
+                //             }
+                //         },
+                //         url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                //     },
+                //     x: X_OFFSET,    
+                //     y: Y_OFFSET,    
+                //     w: 1920,       
+                //     h: 1080,  
+                //     space: "DODev"  
+                // };
+
+                // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                //     method: "POST",
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     },
+                //     body: JSON.stringify(payload)
+                // })
+                // .then(response => {
+                //     if (!response.ok) {
+                //         throw new Error('Failed to load snapshot.');
+                //     }
+                //     return response.json();
+                // })
+                // .then(data => {
+                //     console.log('Snapshot loaded into the observatory:', data);
+                // })
+                // .catch(error => {
+                //     console.error('Error loading snapshot into the observatory:', error);
+                // });
+
                 window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
             });
             snapshotList.appendChild(button);
