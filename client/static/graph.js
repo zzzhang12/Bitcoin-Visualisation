@@ -123,85 +123,85 @@ function updateStats(statistics) {
 
 
 // Bind Controller
-function bindEvents(blkid, client){
-    console.log('Binding events with blkid:', blkid, 'and client:', client);
+// function bindEvents(blkid, client){
+//     console.log('Binding events with blkid:', blkid, 'and client:', client);
 
-    // Establish connection to controller
-    var peer = new Peer({ key: "g9o1meczkw9x80k9" });
+//     // Establish connection to controller
+//     var peer = new Peer({ key: "g9o1meczkw9x80k9" });
 
-    var conn = peer.connect('controller');
+//     var conn = peer.connect('controller');
 
-    // Update DOM with connection string
-    conn.on('open', function(){
-        console.log('Connection to ' + conn.peer + ' from ' + peer.id);
-        // document.getElementById('peerID').innerHTML = 'ConnectionID:' + peer.id;
+//     // Update DOM with connection string
+//     conn.on('open', function(){
+//         console.log('Connection to ' + conn.peer + ' from ' + peer.id);
+//         // document.getElementById('peerID').innerHTML = 'ConnectionID:' + peer.id;
 
-        conn.send({ peertype: 'info', peerpayload: client });   // Send which node it is
-        conn.send({ peertype: 'block', peerpayload: blkid });
-    });
+//         conn.send({ peertype: 'info', peerpayload: client });   // Send which node it is
+//         conn.send({ peertype: 'block', peerpayload: blkid });
+//     });
 
-    conn.on('close', function(){
-        // document.getElementById('peerID').innerHTML = 'Not connected to controller';
-    });
+//     conn.on('close', function(){
+//         // document.getElementById('peerID').innerHTML = 'Not connected to controller';
+//     });
 
-    // Simple messaging protocol
-    conn.on('data', function(data) {
-        if (data.type == 'newBlock' && data.value >= 0)
-            window.open("/Web/Bitcoin/App.cshtml?block=" + data.value, '_self');
+//     // Simple messaging protocol
+//     conn.on('data', function(data) {
+//         if (data.type == 'newBlock' && data.value >= 0)
+//             window.open("/Web/Bitcoin/App.cshtml?block=" + data.value, '_self');
 
-        if (data.type == 'newBlock' && data.value < 0)
-            window.open("/Web/Bitcoin/App.cshtml", '_self');
+//         if (data.type == 'newBlock' && data.value < 0)
+//             window.open("/Web/Bitcoin/App.cshtml", '_self');
 
-        if (data.type == 'connComp') {
-            if (data.value)
-                minDegs = 2;
-            else
-                minDegs = 0;
-            applyFilters();
-            renderGraph();
-        }
+//         if (data.type == 'connComp') {
+//             if (data.value)
+//                 minDegs = 2;
+//             else
+//                 minDegs = 0;
+//             applyFilters();
+//             renderGraph();
+//         }
 
-        // if (data.type == 'minValConstraint') {
-        //     minValConstraint = data.value;
-        //     applyFilters();
-        //     renderGraph();
-        // }
+//         // if (data.type == 'minValConstraint') {
+//         //     minValConstraint = data.value;
+//         //     applyFilters();
+//         //     renderGraph();
+//         // }
 
-        // if(data.type == 'maxValConstraint') {
-        //     maxValConstraint = data.value;
-        //     applyFilters();
-        //     renderGraph();
-        // }
+//         // if(data.type == 'maxValConstraint') {
+//         //     maxValConstraint = data.value;
+//         //     applyFilters();
+//         //     renderGraph();
+//         // }
 
-        // if (data.type == 'minFeeConstraint') {
-        //     minFeeConstraint = data.value;
-        //     applyFilters();
-        //     renderGraph();
-        // }
+//         // if (data.type == 'minFeeConstraint') {
+//         //     minFeeConstraint = data.value;
+//         //     applyFilters();
+//         //     renderGraph();
+//         // }
 
-        // if(data.type == 'maxFeeConstraint') {
-        //     maxFeeConstraint = data.value;
-        //     applyFilters();
-        //     renderGraph();
-        // }
+//         // if(data.type == 'maxFeeConstraint') {
+//         //     maxFeeConstraint = data.value;
+//         //     applyFilters();
+//         //     renderGraph();
+//         // }
 
-        // if(data.type == 'addrFilter') {
-        //     addrFilter = data.value;
-        //     applyFilters();
-        //     renderGraph();
-        // }
+//         // if(data.type == 'addrFilter') {
+//         //     addrFilter = data.value;
+//         //     applyFilters();
+//         //     renderGraph();
+//         // }
 
-        // if(data.type == 'txFilter') {
-        //     txFilter = data.value;
-        //     applyFilters();
-        //     renderGraph();
-        // }
+//         // if(data.type == 'txFilter') {
+//         //     txFilter = data.value;
+//         //     applyFilters();
+//         //     renderGraph();
+//         // }
 
-        if (data.type == 'saveSnapshot') {
-            saveGraphSnapshot();
-        }
-    });
-}
+//         if (data.type == 'saveSnapshot') {
+//             saveGraphSnapshot();
+//         }
+//     });
+// }
 
 
 // document.getElementById('saveGraphSnapshot').addEventListener('click', saveGraphSnapshot);
@@ -343,8 +343,8 @@ function renderGraph(graphData) {
     
 
      // Calculate offsets based on col and row
-    //  offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
-     offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
+     offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
+    //  offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
     //  offsetX = 0 
@@ -373,17 +373,17 @@ function renderGraph(graphData) {
     // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
     // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
 
-    // // For local testing with 2 horizontally placed clients
-    // xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
-    // xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
-    // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
-    // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
+    // For local testing with 2 horizontally placed clients
+    xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
+    xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
+    yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
 
-    // For local testing with 1 client
-    xMax = 10000
-    xMin = -10000
-    yMax = 10000
-    yMin = -10000
+    // // For local testing with 1 client
+    // xMax = 10000
+    // xMin = -10000
+    // yMax = 10000
+    // yMin = -10000
 
     // Calculate the filtered nodes
     let filteredNodes = graphData.nodes.filter(node => {
@@ -398,9 +398,9 @@ function renderGraph(graphData) {
 
     // console.log("Filtered nodes:", filteredNodes);
 
-    // console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
-    // console.log(`Client x range: [${xMin}, ${xMax}]`);
-    // console.log(`Client y range: [${yMin}, ${yMax}]`);
+    console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
+    console.log(`Client x range: [${xMin}, ${xMax}]`);
+    console.log(`Client y range: [${yMin}, ${yMax}]`);
 
     // // Convert edges to reference the node objects
     // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
