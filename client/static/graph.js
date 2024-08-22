@@ -23,7 +23,7 @@ function init() {
 
 
 function runWebSocket() {
-    socket = io("http://146.169.209.45:3000/",{
+    socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
         withCredentials: true,
         }
     )
@@ -340,7 +340,6 @@ function renderGraph(graphData) {
         infoArea.style.visibility = 'visible';
         infoArea.style.opacity = '1';
     }
-    
 
      // Calculate offsets based on col and row
     //  offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
@@ -425,7 +424,7 @@ function renderGraph(graphData) {
        else if (col == 1){
             node.x = node.x - 0.5 * CLIENT_WIDTH;
        }
-       else if (col == 2){
+       else if (col == -1){
             node.x = node.x + 1.5 * CLIENT_WIDTH;
        }
     });

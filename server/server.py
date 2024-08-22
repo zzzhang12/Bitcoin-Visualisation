@@ -1096,4 +1096,4 @@ if __name__ == '__main__':
     # threading.Thread(target=start_ws).start()
     # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
-    socketio.run(app, host='0.0.0.0', port=3000)
+    socketio.run(app, host='2a0c:5bc0:40:2e26:4961:8fe2:345d:7569', port=3000)

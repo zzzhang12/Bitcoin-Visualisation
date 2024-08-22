@@ -120,7 +120,7 @@
         }
 
         function runWebSocket() {
-            socket = io("http://146.169.209.45:3000/",{
+            socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
                 withCredentials: true,
                 }
             )
@@ -230,7 +230,7 @@
 
 
             button.addEventListener('click', () => {
-                const url = `/static_graph?snapshot=${snapshot.file_name}`;
+                const url = `http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/static_graph?snapshot=${snapshot.file_name}`;
     
                 const payload = {
                     app: {
@@ -245,7 +245,7 @@
                     y: Y_OFFSET,    
                     w: 5760,       
                     h: 4320,  
-                    space: "DODev"  
+                    space: "DOCluster"  
                 };
 
                 fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
