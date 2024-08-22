@@ -343,8 +343,8 @@ function renderGraph(graphData) {
     
 
      // Calculate offsets based on col and row
-     offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
-    //  offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
+    //  offsetX = (col > 0 ? (col - 1) : (col + 1)) * CLIENT_WIDTH;  // for even numbers of cols
+     offsetX = (col == 0 ? 0 : col * 0.5 * CLIENT_WIDTH);     
      offsetY = (row > 0 ? (row - 1) : (row + 1)) * CLIENT_HEIGHT;
 
     //  offsetX = 0 
@@ -361,23 +361,23 @@ function renderGraph(graphData) {
     
     // x and y value ranges based on client position
     let xMax, xMin, yMax, yMin
-    // if (col == 0){
-    //     // const xInRange = node.x >= -0.5 * CLIENT_WIDTH && node.x <= 0.5 * CLIENT_WIDTH
-    //     xMax = 0.5 * CLIENT_WIDTH
-    //     xMin = -0.5 * CLIENT_WIDTH
-    // }
-    // else{
-    //     xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
-    //     xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
-    // }
-    // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
-    // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
-
-    // For local testing with 2 horizontally placed clients
-    xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
-    xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    if (col == 0){
+        // const xInRange = node.x >= -0.5 * CLIENT_WIDTH && node.x <= 0.5 * CLIENT_WIDTH
+        xMax = 0.5 * CLIENT_WIDTH
+        xMin = -0.5 * CLIENT_WIDTH
+    }
+    else{
+        xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
+        xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    }
     yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
     yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
+
+    // For local testing with 2 horizontally placed clients
+    // xMax = col > 0 ? (offsetX + CLIENT_WIDTH) : offsetX
+    // xMin = col > 0 ? offsetX : (offsetX - CLIENT_WIDTH)
+    // yMax = row > 0 ? (offsetY+ CLIENT_HEIGHT) : offsetY
+    // yMin = row > 0 ? offsetY : (offsetY - CLIENT_HEIGHT)
 
     // // For local testing with 1 client
     // xMax = 10000
@@ -409,6 +409,26 @@ function renderGraph(graphData) {
     //     d.target = nodeById.get(d.target);
     // });
 
+    filteredNodes.forEach(node => {
+       if (row > 0){
+            node.y = row * CLIENT_HEIGHT - node.y;
+       }
+       else if (row == -1){
+            node.y = -1 * node.y;
+       }
+       else if (row == -2){
+            node.y = abs(node.y) - CLIENT_HEIGHT;s
+       }
+       if (col == 0){
+            node.x = node.x + 0.5 * CLIENT_WIDTH;
+       }
+       else if (col == 1){
+            node.x = node.x - 0.5 * CLIENT_WIDTH;
+       }
+       else if (col == 2){
+            node.x = node.x + 1.5 * CLIENT_WIDTH;
+       }
+    });
 
     // Filter edges based on the filtered nodes
     const filteredEdges = graphData.edges.filter(edge => {
@@ -467,13 +487,13 @@ function updateGraph(newGraphData) {
     node.transition()
         .duration(1500)
         .attrTween("cx", function(d) {
-            const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x - offsetX;
-            const endPos = d.x - offsetX;
+            const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).x : d.x;
+            const endPos = d.x;
             return d3.interpolate(startPos, endPos);
         })
         .attrTween("cy", function(d) {
-            const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y - offsetY;
-            const endPos = d.y - offsetY;
+            const startPos = currentPositions.get(d.id) ? currentPositions.get(d.id).y : d.y;
+            const endPos = d.y;
             return d3.interpolate(startPos, endPos);
         })
         .on("start", function(d) {
@@ -492,8 +512,8 @@ function updateGraph(newGraphData) {
     const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
         .attr("r", d => d.type === 'tx' ? 4 : 1)
-        .attr("cx", d => d.x - offsetX)
-        .attr("cy", d => d.y - offsetY)
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
         .style("fill", d => {
             if (d.z_score_balance) {
                 if (d.type === 'input') {
@@ -533,23 +553,23 @@ function updateGraph(newGraphData) {
     link.transition()
         .duration(1500)
         .attrTween("x1", function(d) {
-            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x - offsetX;
-            const endPos = d.source.x - offsetX;
+            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).x : d.source.x;
+            const endPos = d.source.x;
             return d3.interpolate(startPos, endPos);
         })
         .attrTween("y1", function(d) {
-            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y - offsetY;
-            const endPos = d.source.y - offsetY;
+            const startPos = currentPositions.get(d.source.id) ? currentPositions.get(d.source.id).y : d.source.y;
+            const endPos = d.source.y;
             return d3.interpolate(startPos, endPos);
         })
         .attrTween("x2", function(d) {
-            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x - offsetX;
-            const endPos = d.target.x - offsetX;
+            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).x : d.target.x;
+            const endPos = d.target.x;
             return d3.interpolate(startPos, endPos);
         })
         .attrTween("y2", function(d) {
-            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y - offsetY;
-            const endPos = d.target.y - offsetY;
+            const startPos = currentPositions.get(d.target.id) ? currentPositions.get(d.target.id).y : d.target.y;
+            const endPos = d.target.y;
             return d3.interpolate(startPos, endPos);
         })
         .on("start", function(d) {

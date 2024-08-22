@@ -26,7 +26,7 @@ nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
 broadcast_interval = 2 # Frequency in seconds to broadcast data to clients
-scale_factor = 4 
+scale_factor = 3
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
 node_positions = {}
@@ -794,10 +794,21 @@ def create_graph_data(new_nodes, new_edges, positions):
     global scale_factor
 
     new_edges_split = []
+    all_x_values = []
+    all_y_values = []
+    outside_x_range = 0
+    outside_y_range = 0
+
     for edge in new_edges:
         if edge['source'] in positions and edge['target'] in positions:
             source_pos = positions[edge['source']]
             target_pos = positions[edge['target']]
+
+             # Collecting x and y values
+            all_x_values.append(source_pos[0])
+            all_x_values.append(target_pos[0])
+            all_y_values.append(source_pos[1])
+            all_y_values.append(target_pos[1])
 
             if is_different_client(source_pos, target_pos):
                 intersections = []
@@ -821,6 +832,9 @@ def create_graph_data(new_nodes, new_edges, positions):
                     intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
                     positions[intersection_id] = intersection
 
+                    all_x_values.append(intersection[0])
+                    all_y_values.append(intersection[1])
+
                     new_edges_split.append({
                         'source': last_node_id,
                         'target': intersection_id,
@@ -843,6 +857,24 @@ def create_graph_data(new_nodes, new_edges, positions):
                 })
             else:
                 new_edges_split.append(edge)
+     # Determine the range of x and y values
+    x_min, x_max = min(all_x_values), max(all_x_values)
+    y_min, y_max = min(all_y_values), max(all_y_values)
+
+    # Check how many nodes fall outside the specified range
+    for x in all_x_values:
+        if x < -1920 or x > 3840:
+            outside_x_range += 1
+
+    for y in all_y_values:
+        if y < -2160 or y > 2160:
+            outside_y_range += 1
+
+    # Print the range of x and y values and how many are outside the boundaries
+    print(f"X range: ({x_min}, {x_max})")
+    print(f"Y range: ({y_min}, {y_max})")
+    print(f"Nodes outside X range: {outside_x_range}")
+    print(f"Nodes outside Y range: {outside_y_range}")
 
     graph_data = {
         'nodes': [{'id': node['id'], 
