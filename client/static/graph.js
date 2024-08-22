@@ -323,6 +323,7 @@ function initializeGraph() {
     node = g.selectAll(".node");
 }
 
+
 var count = 0
 function renderGraph(graphData) {
     console.log("Attempting to render graph");
@@ -390,13 +391,6 @@ function renderGraph(graphData) {
     console.log(`Client x range: [${xMin}, ${xMax}]`);
     console.log(`Client y range: [${yMin}, ${yMax}]`);
 
-    // // Convert edges to reference the node objects
-    // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
-    // graphData.edges.forEach(d => {
-    //     d.source = nodeById.get(d.source);
-    //     d.target = nodeById.get(d.target);
-    // });
-
 
     // Filter edges based on the filtered nodes
     const filteredEdges = graphData.edges.filter(edge => {
@@ -410,14 +404,147 @@ function renderGraph(graphData) {
 
     console.log('Filtered edges:', filteredEdges);
 
+    let nodesLeaving, nodesEntering, edgesLeaving, edgesEntering
+
+    if (node){
+        const currentPositions = new Map();
+        node.each(function(d) {
+            const element = d3.select(this);
+            const cx = parseFloat(element.attr("cx"));
+            const cy = parseFloat(element.attr("cy")); 
+            currentPositions.set(d.id, {
+                x: cx + offsetX,
+                y: cy + offsetY
+            });
+        });
+        console.log("current positions:", currentPositions)
+
+        // Track nodes that are moving out of or into the client's range
+        nodesLeaving = graphData.nodes.filter(node => {
+            const wasInRange = currentPositions.has(node.id) &&
+                currentPositions.get(node.id).x >= xMin &&
+                currentPositions.get(node.id).x <= xMax &&
+                currentPositions.get(node.id).y >= yMin &&
+                currentPositions.get(node.id).y <= yMax;
+            const isInRangeNow = node.x >= xMin && node.x <= xMax && node.y >= yMin && node.y <= yMax;
+            return wasInRange && !isInRangeNow;
+        });
+
+        console.log("Nodes leaving:", nodesLeaving);
+
+        nodesEntering = graphData.nodes.filter(node => {
+            const position = currentPositions.get(node.id);
+        
+            if (position) {
+                console.log("current x:", position.x);
+                console.log("current y:", position.y);
+            } else {
+                console.log(`No current position found for node: ${node.id}`);
+            }
+
+            const wasInRange = currentPositions.has(node.id) &&
+                currentPositions.get(node.id).x >= xMin &&
+                currentPositions.get(node.id).x <= xMax &&
+                currentPositions.get(node.id).y >= yMin &&
+                currentPositions.get(node.id).y <= yMax;
+            const isInRangeNow = node.x >= xMin && node.x <= xMax && node.y >= yMin && node.y <= yMax;
+            console.log("node:", node.id)
+            console.log(wasInRange? "was in range": "NOT was in range")
+            console.log(isInRangeNow? "is in range now": "NOT is in range now")
+            return !wasInRange && isInRangeNow;
+        });
+
+        console.log("Nodes Entering:", nodesEntering);
+
+        // Track edges that involve nodes leaving the client's range
+        edgesLeaving = graphData.edges.filter(edge => {
+            const sourceWasInRange = currentPositions.has(edge.source) &&
+                currentPositions.get(edge.source).x >= xMin &&
+                currentPositions.get(edge.source).x <= xMax &&
+                currentPositions.get(edge.source).y >= yMin &&
+                currentPositions.get(edge.source).y <= yMax;
+            const targetWasInRange = currentPositions.has(edge.target) &&
+                currentPositions.get(edge.target).x >= xMin &&
+                currentPositions.get(edge.target).x <= xMax &&
+                currentPositions.get(edge.target).y >= yMin &&
+                currentPositions.get(edge.target).y <= yMax;
+            const sourceIsInRangeNow = graphData.nodes.find(node => node.id === edge.source && node.x >= xMin && node.x <= xMax && node.y >= yMin && node.y <= yMax);
+            const targetIsInRangeNow = graphData.nodes.find(node => node.id === edge.target && node.x >= xMin && node.x <= xMax && node.y >= yMin && node.y <= yMax);
+
+            return (sourceWasInRange && !sourceIsInRangeNow) || (targetWasInRange && !targetIsInRangeNow);
+        });
+
+        console.log("Edges leaving:", edgesLeaving)
+
+        // Track edges that involve nodes entering the client's range
+        edgesEntering = graphData.edges.filter(edge => {
+            const sourceWasInRange = currentPositions.has(edge.source) &&
+                currentPositions.get(edge.source).x >= xMin &&
+                currentPositions.get(edge.source).x <= xMax &&
+                currentPositions.get(edge.source).y >= yMin &&
+                currentPositions.get(edge.source).y <= yMax;
+            const targetWasInRange = currentPositions.has(edge.target) &&
+                currentPositions.get(edge.target).x >= xMin &&
+                currentPositions.get(edge.target).x <= xMax &&
+                currentPositions.get(edge.target).y >= yMin &&
+                currentPositions.get(edge.target).y <= yMax;
+            const sourceIsInRangeNow = graphData.nodes.find(node => node.id === edge.source && node.x >= xMin && node.x <= xMax && node.y >= yMin && node.y <= yMax);
+            const targetIsInRangeNow = graphData.nodes.find(node => node.id === edge.target && node.x >= xMin && node.x <= xMax && node.y >= yMin && node.y <= yMax);
+
+            return (!sourceWasInRange && sourceIsInRangeNow) || (!targetWasInRange && targetIsInRangeNow);
+        });
+
+        console.log("edges entering:", edgesEntering)
+    }
+
     if (!svg) {
         initializeGraph();
     }
 
     count++
     // updateGraph(graphData);  // for testing with only client
+
     // updateGraph({nodes: filteredNodes, edges: filteredEdges}, count);
-    updateGraph({nodes: filteredNodes, edges: filteredEdges});
+    // updateGraph({nodes: filteredNodes, edges: filteredEdges});
+
+
+    // updateGraph({
+    //     nodes: filteredNodes
+    //         .concat(nodesLeaving  !== null ? nodesLeaving : [])
+    //         .concat(nodesEntering !== null ? nodesEntering : [])
+    //         .filter(node => node !== undefined && node !== null),
+    //     edges: filteredEdges
+    //         .concat(edgesLeaving !== null ? edgesLeaving : [])
+    //         .concat(edgesEntering !== null ? edgesEntering : [])
+    //         .filter(edge => edge !== undefined && edge !== null)
+
+    // });
+
+    // Helper function to concatenate arrays and filter out duplicates
+    function mergeAndUnique(arr1, arr2, arr3) {
+        const combined = [].concat(arr1 || [], arr2 || [], arr3 || []);
+        const unique = [];
+        const seen = new Set();
+
+        combined.forEach(item => {
+            if (item && !seen.has(item.id)) {
+                seen.add(item.id);
+                unique.push(item);
+            }
+        });
+
+        return unique;
+    }
+
+    // Merge and filter nodes and edges to remove duplicates
+    const uniqueNodes = mergeAndUnique(filteredNodes, nodesLeaving, nodesEntering);
+    const uniqueEdges = mergeAndUnique(filteredEdges, edgesLeaving, edgesEntering);
+
+    // Update the graph with unique nodes and edges
+    updateGraph({
+        nodes: uniqueNodes,
+        edges: uniqueEdges
+    });
 }
 
 
@@ -465,7 +592,8 @@ function updateGraph(newGraphData) {
             return d3.interpolate(startPos, endPos);
         })
         .on("start", function(d) {
-            handleSegmentedTransitions(d, currentPositions.get(d.id), { x: d.x - offsetX, y: d.y - offsetY }, "node");
+            // handleSegmentedTransitions(d, currentPositions.get(d.id), { x: d.x - offsetX, y: d.y - offsetY }, "node");
+            handleSegmentedTransitions(d, currentPositions.get(d.id), { x: d.x, y: d.y}, "node");
         });
         // .on("start", function(d) {
         //     const currentPos = currentPositions.get(d.id);
@@ -544,8 +672,10 @@ function updateGraph(newGraphData) {
             return d3.interpolate(startPos, endPos);
         })
         .on("start", function(d) {
-            handleSegmentedTransitions(d, currentPositions.get(d.source.id), { x: d.source.x - offsetX, y: d.source.y - offsetY }, "link-source");
-            handleSegmentedTransitions(d, currentPositions.get(d.target.id), { x: d.target.x - offsetX, y: d.target.y - offsetY }, "link-target");
+            // handleSegmentedTransitions(d, currentPositions.get(d.source.id), { x: d.source.x - offsetX, y: d.source.y - offsetY }, "link-source");
+            // handleSegmentedTransitions(d, currentPositions.get(d.target.id), { x: d.target.x - offsetX, y: d.target.y - offsetY }, "link-target");
+            handleSegmentedTransitions(d, currentPositions.get(d.source.id), { x: d.source.x, y: d.source.y}, "link-source");
+            handleSegmentedTransitions(d, currentPositions.get(d.target.id), { x: d.target.x, y: d.target.y}, "link-target");
         });
         // .on("start", function(d) {
         //     const sourcePos = currentPositions.get(d.source.id);
@@ -615,6 +745,9 @@ function updateGraph(newGraphData) {
 // }
 
 function handleSegmentedTransitions(d, startPos, endPos, axis) {
+    console.log("Axis: ", axis)
+    console.log(d)
+    console.log("Handle segmented transitions, start: ", startPos, "end: ", endPos)
     const segments = splitIntoSegments(startPos, endPos);
 
     if (segments.length > 1) {
