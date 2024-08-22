@@ -189,9 +189,14 @@
         }
     
         // WebSocket connection to the server
-        const socket = io("http://localhost:3000", {
-            withCredentials: true,
-        });
+        // const socket = io("http://localhost:3000", {
+        //     withCredentials: true,
+        // });
+
+        const socket = io("http://146.169.209.45:3000/",{
+                withCredentials: true,
+            }
+        )
     
         socket.on('connect', function() {
             console.log("Connected to server WebSocket");

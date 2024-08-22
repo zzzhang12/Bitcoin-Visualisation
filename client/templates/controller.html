@@ -120,13 +120,13 @@
         }
 
         function runWebSocket() {
-            // socket = io("http://146.169.209.45:3000/",{
-            //     withCredentials: true,
-            //     }
-            // )
-            socket = io("http://localhost:3000", {
+            socket = io("http://146.169.209.45:3000/",{
                 withCredentials: true,
-            }); 
+                }
+            )
+            // socket = io("http://localhost:3000", {
+            //     withCredentials: true,
+            // }); 
 
             socket.on('connect', function() {
                 console.log("Connected to server WebSocket");
@@ -230,45 +230,45 @@
 
 
             button.addEventListener('click', () => {
-                // const url = `/static_graph?snapshot=${snapshot.file_name}`;
+                const url = `/static_graph?snapshot=${snapshot.file_name}`;
     
-                // const payload = {
-                //     app: {
-                //         states: {
-                //             load: {
-                //                 url: url
-                //             }
-                //         },
-                //         url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                //     },
-                //     x: X_OFFSET,    
-                //     y: Y_OFFSET,    
-                //     w: 5760,       
-                //     h: 4320,  
-                //     space: "DODev"  
-                // };
+                const payload = {
+                    app: {
+                        states: {
+                            load: {
+                                url: url
+                            }
+                        },
+                        url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                    },
+                    x: X_OFFSET,    
+                    y: Y_OFFSET,    
+                    w: 5760,       
+                    h: 4320,  
+                    space: "DODev"  
+                };
 
-                // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-                //     method: "POST",
-                //     headers: {
-                //         'Content-Type': 'application/json'
-                //     },
-                //     body: JSON.stringify(payload)
-                // })
-                // .then(response => {
-                //     if (!response.ok) {
-                //         throw new Error('Failed to load snapshot.');
-                //     }
-                //     return response.json();
-                // })
-                // .then(data => {
-                //     console.log('Snapshot loaded into the observatory:', data);
-                // })
-                // .catch(error => {
-                //     console.error('Error loading snapshot into the observatory:', error);
-                // });
+                fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Failed to load snapshot.');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Snapshot loaded into the observatory:', data);
+                })
+                .catch(error => {
+                    console.error('Error loading snapshot into the observatory:', error);
+                });
 
-                window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
+                // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
             });
             snapshotList.appendChild(button);
             });

@@ -23,13 +23,13 @@ function init() {
 
 
 function runWebSocket() {
-    // socket = io("http://146.169.209.45:3000/",{
-    //     withCredentials: true,
-    //     }
-    // )
-    socket = io("http://localhost:3000",{
+    socket = io("http://146.169.209.45:3000/",{
         withCredentials: true,
-    }) // For local testing
+        }
+    )
+    // socket = io("http://localhost:3000",{
+    //     withCredentials: true,
+    // }) // For local testing
     socket.on('connect', function() {
         console.log("Connected to server WebSocket");
     });
