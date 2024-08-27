@@ -50,6 +50,8 @@
         }
 
         function renderGraph(graphData) {
+            const total_width = 3840;
+            const total_height = 2160;
             console.log(graphData)
             console.log("Rendering graph");
 
@@ -69,6 +71,22 @@
             svg.call(d3.zoom().on("zoom", ({ transform }) => {
                 g.attr("transform", transform);
             }));
+            
+            // Calculate the scaling factor based on the original graph dimensions
+            const xExtent = d3.extent(graphData.nodes, d => d.x);
+            const yExtent = d3.extent(graphData.nodes, d => d.y);
+
+            const xRange = xExtent[1] - xExtent[0];
+            const yRange = yExtent[1] - yExtent[0];
+
+            const scaleX = total_width / xRange;
+            const scaleY = total_height / yRange;
+
+            const scaleFactor = Math.min(scaleX, scaleY);
+
+            // Calculate offsets to center the graph
+            const offsetX = (total_width - (xRange * scaleFactor)) / 2 - xExtent[0] * scaleFactor;
+            const offsetY = (total_height - (yRange * scaleFactor)) / 2 - yExtent[0] * scaleFactor;
 
             // Render nodes
             node = g.selectAll(".node")
@@ -77,8 +95,8 @@
             const nodeEnter = node.enter().append("circle")
                 .attr("class", d => `node node-${d.id}`)
                 .attr("r", d => d.type === 'tx' ? 4 : 1)
-                .attr("cx", d => d.x)
-                .attr("cy", d => d.y)
+                .attr("cx", d => (d.x * scaleFactor) + offsetX)
+                .attr("cy", d => total_height - ((d.y * scaleFactor) + offsetY)) 
                 .style("fill", d => d.color)
 
             node.append("title").text(d => d.id);
@@ -100,10 +118,11 @@
                 .attr("class", "link")
                 .style("stroke", d => d.color)
                 .style("stroke-width", d => d.strokeWidth)
-                .attr("x1", d => d.source.x)
-                .attr("y1", d => d.source.y)
-                .attr("x2", d => d.target.x)
-                .attr("y2", d => d.target.y);
+                .attr("x1", d => (d.source.x * scaleFactor) + offsetX)
+                .attr("y1", d => total_height - ((d.source.y * scaleFactor) + offsetY))
+                .attr("x2", d => (d.target.x * scaleFactor) + offsetX)
+                .attr("y2", d => total_height - ((d.target.y * scaleFactor) + offsetY));
+
             
             link = linkEnter.merge(link);
 

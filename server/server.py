@@ -953,7 +953,7 @@ def save_snapshot():
     file_path = os.path.join(app.static_folder, filename)
     try:
         with open(file_path, 'w') as f:
-            json.dump(graph_data, f)
+            json.dump(graph_data, f, indent=4)
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
