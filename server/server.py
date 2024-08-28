@@ -295,7 +295,7 @@ def process_transaction(transactions):
                 # Update Statistics
                 numNodes += 1
                 numTx += 1
-                print ("Added tx node", numNodes)
+                # print ("Added tx node", numNodes)
                 # graph_data = compute_graph(nodes, edges)
                 # if graph_data:
                 #     socketio.emit('graph_data', graph_data)
@@ -378,7 +378,7 @@ def process_transaction(transactions):
                         numNodes += 1
                         numIn += 1
 
-                        print ("Added input node", numNodes)
+                        # print ("Added input node", numNodes)
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
 
@@ -491,7 +491,7 @@ def process_transaction(transactions):
                         # Update statistics
                         numNodes += 1
                         numOut += 1
-                        print ("Added output node", numNodes)
+                        # print ("Added output node", numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
                         # graph_data = compute_graph(nodes, edges)
@@ -611,7 +611,7 @@ def process_block(msg):
 
     # Update timers and alerts (if needed)
     blkStart = time.time()
-    # Clear and set blkTimer (you need to implement timeBlock logic if necessary)
+    # Clear and set blkTimer (need to implement timeBlock logic)
     # blkTimer = setInterval(timeBlock, 1000, [blkStart])
 
     txs = msg[0]["x"]["txIndexes"]
@@ -664,7 +664,6 @@ def drop_connected(tx_id):
 
 
 def get_address_balances(addresses):
-    # url = "https://blockchain.info/multiaddr?active=" + '|'.join(addresses)
     url = f"https://blockchain.info/multiaddr?active={'|'.join(addresses)}&n=0"
     response = requests.get(url)
     if response.status_code == 200:
@@ -954,37 +953,6 @@ def static_graph():
     return render_template('static_graph.html', snapshot=snapshot)
 
 
-# @app.route('/save_snapshot', methods=['POST'])
-# def save_snapshot():
-#     print ("SAVING SNAPSHOTS")
-#     graph_data = request.json
-#     graph_data_accumulated = {
-#                 "nodes": [],
-#                 "edges": []
-#     }
-#     graph_data_accumulated["nodes"].extend(graph_data["nodes"])
-#     graph_data_accumulated["edges"].extend(graph_data["edges"])
-#     if graph_data["stats"]:
-#         print ("There is STATS")
-#         print (graph_data["stats"])
-#         graph_data_accumulated['stats'] = graph_data['stats']
-
-#     filename = request.args.get('filename', 'saved_graph.json')
-#     file_path = os.path.join(app.static_folder, filename)
-#     with save_lock:  # Ensure only one client can write at a time
-#         try:
-#             with open(file_path, 'w') as f:
-#                 print ("number of nodes", len(graph_data_accumulated['nodes']))
-#                 print ("number of edges", len(graph_data_accumulated['edges']))
-#                 if 'stats' in graph_data_accumulated: 
-#                     print ("stats YES")
-#                 else:
-#                     print ("stats NO")
-#                 json.dump(graph_data_accumulated, f, indent=4)
-#             return jsonify({"status": "success"})
-#         except Exception as e:
-#             return jsonify({"status": "error", "message": str(e)}), 500
-
 @app.route('/save_snapshot', methods=['POST'])
 def save_snapshot():
     print("SAVING SNAPSHOTS")
@@ -1018,12 +986,6 @@ def accumulate_graph_data(new_data, filename):
             try:
                 with open(file_path, 'w') as f:
                     print("All client data received. Writing to file...")
-                    print("Number of nodes:", len(graph_data_accumulated['nodes']))
-                    print("Number of edges:", len(graph_data_accumulated['edges']))
-                    if 'stats' in graph_data_accumulated and graph_data_accumulated['stats']:
-                        print("Stats YES")
-                    else:
-                        print("Stats NO")
                     json.dump(graph_data_accumulated, f, indent=4)
                     print("Graph snapshot saved successfully.")
             except Exception as e:
@@ -1036,14 +998,7 @@ def accumulate_graph_data(new_data, filename):
                     "stats": {}
                 }
                 clients_received = 0
-# @app.route('/list_snapshots', methods=['GET'])
-# def list_snapshots():
-#     snapshots = []
-#     static_folder = os.path.join(app.static_folder)
-#     for file_name in os.listdir(static_folder):
-#         if file_name.startswith("graph_snapshot_") and file_name.endswith(".json"):
-#             snapshots.append(file_name)
-#     return jsonify(snapshots)
+
 
 @app.route('/list_snapshots', methods=['GET'])
 def list_snapshots():
@@ -1070,12 +1025,6 @@ def get_snapshot():
         return jsonify(graph_data)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
-
-# @socketio.on('controller_command')
-# def handle_controller_command(data):
-#     print(f"Received controller command: {data['action']}")
-#     emit('controller_command', data, broadcast=True)
 
 
 @socketio.on('controller_command')
