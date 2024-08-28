@@ -50,8 +50,10 @@
         }
 
         function renderGraph(graphData) {
-            const total_width = 3840;
-            const total_height = 2160;
+            // const total_width = 3840;
+            // const total_height = 2160;
+            const total_width = 1710;
+            const total_height = 981;
             console.log(graphData)
             console.log("Rendering graph");
 
@@ -94,7 +96,7 @@
 
             const nodeEnter = node.enter().append("circle")
                 .attr("class", d => `node node-${d.id}`)
-                .attr("r", d => d.type === 'tx' ? 4 : 1)
+                .attr("r", d => d.type === 'tx' ? 1.7 : 0.5)
                 .attr("cx", d => (d.x * scaleFactor) + offsetX)
                 .attr("cy", d => total_height - ((d.y * scaleFactor) + offsetY)) 
                 .style("fill", d => d.color)

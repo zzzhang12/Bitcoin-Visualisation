@@ -35,12 +35,19 @@ address_dict = {} # track addresses and associated nodes
 paused = False
 msgBuf = []
 start_visualization = False # Initialised to false, True when visualisation started by controller
+graph_data_accumulated = {
+    "nodes": [],
+    "edges": [],
+    "stats": {}
+}
+clients_received = 0
 
 
 # Locks
 queue_lock = threading.Lock()
 forceatlas2_lock = threading.Lock()
 start_lock = threading.Lock()
+save_lock = threading.Lock()
 
 # Statistics 
 mean_tx = 0 # Mean of transaction values
@@ -64,6 +71,7 @@ file_index = 0
 # ]
 
 # Canvas sizes
+NUM_CLIENTS = 12
 NUM_ROWS = 4
 NUM_COLS = 3
 CLIENT_WIDTH = 1920
@@ -287,7 +295,7 @@ def process_transaction(transactions):
                 # Update Statistics
                 numNodes += 1
                 numTx += 1
-                # print (numNodes)
+                print ("Added tx node", numNodes)
                 # graph_data = compute_graph(nodes, edges)
                 # if graph_data:
                 #     socketio.emit('graph_data', graph_data)
@@ -370,7 +378,7 @@ def process_transaction(transactions):
                         numNodes += 1
                         numIn += 1
 
-                        # print (numNodes)
+                        print ("Added input node", numNodes)
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
 
@@ -483,7 +491,7 @@ def process_transaction(transactions):
                         # Update statistics
                         numNodes += 1
                         numOut += 1
-                        # print (numNodes)
+                        print ("Added output node", numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
                         # graph_data = compute_graph(nodes, edges)
@@ -857,6 +865,7 @@ def create_graph_data(new_nodes, new_edges, positions):
                 })
             else:
                 new_edges_split.append(edge)
+
      # Determine the range of x and y values
     x_min, x_max = min(all_x_values), max(all_x_values)
     y_min, y_max = min(all_y_values), max(all_y_values)
@@ -945,20 +954,88 @@ def static_graph():
     return render_template('static_graph.html', snapshot=snapshot)
 
 
+# @app.route('/save_snapshot', methods=['POST'])
+# def save_snapshot():
+#     print ("SAVING SNAPSHOTS")
+#     graph_data = request.json
+#     graph_data_accumulated = {
+#                 "nodes": [],
+#                 "edges": []
+#     }
+#     graph_data_accumulated["nodes"].extend(graph_data["nodes"])
+#     graph_data_accumulated["edges"].extend(graph_data["edges"])
+#     if graph_data["stats"]:
+#         print ("There is STATS")
+#         print (graph_data["stats"])
+#         graph_data_accumulated['stats'] = graph_data['stats']
+
+#     filename = request.args.get('filename', 'saved_graph.json')
+#     file_path = os.path.join(app.static_folder, filename)
+#     with save_lock:  # Ensure only one client can write at a time
+#         try:
+#             with open(file_path, 'w') as f:
+#                 print ("number of nodes", len(graph_data_accumulated['nodes']))
+#                 print ("number of edges", len(graph_data_accumulated['edges']))
+#                 if 'stats' in graph_data_accumulated: 
+#                     print ("stats YES")
+#                 else:
+#                     print ("stats NO")
+#                 json.dump(graph_data_accumulated, f, indent=4)
+#             return jsonify({"status": "success"})
+#         except Exception as e:
+#             return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/save_snapshot', methods=['POST'])
 def save_snapshot():
-    print ("SAVING SNAPSHOTS")
+    print("SAVING SNAPSHOTS")
     graph_data = request.json
-    filename = request.args.get('filename', 'saved_graph.json')
-    file_path = os.path.join(app.static_folder, filename)
-    try:
-        with open(file_path, 'w') as f:
-            json.dump(graph_data, f, indent=4)
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    filename = request.args.get('filename')
+
+    # Call the function to accumulate data
+    accumulate_graph_data(graph_data, filename)
+
+    return jsonify({"status": "success"})
 
 
+def accumulate_graph_data(new_data, filename):
+    global graph_data_accumulated, clients_received
+
+    # Accumulate nodes and edges
+    graph_data_accumulated["nodes"].extend(new_data["nodes"])
+    graph_data_accumulated["edges"].extend(new_data["edges"])
+
+    # Only set stats if they are not empty
+    if new_data["stats"]:
+        graph_data_accumulated['stats'] = new_data['stats']
+
+    clients_received += 1
+    print(f"Received data from client {clients_received}/{NUM_CLIENTS}")
+
+    # Only save to file when all clients have submitted their data
+    if clients_received == NUM_CLIENTS:
+        file_path = os.path.join(app.static_folder, filename)
+        with save_lock:  # Ensure only one client can write at a time
+            try:
+                with open(file_path, 'w') as f:
+                    print("All client data received. Writing to file...")
+                    print("Number of nodes:", len(graph_data_accumulated['nodes']))
+                    print("Number of edges:", len(graph_data_accumulated['edges']))
+                    if 'stats' in graph_data_accumulated and graph_data_accumulated['stats']:
+                        print("Stats YES")
+                    else:
+                        print("Stats NO")
+                    json.dump(graph_data_accumulated, f, indent=4)
+                    print("Graph snapshot saved successfully.")
+            except Exception as e:
+                print("Error saving graph snapshot:", str(e))
+            finally:
+                # Reset for next snapshot
+                graph_data_accumulated = {
+                    "nodes": [],
+                    "edges": [],
+                    "stats": {}
+                }
+                clients_received = 0
 # @app.route('/list_snapshots', methods=['GET'])
 # def list_snapshots():
 #     snapshots = []

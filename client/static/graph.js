@@ -12,6 +12,7 @@ let offsetX, offsetY
 let firstLoaded = false
 let startTime
 let isTopLeft
+let originalGraphData = { nodes: [], edges: [] };
 
 window.addEventListener("load", init, false);
 
@@ -45,6 +46,7 @@ function runWebSocket() {
             setTimer();
             firstLoaded = true
         }
+        originalGraphData = JSON.parse(JSON.stringify(msg)); // Deep copy to preserve original data
         processMessage(msg);
     });
 
@@ -212,7 +214,10 @@ function saveGraphSnapshot() {
     const graphData = {
         nodes: [],
         edges: [],
-        stats: {
+        stats: {}
+    }
+    if (isTopLeft){
+        graphData.stats = {
             txRate: document.getElementById('statTxRate').textContent,
             txMaxVal: document.getElementById('txMaxVal').textContent,
             txTotalVal: document.getElementById('txTotalVal').textContent,
@@ -227,29 +232,28 @@ function saveGraphSnapshot() {
             numTx: document.getElementById('statNumTx').textContent,
             numNodes: document.getElementById('statNumNodes').textContent
         }
-    };
-
+    }
+    console.log(originalGraphData)
     // Capture the current state of nodes
-    node.each(function(d) {
+    originalGraphData.nodes.forEach(d => {
         graphData.nodes.push({
             id: d.id,
             x: d.x,
             y: d.y,
-            color: d.color,
+            color: mapZScoreToColor(d.z_score_balance, d.color),
             type: d.type,
             size: d.size,
             z_score_tx: d.z_score_tx,
             balance: d.balance,
             z_score_balance: d.z_score_balance,
-            color: d.color
         });
     });
 
     // Capture the current state of edges
-    link.each(function(d) {
+    originalGraphData.edges.forEach(d => {
         graphData.edges.push({
-            source: d.source.id,
-            target: d.target.id,
+            source: d.source,
+            target: d.target,
             color: d.color,
             type: d.type,
             size: d.size,
