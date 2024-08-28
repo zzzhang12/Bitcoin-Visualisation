@@ -50,10 +50,10 @@
         }
 
         function renderGraph(graphData) {
-            // const total_width = 3840;
-            // const total_height = 2160;
-            const total_width = 1710;
-            const total_height = 981;
+            const total_width = 3840;
+            const total_height = 2160;
+            // const total_width = 1710;
+            // const total_height = 981;
             console.log(graphData)
             console.log("Rendering graph");
 
@@ -90,21 +90,31 @@
             const offsetX = (total_width - (xRange * scaleFactor)) / 2 - xExtent[0] * scaleFactor;
             const offsetY = (total_height - (yRange * scaleFactor)) / 2 - yExtent[0] * scaleFactor;
 
+            // Apply scaling and offsets to nodes
+            graphData.nodes.forEach(d => {
+                d.x = (d.x * scaleFactor) + offsetX;
+                d.y = total_height - ((d.y * scaleFactor) + offsetY);  // Adjust for D3 coordinate system
+            });
+
+            // Apply scaling to edge widths
+            graphData.edges.forEach(d => {
+                d.strokeWidth = d.strokeWidth * scaleFactor;  // Adjust stroke width
+            });
+
             // Render nodes
             node = g.selectAll(".node")
             node = node.data(graphData.nodes, d => d.id);
 
             const nodeEnter = node.enter().append("circle")
                 .attr("class", d => `node node-${d.id}`)
-                .attr("r", d => d.type === 'tx' ? 1.7 : 0.5)
-                .attr("cx", d => (d.x * scaleFactor) + offsetX)
-                .attr("cy", d => total_height - ((d.y * scaleFactor) + offsetY)) 
+                .attr("r", d => d.type === 'tx' ? 4 * scaleFactor : 1 * scaleFactor)
+                .attr("cx", d => d.x)
+                .attr("cy", d => d.y) 
                 .style("fill", d => d.color)
 
             node.append("title").text(d => d.id);
             node = nodeEnter.merge(node);
             
-
             // Render edges
             link = g.selectAll(".link")
 
@@ -120,14 +130,14 @@
                 .attr("class", "link")
                 .style("stroke", d => d.color)
                 .style("stroke-width", d => d.strokeWidth)
-                .attr("x1", d => (d.source.x * scaleFactor) + offsetX)
-                .attr("y1", d => total_height - ((d.source.y * scaleFactor) + offsetY))
-                .attr("x2", d => (d.target.x * scaleFactor) + offsetX)
-                .attr("y2", d => total_height - ((d.target.y * scaleFactor) + offsetY));
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
 
             
             link = linkEnter.merge(link);
-
+            
             // Nodes displayed above edges
             node.raise();
         }

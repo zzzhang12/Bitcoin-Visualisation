@@ -7,7 +7,7 @@ const CLIENT_HEIGHT = 1080;
 // const CLIENT_WIDTH = 853;  
 // const CLIENT_HEIGHT = 982; // For local testing
 
-let socket, svg, g, link, node, simulation;
+let socket, svg, g, link, node;
 let offsetX, offsetY
 let firstLoaded = false
 let startTime
@@ -240,7 +240,7 @@ function saveGraphSnapshot() {
             id: d.id,
             x: d.x,
             y: d.y,
-            color: mapZScoreToColor(d.z_score_balance, d.color),
+            color: (d.type === 'input' || d.type === 'output') ? mapZScoreToColor(d.z_score_balance, d.color) : d.color,
             type: d.type,
             size: d.size,
             z_score_tx: d.z_score_tx,
@@ -519,11 +519,9 @@ function updateGraph(newGraphData) {
         .attr("cy", d => d.y)
         .style("fill", d => {
             if (d.z_score_balance) {
-                if (d.type === 'input') {
+                if (d.type === 'input' || d.type === 'output') {
                     d.color = mapZScoreToColor(d.z_score_balance, d.color);
-                } else if (d.type === 'output') {
-                    d.color = mapZScoreToColor(d.z_score_balance, d.color);
-                } 
+                }
             }
             return d.color;
         })
