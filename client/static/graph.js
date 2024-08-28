@@ -399,7 +399,7 @@ function renderGraph(graphData) {
         return xInRange && yInRange;
     });
 
-    // console.log("Filtered nodes:", filteredNodes);
+    console.log("Filtered nodes:", filteredNodes);
 
     console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
     console.log(`Client x range: [${xMin}, ${xMax}]`);
@@ -420,7 +420,7 @@ function renderGraph(graphData) {
             node.y = -1 * node.y;
        }
        else if (row == -2){
-            node.y = abs(node.y) - CLIENT_HEIGHT;s
+            node.y = abs(node.y) - CLIENT_HEIGHT;
        }
        if (col == 0){
             node.x = node.x + 0.5 * CLIENT_WIDTH;
@@ -921,14 +921,14 @@ function ticked() {
             console.error("Undefined x for node", d);
             return 0;
         }
-        return d.x - offsetX;
+        return d.x;
     })
     .attr("cy", d => {
         if (d.y === undefined) {
             console.error("Undefined y for node", d);
             return 0;
         }
-        return d.y - offsetY;
+        return d.y;
     });
     link
         .attr("x1", d => {
@@ -936,28 +936,28 @@ function ticked() {
                 console.error("Undefined source or source.x for link", d);
                 return 0;
             }
-            return d.source.x - offsetX;
+            return d.source.x;
         })
         .attr("y1", d => {
             if (!d.source || d.source.y === undefined) {
                 console.error("Undefined source or source.y for link", d);
                 return 0;
             }
-            return d.source.y - offsetY;
+            return d.source.y;
         })
         .attr("x2", d => {
             if (!d.target || d.target.x === undefined) {
                 console.error("Undefined target or target.x for link", d);
                 return 0;
             }
-            return d.target.x - offsetX;
+            return d.target.x;
         })
         .attr("y2", d => {
             if (!d.target || d.target.y === undefined) {
                 console.error("Undefined target or target.y for link", d);
                 return 0;
             }
-            return d.target.y - offsetY;
+            return d.target.y;
         });
 }
 
