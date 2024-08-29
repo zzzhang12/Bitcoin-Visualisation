@@ -934,7 +934,7 @@ def static_proxy(path):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    return render_template('mempool.html')
 
 
 @app.route('/controller')
@@ -1016,13 +1016,17 @@ def list_snapshots():
     return jsonify(snapshots)
 
 
-@app.route('/get_snapshot', methods=['GET'])
-def get_snapshot():
-    file_path = os.path.join(app.static_folder, 'saved_graph.json')
+@app.route('/snapshot_stats', methods=['GET'])
+def snapshot_stats():
+    snapshot = request.args.get('snapshot', 'saved_graph.json')
+    file_path = os.path.join(app.static_folder, snapshot)
+    
     try:
         with open(file_path, 'r') as f:
             graph_data = json.load(f)
-        return jsonify(graph_data)
+            stats = graph_data.get('stats', {})
+            timestamp = snapshot.replace('graph_snapshot_', '').replace('.json', '')
+            return render_template('snapshot_info.html', stats=stats, timestamp=timestamp)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 

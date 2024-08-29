@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snapshot - {{ timestamp }}</title>
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #header {
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 300%;
+            text-align: center;
+            margin: 20px;
+        }
+        #statsArea {
+            color: white;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            font-size: 250%;
+            line-height: 1.5;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            flex: 1;
+            gap: 50px;
+        }
+        .stat-block {
+            flex: 1 1 calc(33.33% - 100px); 
+            margin: 20px;
+            text-align: left;
+        }
+        b {
+            color: yellow;
+        }
+        i {
+            color: rgb(128, 128, 128);
+        }
+        .stat-block div {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body oncontextmenu="return false;">
+    <div id="header">Snapshot Taken at: {{ timestamp }}</div>
+    <div id="statsArea">
+        <div class="stat-block">
+            <i>TxRate:</i> <div>{{ stats.txRate or 'N/A' }}</div> tps <br>
+            <i>NumTx:</i> <div>{{ stats.numTx or 'N/A' }}</div><br>
+            <i>NumNodes:</i> <div>{{ stats.numNodes or 'N/A' }}</div>
+        </div>
+        <div class="stat-block">
+            <b>Value</b><br>
+            <i>Max:</i> <div>{{ stats.txMaxVal or 'N/A' }}</div><br>
+            <i>Total:</i> <div>{{ stats.txTotalVal or 'N/A' }}</div><br>
+            <i>Avg:</i> <div>{{ stats.txAvgVal or 'N/A' }}</div>
+        </div>
+        <div class="stat-block">
+            <b>Fees</b><br>
+            <i>Max:</i> <div>{{ stats.txMaxFee or 'N/A' }}</div><br>
+            <i>Total:</i> <div>{{ stats.txTotalFee or 'N/A' }}</div><br>
+            <i>Avg:</i> <div>{{ stats.txAvgFee or 'N/A' }}</div>
+        </div>
+        <div class="stat-block">
+            <b>Size</b><br>
+            <i>Max:</i> <div>{{ stats.txMaxSize or 'N/A' }}</div><br>
+            <i>Total:</i> <div>{{ stats.txTotalSize or 'N/A' }}</div><br>
+            <i>Avg:</i> <div>{{ stats.txAvgSize or 'N/A' }}</div>
+        </div>
+        <div class="stat-block">
+            <b>Fee Density</b><br>
+            <i>Avg:</i> <div>{{ stats.txAvgFeeDens or 'N/A' }}</div>
+        </div>
+    </div>
+</body>
+</html>

@@ -230,8 +230,8 @@
 
 
             button.addEventListener('click', () => {
-                const url = `http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/static_graph?snapshot=${snapshot.file_name}`;
-    
+                // const url = `http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/static_graph?snapshot=${snapshot.file_name}`;
+                
                 // const payload = {
                 //     app: {
                 //         states: {
@@ -268,7 +268,8 @@
                 //     console.error('Error loading snapshot into the observatory:', error);
                 // });
 
-                window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
+                // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
+                window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank');
             });
             snapshotList.appendChild(button);
             });
