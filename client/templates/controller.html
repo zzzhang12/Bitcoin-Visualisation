@@ -87,6 +87,25 @@
         b {
             color: yellow;
         }
+        .region-buttons{
+            display: flex;
+            gap: 10px;
+            margin: 10Px;
+            justify-content: center;
+        }
+        .region-button {
+            flex: 1;
+            padding: 10px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            text-align: center;
+            margin: 0 5px;
+        }
+        .region-button:hover {
+            background-color: #666;
+        }
     </style>
 </head>
 <body>
@@ -100,8 +119,6 @@
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script>
         let socket;
-        let X_OFFSET = 5760
-        let Y_OFFSET = 0
 
         window.addEventListener("load", init, false);
 
@@ -162,9 +179,12 @@
                 .catch(error => console.error('Error fetching snapshots:', error));
         }
 
+        
         function displaySnapshotList(snapshots) {
             const snapshotList = document.getElementById('snapshotList');
             snapshotList.innerHTML = ''; // Clear previous list
+
+            let activeRegionButtons = null; 
 
             snapshots.forEach(snapshot => {
                 const fileName = snapshot.file_name
@@ -210,7 +230,8 @@
                     </div>
                 </div>
             `;
-            // Append the infoBox to the document body
+
+            snapshotList.appendChild(button);
             document.body.appendChild(infoBox);
 
             // Event listeners for hover to show and hide the info box
@@ -225,52 +246,95 @@
                 infoBox.style.display = 'none';
             });
 
-
+            // Handle click event to show region buttons
             button.addEventListener('click', () => {
-                // const url = `http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/static_graph?snapshot=${snapshot.file_name}`;
-                
-                // const payload = {
-                //     app: {
-                //         states: {
-                //             load: {
-                //                 url: url
-                //             }
-                //         },
-                //         url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                //     },
-                //     x: X_OFFSET,    
-                //     y: Y_OFFSET,    
-                //     w: 5760,       
-                //     h: 4320,  
-                //     space: "DOCluster"  
-                // };
+                // If there's already a set of region buttons active, remove it
+                if (activeRegionButtons) {
+                    activeRegionButtons.remove();
+                }
 
-                // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-                //     method: "POST",
-                //     headers: {
-                //         'Content-Type': 'application/json'
-                //     },
-                //     body: JSON.stringify(payload)
-                // })
-                // .then(response => {
-                //     if (!response.ok) {
-                //         throw new Error('Failed to load snapshot.');
-                //     }
-                //     return response.json();
-                // })
-                // .then(data => {
-                //     console.log('Snapshot loaded into the observatory:', data);
-                // })
-                // .catch(error => {
-                //     console.error('Error loading snapshot into the observatory:', error);
-                // });
+                // Check if the clicked button already has its region buttons displayed
+                if (button.nextSibling && button.nextSibling.className === 'region-buttons') {
+                    activeRegionButtons = null; // If so, remove them
+                    return;
+                }
 
-                window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
-                // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank');
-            });
-            snapshotList.appendChild(button);
-            });
+                const regionButtons = document.createElement('div');
+                regionButtons.className = 'region-buttons'
 
+                const regions = ['Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5'];
+
+                regions.forEach((region, index) => {
+                    const regionButton = document.createElement('button');
+                    regionButton.textContent = region;
+                    regionButton.className = 'region-button';
+
+                    regionButton.addEventListener('mouseenter', () => {
+                        regionButton.style.backgroundColor = '#666';
+                    });
+                    regionButton.addEventListener('mouseleave', () => {
+                        regionButton.style.backgroundColor = '#444';
+                    });
+
+                    regionButton.addEventListener('click', () => {
+                        const x = (index * 2 + 2) * 1920;
+                        const y = 0;
+
+                        console.log(x, y)
+                        const payload = {
+                            app: {
+                                states: {
+                                    load: {
+                                        url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_graph?snapshot=${snapshot.file_name}`
+                                    }
+                                },
+                                url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                            },
+                            x: x,    
+                            y: y,    
+                            w: 5760,       
+                            h: 4320,  
+                            space: "DOCluster"  
+                        };
+
+                        // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                        //     method: "POST",
+                        //     headers: {
+                        //         'Content-Type': 'application/json'
+                        //     },
+                        //     body: JSON.stringify(payload)
+                        // })
+                        
+                        // .then(response => {
+                        //     if (!response.ok) {
+                        //         throw new Error('Failed to load snapshot.');
+                        //     }
+                        //     return response.json();
+                        // })
+                        // .then(data => {
+                        //     console.log('Snapshot loaded into the observatory:', data);
+                        //     button.style.backgroundColor = '#28a745'; // Green color to indicate success
+                        //     regionButtons.remove();
+                        //     activeRegionButtons = null; // Reset the active region buttons
+                        // })
+                        // .catch(error => {
+                        //     console.error('Error loading snapshot into the observatory:', error);
+                        // });
+
+                        // For local testing only
+                        window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank')
+                        // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank')
+                        button.style.backgroundColor = '#28a745'; // Green color to indicate success
+                        regionButtons.remove();
+                        activeRegionButtons = null; // Reset the active region buttons
+                    });
+
+                    regionButtons.appendChild(regionButton);
+                });
+                button.after(regionButtons);
+                activeRegionButtons = regionButtons;
+        });
+    });
             snapshotList.style.display = 'block'; // Show the list
         }
     </script>
