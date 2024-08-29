@@ -230,6 +230,8 @@ function saveGraphSnapshot() {
             txAvgSize: document.getElementById('txAvgSize').textContent,
             txAvgFeeDens: document.getElementById('txAvgFeeDens').textContent,
             numTx: document.getElementById('statNumTx').textContent,
+            numIn: document.getElementById('statNumIn').textContent,
+            numOut: document.getElementById('statNumOut').textContent,
             numNodes: document.getElementById('statNumNodes').textContent
         }
     }
