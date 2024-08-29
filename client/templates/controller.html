@@ -43,21 +43,6 @@
         .snapshot-button:hover {
             background-color: #666;
         }
-        /* Tooltip styling */
-        .snapshot-info {
-            display: none;
-            position: absolute;
-            left: 110%;
-            top: 0;
-            background-color: rgba(0, 0, 0, 0.9);
-            color: #fff;
-            padding: 10px;
-            border-radius: 5px;
-            z-index: 100;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.5);
-            white-space: nowrap;
-            transition: opacity 0.3s ease;
-        }
         .snapshot-button:hover .snapshot-info {
             display: block;
             opacity: 1;
@@ -80,18 +65,24 @@
             font-size: 0.9em;
             display: none; /* Hidden by default */
             position: absolute;
-            z-index: 1000; /* Ensure it’s above other elements */
+            z-index: 1000;
+            width: auto;
+            left: 110%;
+            top: 0;
+            white-space: nowrap;
+            transition: opacity 0.3s ease;
         }
 
         #infoBoxStatsArea {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; /* Smaller gap to fit the content */
         }
 
         .stat-block {
+            flex: 1;
             margin-right: 20px;
             text-align: left;
+            /* flex: 1 1 calc(33.33% - 100px);  */
         }
         b {
             color: yellow;
@@ -210,6 +201,12 @@
                         <i>Max:</i> ${snapshot.stats.txMaxSize || 'N/A'}<br>
                         <i>Total:</i> ${snapshot.stats.txTotalSize || 'N/A'}<br>
                         <i>Avg:</i> ${snapshot.stats.txAvgSize || 'N/A'}
+                    </div>
+                    <div class="stat-block">
+                        <b>Wallet Balance</b><br>
+                        <i>Max:</i> ${snapshot.stats.balanceMax || 'N/A'}<br>
+                        <i>Median:</i> ${snapshot.stats.balanceMed || 'N/A'}<br>
+                        <i>IQR:</i> ${snapshot.stats.balanceIQR || 'N/A'}
                     </div>
                 </div>
             `;

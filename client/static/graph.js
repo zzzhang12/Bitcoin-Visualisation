@@ -235,10 +235,12 @@ function saveGraphSnapshot() {
             numTx: document.getElementById('statNumTx').textContent,
             numIn: document.getElementById('statNumIn').textContent,
             numOut: document.getElementById('statNumOut').textContent,
-            numNodes: document.getElementById('statNumNodes').textContent
+            numNodes: document.getElementById('statNumNodes').textContent,
+            balanceMax: document.getElementById('balanceMax').textContent,
+            balanceMed: document.getElementById('balanceMed').textContent,
+            balanceIQR: document.getElementById('balanceIQR').textContent,
         }
     }
-    console.log(originalGraphData)
     // Capture the current state of nodes
     originalGraphData.nodes.forEach(d => {
         graphData.nodes.push({

@@ -77,6 +77,12 @@
             <i>Avg:</i> <div>{{ stats.txAvgSize or 'N/A' }}</div>
         </div>
         <div class="stat-block">
+            <b>Wallet Balance</b><br>
+            <i>Max:</i> <div>{{ stats.balanceMax or 'N/A' }}</div><br>
+            <i>Median:</i> <div>{{ stats.balanceMed or 'N/A' }}</div><br>
+            <i>IQR:</i> <div>{{ stats.balanceIQR or 'N/A' }}</div><br>
+        </div>
+        <div class="stat-block">
             <b>Fee Density</b><br>
             <i>Avg:</i> <div>{{ stats.txAvgFeeDens or 'N/A' }}</div>
         </div>
