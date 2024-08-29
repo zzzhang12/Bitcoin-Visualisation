@@ -422,7 +422,7 @@ function renderGraph(graphData) {
             node.y = -1 * node.y;
        }
        else if (row == -2){
-            node.y = abs(node.y) - CLIENT_HEIGHT;
+            node.y = Math.abs(node.y) - CLIENT_HEIGHT;
        }
        if (col == 0){
             node.x = node.x + 0.5 * CLIENT_WIDTH;
