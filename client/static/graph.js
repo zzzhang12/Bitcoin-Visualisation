@@ -121,8 +121,11 @@ function updateStats(statistics) {
     document.getElementById('statNumIn').innerHTML = statistics.numIn.toLocaleString();
     document.getElementById('statNumOut').innerHTML = statistics.numOut.toLocaleString();
     document.getElementById('statNumNodes').innerHTML = statistics.numNodes.toLocaleString();
-}
 
+    document.getElementById('balanceMax').innerHTML = statistics.balanceMax ? statistics.balanceMax.toLocaleString() + 'B': 'N/A';
+    document.getElementById('balanceMed').innerHTML = statistics.balanceMed ? (statistics.balanceMed * 1000).toLocaleString() + 'mB': 'N/A';
+    document.getElementById('balanceIQR').innerHTML = statistics.balanceIQR ? (statistics.balanceIQR * 1000).toLocaleString() + 'mB': 'N/A';
+}
 
 // Bind Controller
 // function bindEvents(blkid, client){

@@ -29,6 +29,8 @@ broadcast_interval = 2 # Frequency in seconds to broadcast data to clients
 scale_factor = 3
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
+current_addresses = {} # Addresses in the current visualisation, resets to empty when server resetes
+balance_stats = {}
 node_positions = {}
 addresses_to_query = [] # Addresses not in cache, thus need API query
 address_dict = {} # track addresses and associated nodes
@@ -112,7 +114,7 @@ def load_transaction_stats():
 
 def reset_server_state():
     global nodes, edges, node_ids, nx_graph, node_positions
-    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses
 
     nodes = []
     edges = []
@@ -132,6 +134,8 @@ def reset_server_state():
     lastRateTx = 0
     timeOfLastTx = time.time()
     txRate = 0
+    current_addresses = {}
+    balance_stats = {}
 
     print("Server state has been reset.")
 
@@ -241,7 +245,7 @@ def process_transaction(transactions):
     # print("transactions: ", transactions)
     # print("length of transacions: ", len(transactions))
 
-    global nodes, edges, node_ids, nx_graph, address_dict, address_cache
+    global nodes, edges, node_ids, nx_graph, address_dict, address_cache, current_addresses, balance_stats
     global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize, lastRateTx, timeOfLastTx, txRate
 
     new_nodes = []
@@ -539,10 +543,16 @@ def process_transaction(transactions):
             txTotalSize += tx_size
             txMaxSize = max(txMaxSize, tx_size)
 
+            # For every 10 transactions
             if numTx - lastRateTx >= 10:
+                # Update txRate
                 txRate = 10 / ((time.time() - timeOfLastTx) / 1000)
                 timeOfLastTx = time.time()
                 lastRateTx = numTx
+
+                if current_addresses:
+                    # Update statistics of address balances
+                    update_address_balance_stats()
 
             # After updating the variables, emit the updated statistics
             statistics = {
@@ -558,6 +568,8 @@ def process_transaction(transactions):
                 'txMaxSize': txMaxSize,
                 'txRate': round(txRate, 2)
             }
+            statistics.update(balance_stats)
+
             socketio.emit('update_stats', statistics)
              
             stat_txVal = {
@@ -586,12 +598,14 @@ def process_transaction(transactions):
                     # if address is already in cache, update the cached value
                     else:
                         transaction_value = node['size']
-                        update_cache(address, transaction_value)
+                        update_cache(address, transaction_value, "cache")
+                        update_cache(address, transaction_value, "current")
 
         if len(addresses_to_query) >= 50:
             # print("-----------quering: ", len(addresses_to_query))
             new_balances = get_address_balances(addresses_to_query)
             address_cache.update(new_balances)
+            current_addresses.update(new_balances)
             addresses_to_query = []
 
         # compute_graph(new_nodes, new_edges)
@@ -675,11 +689,37 @@ def get_address_balances(addresses):
         return {}
 
 
-def update_cache(address, transaction_value):
-    if address in address_cache:
-        address_cache[address] += transaction_value
-    else:
-        address_cache[address] = transaction_value
+def update_cache(address, transaction_value, type):
+    global address_cache, current_addresses
+    if type == "cache":
+        if address in address_cache:
+            address_cache[address] += transaction_value
+        else:
+            address_cache[address] = transaction_value
+    elif type == "current":
+        if address in current_addresses:
+            current_addresses[address] += transaction_value
+        else:
+            current_addresses[address] = transaction_value
+
+
+def update_address_balance_stats():
+    global current_addresses, balance_stats
+
+    # Get all balance values from the dictionary
+    balances = np.array(list(current_addresses.values()))
+    
+    # Calculate the required statistics
+    median_balance = np.median(balances)
+    percentile_25th = np.percentile(balances, 25)
+    percentile_75th = np.percentile(balances, 75)
+    iqr = percentile_75th - percentile_25th
+    max_balance = np.max(balances)
+
+    # Update balance stats
+    balance_stats["balanceMed"] = median_balance
+    balance_stats["balanceIQR"] = iqr
+    balance_stats["balanceMax"] = max_balance
 
 
 # def compute_graph(new_nodes, new_edges):
