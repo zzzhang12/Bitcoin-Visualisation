@@ -32,7 +32,7 @@
         });
 
         function loadSnapshot(snapshot) {
-            fetch(`/static/${snapshot}`)
+            fetch(`/static/snapshots/${snapshot}`)
                 .then(response => response.json())
                 .then(data => {
                     renderGraph(data);

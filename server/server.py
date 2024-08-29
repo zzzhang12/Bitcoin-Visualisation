@@ -1021,7 +1021,7 @@ def accumulate_graph_data(new_data, filename):
 
     # Only save to file when all clients have submitted their data
     if clients_received == NUM_CLIENTS:
-        file_path = os.path.join(app.static_folder, filename)
+        file_path = os.path.join(app.static_folder, 'snapshots', filename)
         with save_lock:  # Ensure only one client can write at a time
             try:
                 with open(file_path, 'w') as f:
@@ -1043,10 +1043,11 @@ def accumulate_graph_data(new_data, filename):
 @app.route('/list_snapshots', methods=['GET'])
 def list_snapshots():
     snapshots = []
-    static_folder = os.path.join(app.static_folder)
-    for file_name in os.listdir(static_folder):
+    snapshots_folder = os.path.join(app.static_folder, 'snapshots')
+
+    for file_name in os.listdir(snapshots_folder):
         if file_name.startswith("graph_snapshot_") and file_name.endswith(".json"):
-            with open(os.path.join(static_folder, file_name), 'r') as f:
+            with open(os.path.join(snapshots_folder, file_name), 'r') as f:
                 graph_data = json.load(f)
                 stats = graph_data.get('stats', {})
                 snapshots.append({
@@ -1059,8 +1060,7 @@ def list_snapshots():
 @app.route('/snapshot_stats', methods=['GET'])
 def snapshot_stats():
     snapshot = request.args.get('snapshot', 'saved_graph.json')
-    file_path = os.path.join(app.static_folder, snapshot)
-    
+    file_path = os.path.join(app.static_folder, 'snapshots', snapshot)
     try:
         with open(file_path, 'r') as f:
             graph_data = json.load(f)

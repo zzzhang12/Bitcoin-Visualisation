@@ -265,27 +265,14 @@
                 //     console.error('Error loading snapshot into the observatory:', error);
                 // });
 
-                // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
-                window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank');
+                window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
+                // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank');
             });
             snapshotList.appendChild(button);
             });
 
             snapshotList.style.display = 'block'; // Show the list
         }
-
-        // function displaySnapshot(snapshot) {
-        //     const rows = 1; 
-        //     const cols = 2; 
-            
-        //     for (let row = 0; row < rows; row++) {
-        //         for (let col = 0; col < cols; col++) {
-        //             const url = `/static_graph?snapshot=${snapshot}&row=${row}&col=${col}`;
-        //             window.open(url, `_blank`);
-        //         }
-        //     }
-        //     window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank');
-        // }
     </script>
 </body>
 </html>
