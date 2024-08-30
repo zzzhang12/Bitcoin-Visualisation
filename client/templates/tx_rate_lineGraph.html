@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Real-time Transaction Rate Line Graph</title>
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .axis-label {
+            font-family: Arial, sans-serif;
+            fill: white;
+            font-size: 20px;
+        }
+        .line {
+            fill: none;
+            stroke: steelblue;
+            stroke-width: 2;
+        }
+        #header {
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">Real-time Transaction Rate</div>
+    <svg id="lineGraph"></svg>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script type="module">
+        import { createLineGraph } from '../static/lineGraph.js';
+
+        // Initialize the line graph with parameters
+        const updateLineGraph = createLineGraph("lineGraph", "Transaction Rate (tps)", "darkorange");
+
+        // WebSocket connection to the server
+        const socket = io("http://localhost:3000", {
+            withCredentials: true,
+        });
+
+        // const socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000",{
+        //         withCredentials: true,
+        //     }
+        // )
+        
+        socket.on('connect', function() {
+            console.log("Connected to server WebSocket");
+        });
+
+        socket.on('disconnect', function() {
+            console.log('Disconnected from server');
+        });
+
+        socket.on('tx_rate_stats', function(statistics) {
+            console.log('Received updated statistics:', statistics);
+            const transactionRate = statistics.txRate;  
+            updateLineGraph(transactionRate);
+        });
+    </script>
+</body>
+</html>

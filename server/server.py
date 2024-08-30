@@ -550,6 +550,13 @@ def process_transaction(transactions):
                 timeOfLastTx = time.time()
                 lastRateTx = numTx
 
+                # Emit txRate to update tx rate line graph
+                tx_rate = {
+                    'txRate': round(txRate, 2)
+                }
+
+                socketio.emit('tx_rate_stats', tx_rate)
+
                 if current_addresses:
                     # Update statistics of address balances
                     update_address_balance_stats()
@@ -576,7 +583,7 @@ def process_transaction(transactions):
             graph_stats = {
                 'txVal': outVals * 1000 / 100000000,
                 'txSize': tx_size,
-                'txAvgFee': txTotalFee / numTx * 1000 / 100000000
+                'txAvgFee': txTotalFee / numTx * 1000 / 100000000,
             }
 
             socketio.emit('stats', graph_stats)
@@ -999,6 +1006,10 @@ def tx_size():
 def tx_fee():
     return render_template('tx_fee_lineGraph.html')
 
+
+@app.route('/tx_rate')
+def tx_rate():
+    return render_template('tx_rate_lineGraph.html')
 
 
 @app.route('/static_graph', methods=['GET'])
