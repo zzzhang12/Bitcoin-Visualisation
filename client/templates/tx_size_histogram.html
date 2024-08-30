@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Real-time Transaction Value Histogram</title>
+    <title>Real-time Transaction Size Histogram</title>
     <style>
         body {
             background-color: #000000;
@@ -48,7 +48,7 @@
     </style>
 </head>
 <body>
-    <div id="header">Real-time Transaction Value Histogram</div>
+    <div id="header">Real-time Transaction Size Histogram</div>
     <svg id="histogram"></svg>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -56,7 +56,7 @@
     <script type="module">
         import { createHistogram } from '../static/histogram.js';
 
-        const updateHistogram = createHistogram("histogram", "steelblue", "Transaction Value (mB)");
+        const updateHistogram = createHistogram("histogram", "darkorange", "Transaction Size (bytes)");
 
         // WebSocket connection to the server
         const socket = io("http://localhost:3000", {
@@ -78,8 +78,8 @@
     
         socket.on('stat_update', function(statistics) {
             console.log('Received updated statistics:', statistics);
-            const txVal = statistics.txVal;
-            updateHistogram(txVal);
+            const transactionSize = statistics.txSize;
+            updateHistogram(transactionSize);
         });
     </script>
 </body>

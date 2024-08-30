@@ -573,7 +573,8 @@ def process_transaction(transactions):
             socketio.emit('update_stats', statistics)
              
             stat_txVal = {
-                'txVal': outVals * 1000 / 100000000
+                'txVal': outVals * 1000 / 100000000,
+                'txSize': tx_size
             }
 
             socketio.emit('stat_update', stat_txVal)
@@ -983,8 +984,13 @@ def controller():
 
 
 @app.route('/tx_value')
-def tx_size():
+def tx_value():
     return render_template('tx_value_histogram.html')
+
+
+@app.route('/tx_size')
+def tx_size():
+    return render_template('tx_size_histogram.html')
 
 
 @app.route('/static_graph', methods=['GET'])
