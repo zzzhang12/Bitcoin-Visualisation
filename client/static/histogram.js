@@ -49,23 +49,24 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
             xMax = xMin + 1; // Adjust slightly to prevent the range from collapsing
         }
 
-        const x = d3.scaleLinear()
-            .domain([xMin, xMax])
-            .range([0, width]);
+         // Logarithmic scale for the x-axis
+         const x = d3.scaleLog()
+         .domain([Math.max(xMin, 1), xMax])
+         .range([0, width]);
 
         const xAxis = svg.select(".x.axis");
         if (xAxis.empty()) {
             svg.append("g")
                 .attr("class", "x axis")
                 .attr("transform", `translate(0,${height})`)
-                .call(d3.axisBottom(x))
+                .call(d3.axisBottom(x).ticks(10, ",.1s"))
                 .selectAll("text")
-                .style("font-size", "14px") // Adjust the size as needed
+                .style("font-size", "14px")
                 .style("fill", "white");
         } else {
             xAxis.transition().call(d3.axisBottom(x))
                 .selectAll("text")
-                .style("font-size", "14px") // Adjust the size as needed
+                .style("font-size", "14px")
                 .style("fill", "white");
         }
 
@@ -83,7 +84,7 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         y.domain([0, yMax]);
         yAxis.transition().call(d3.axisLeft(y))
             .selectAll("text")
-            .style("font-size", "14px") // Adjust the size as needed
+            .style("font-size", "14px")
             .style("fill", "white");
 
         // Join the data to bars

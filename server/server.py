@@ -573,7 +573,7 @@ def process_transaction(transactions):
             socketio.emit('update_stats', statistics)
              
             stat_txVal = {
-                'txAvgVal': txTotalVal / numTx * 1000 / 100000000
+                'txVal': outVals * 1000 / 100000000
             }
 
             socketio.emit('stat_update', stat_txVal)
