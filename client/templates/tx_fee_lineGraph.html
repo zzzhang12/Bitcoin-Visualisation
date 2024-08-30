@@ -39,7 +39,7 @@
     </style>
 </head>
 <body>
-    <div id="header">Real-time Transaction Fee Line Graph</div>
+    <div id="header">Real-time Transaction Fee</div>
     <svg id="lineGraph"></svg>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -59,7 +59,7 @@
         //         withCredentials: true,
         //     }
         // )
-        
+
         socket.on('connect', function() {
             console.log("Connected to server WebSocket");
         });
