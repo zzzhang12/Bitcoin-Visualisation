@@ -76,7 +76,7 @@
             console.log('Disconnected from server');
         });
     
-        socket.on('stat_update', function(statistics) {
+        socket.on('stats', function(statistics) {
             console.log('Received updated statistics:', statistics);
             const txVal = statistics.txVal;
             updateHistogram(txVal);

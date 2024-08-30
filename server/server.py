@@ -554,7 +554,7 @@ def process_transaction(transactions):
                     # Update statistics of address balances
                     update_address_balance_stats()
 
-            # After updating the variables, emit the updated statistics
+            # After updating the variables, emit the updated statistics to the clients 
             statistics = {
                 'numNodes': numNodes,
                 'numTx': numTx,
@@ -572,12 +572,14 @@ def process_transaction(transactions):
 
             socketio.emit('update_stats', statistics)
              
-            stat_txVal = {
+            # Emit updated statistics to clients rendering histograms and line graphs
+            graph_stats = {
                 'txVal': outVals * 1000 / 100000000,
-                'txSize': tx_size
+                'txSize': tx_size,
+                'txAvgFee': txTotalFee / numTx * 1000 / 100000000
             }
 
-            socketio.emit('stat_update', stat_txVal)
+            socketio.emit('stats', graph_stats)
         # Compute positions and send graph data after processing each transaction
         # graph_data = compute_graph(nodes, edges)
         # if graph_data:
@@ -991,6 +993,12 @@ def tx_value():
 @app.route('/tx_size')
 def tx_size():
     return render_template('tx_size_histogram.html')
+
+
+@app.route('/tx_fee')
+def tx_fee():
+    return render_template('tx_fee_lineGraph.html')
+
 
 
 @app.route('/static_graph', methods=['GET'])
