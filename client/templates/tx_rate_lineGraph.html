@@ -45,7 +45,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script type="module">
-        import { createLineGraph } from '../static/lineGraph.js';
+        import { createLineGraph, saveLineGraphSnapshot } from '../static/lineGraph.js';
 
         // Initialize the line graph with parameters
         const { updateLineGraph, resetLineGraph } = createLineGraph("lineGraph", "Transaction Rate (tps)", "darkorange");
@@ -77,6 +77,13 @@
         socket.on('reload', function() {
             console.log("Reloading line graph because the server state has been reset");
             resetLineGraph();
+        });
+
+        socket.on('controller_command', function(msg) {
+            console.log("Received controller command");
+            if (msg.action === 'saveSnapshot') {
+                saveLineGraphSnapshot('tx_rate');
+            }
         });
     </script>
 </body>

@@ -75,7 +75,7 @@ file_index = 0
 # ]
 
 # Canvas sizes
-NUM_CLIENTS = 14
+NUM_CLIENTS = 16 
 NUM_ROWS = 4
 NUM_COLS = 3
 CLIENT_WIDTH = 1920

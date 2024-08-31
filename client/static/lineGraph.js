@@ -1,4 +1,5 @@
 // lineGraph.js
+let dataBuffer = []
 
 export function createLineGraph(containerId, yAxisLabel, lineColor) {
     // Initial setup for the line graph
@@ -60,7 +61,7 @@ export function createLineGraph(containerId, yAxisLabel, lineColor) {
         .text("Time");
 
     // Initialize an empty buffer for values
-    let dataBuffer = [];
+    // let dataBuffer = [];
 
     function updateLineGraph(newValue) {
         const timestamp = new Date();
@@ -99,4 +100,32 @@ export function createLineGraph(containerId, yAxisLabel, lineColor) {
     }
 
     return { updateLineGraph, resetLineGraph };
+}
+
+
+export function saveLineGraphSnapshot(name) {
+    console.log("--------------SAVING LINEGRAPH SNAPSHOT-------------");
+    const lineGraphData = {
+        lineGraphs: {
+            [name]: dataBuffer
+        }
+    };
+    console.log(lineGraphData)
+
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
+    const filename = `graph_snapshot_${timestamp}.json`;
+
+    fetch(`/save_snapshot?filename=${filename}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(lineGraphData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Line Graph snapshot saved:", data);
+    })
+    .catch(error => console.error('Error saving line graph snapshot:', error));
 }
