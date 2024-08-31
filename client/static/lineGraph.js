@@ -13,7 +13,7 @@ export function createLineGraph(containerId, yAxisLabel, lineColor) {
         .attr("transform", `translate(${margin.left},${margin.top})`);
 
     // X scale for time
-    const x = d3.scaleTime()
+    let x = d3.scaleTime()
         .range([0, width]);
 
     const xAxis = svg.append("g")
@@ -21,7 +21,7 @@ export function createLineGraph(containerId, yAxisLabel, lineColor) {
         .attr("transform", `translate(0,${height})`);
 
     // Y scale for the values
-    const y = d3.scaleLinear()
+    let y = d3.scaleLinear()
         .range([height, 0]);
 
     const yAxis = svg.append("g")
@@ -82,5 +82,21 @@ export function createLineGraph(containerId, yAxisLabel, lineColor) {
             .attr("d", line);
     }
 
-    return updateLineGraph;
+    function resetLineGraph() {
+        dataBuffer = [];
+
+        // Reset x and y scales with default ranges
+        x = d3.scaleTime().range([0, width]);
+        y = d3.scaleLinear().range([height, 0]);
+
+        // Clear the line path
+        path.datum(dataBuffer)
+            .attr("d", line);
+
+        // Reset the axes
+        xAxis.call(d3.axisBottom(x));
+        yAxis.call(d3.axisLeft(y));
+    }
+
+    return { updateLineGraph, resetLineGraph };
 }

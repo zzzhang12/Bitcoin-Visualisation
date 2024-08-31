@@ -48,7 +48,7 @@
         import { createLineGraph } from '../static/lineGraph.js';
 
         // Initialize the line graph with parameters
-        const updateLineGraph = createLineGraph("lineGraph", "Average Transaction Fee (mB)", "steelblue");
+        const { updateLineGraph, resetLineGraph } = createLineGraph("lineGraph", "Average Transaction Fee (mB)", "steelblue");
 
         // WebSocket connection to the server
         const socket = io("http://localhost:3000", {
@@ -72,6 +72,11 @@
             console.log('Received updated statistics:', statistics);
             const transactionFee = statistics.txAvgFee;  
             updateLineGraph(transactionFee);
+        });
+
+        socket.on('reload', function() {
+            console.log("Reloading line graph because the server state has been reset");
+            resetLineGraph();
         });
     </script>
 </body>
