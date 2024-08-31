@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Static Histogram</title>
+    <style>
+        body {
+            background-color: #000000;
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .bar {
+            fill: steelblue;
+        }
+        .axis {
+            font: 10px sans-serif;
+        }
+        .axis path, .axis line {
+            fill: none;
+            stroke: #fff;
+            shape-rendering: crispEdges;
+        }
+        .axis-label {
+            font-family: Arial, sans-serif;
+            fill: white;
+            font-size: 20px;
+        }
+        #header {
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="header">Saved Histogram</div>
+    <svg id="histogram"></svg>
+
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const snapshot = urlParams.get('snapshot'); 
+            const histogramType = urlParams.get('histogramType'); 
+            loadHistogramData(snapshot, histogramType);
+        });
+
+        let barColour, textLabel, pageTitle;
+        function loadHistogramData(snapshot, histogramType) {
+            fetch(`/static/snapshots/${snapshot}`)
+                .then(response => response.json())
+                .then(data => {
+                    const histogramData = data.histograms[histogramType];
+                    if (histogramData) {
+                        if (histogramType == "tx_value"){
+                            barColour = "steelblue";
+                            textLabel = "Transaction Value (mB)";
+                            pageTitle = "Transaction Value";
+                        }
+                        else if (histogramType == "tx_size"){
+                            barColour = "darkorange";
+                            textLabel = "Transaction Size (bytes)";
+                            pageTitle = "Transaction Size";
+                        }
+                        updatePageHeader(pageTitle);
+                        renderHistogram(histogramData);
+                    } else {
+                        console.error(`Histogram data for ${histogramType} not found in the snapshot.`);
+                    }
+                })
+                .catch(error => console.error('Error loading histogram snapshot:', error));
+        }
+
+        function updatePageHeader(title) {
+            document.getElementById('header').textContent = title;
+            document.title = title; 
+        }
+
+        function renderHistogram(histogramData) {
+            const margin = { top: 20, right: 30, bottom: 250, left: 40 }, 
+                  width = window.innerWidth - margin.left - margin.right,
+                  height = window.innerHeight - margin.top - margin.bottom;
+
+            const svg = d3.select("#histogram")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                .append("g")
+                .attr("transform", `translate(${margin.left},${margin.top})`);
+
+            // Y scale for frequency
+            const y = d3.scaleLinear()
+                .range([height, 0]);
+
+            const yAxis = svg.append("g")
+                .attr("class", "y axis");
+
+            // X-axis label
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("x", width / 2)
+                .attr("y", height + 100)
+                .style("text-anchor", "middle")
+                .text(textLabel); // Modify according to the histogram type
+
+            // Automatically adjust the x-axis domain based on the data
+            let xMin = d3.min(histogramData);
+            let xMax = d3.max(histogramData);
+
+            // Logarithmic scale for the x-axis
+            const x = d3.scaleLog()
+                .domain([Math.max(xMin, 0.001), xMax])
+                .range([0, width]);
+
+            svg.append("g")
+                .attr("class", "x axis")
+                .attr("transform", `translate(0,${height})`)
+                .call(d3.axisBottom(x).ticks(10, ",.1s"))
+                .selectAll("text")
+                .style("font-size", "14px")
+                .style("fill", "white");
+
+            // Generate bins for the histogram based on the updated x-axis
+            const histogram = d3.histogram()
+                .value(d => d)
+                .domain(x.domain())
+                .thresholds(x.ticks(50)); // Number of bins
+
+            // Compute the bins
+            const bins = histogram(histogramData);
+
+            // Update Y scale
+            const yMax = d3.max(bins, d => d.length);
+            y.domain([0, yMax]);
+            yAxis.transition().call(d3.axisLeft(y))
+                .selectAll("text")
+                .style("font-size", "14px")
+                .style("fill", "white");
+
+            // Render bars
+            svg.selectAll(".bar")
+                .data(bins)
+                .enter().append("rect")
+                .attr("class", "bar")
+                .attr("x", d => x(d.x0) + 1)
+                .attr("y", d => y(d.length))
+                .attr("width", d => {
+                    const x0 = x(d.x0);
+                    const x1 = x(d.x1);
+                    let calculatedWidth = x1 - x0 - 1;
+                    if (calculatedWidth <= 0) {
+                        calculatedWidth = 1; // Set a minimum width
+                    }
+                    return calculatedWidth;
+                })
+                .attr("height", d => height - y(d.length))
+                .style("fill", barColour);
+        }
+    </script>
+</body>
+</html>

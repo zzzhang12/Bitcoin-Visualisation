@@ -1020,6 +1020,13 @@ def static_graph():
     return render_template('static_graph.html', snapshot=snapshot)
 
 
+@app.route('/static_histogram', methods=['GET'])
+def static_histogram():
+    snapshot = request.args.get('snapshot')
+    histogram_type = request.args.get('histogramType', 'tx_value')
+    return render_template('static_histogram.html', snapshot=snapshot, histogramType=histogram_type)
+
+
 @app.route('/save_snapshot', methods=['POST'])
 def save_snapshot():
     print("SAVING SNAPSHOTS")
