@@ -56,7 +56,7 @@
     <script type="module">
         import { createHistogram } from '../static/histogram.js';
 
-        const updateHistogram = createHistogram("histogram", "darkorange", "Transaction Size (bytes)");
+        const { updateHistogram, resetHistogram } = createHistogram("histogram", "darkorange", "Transaction Size (bytes)");
 
         // WebSocket connection to the server
         const socket = io("http://localhost:3000", {
@@ -77,9 +77,14 @@
         });
     
         socket.on('stats', function(statistics) {
-            console.log('Received updated statistics:', statistics);
+            console.log('Received updated statistics:', statistics.txSize);
             const transactionSize = statistics.txSize;
             updateHistogram(transactionSize);
+        });
+
+        socket.on('reload', function() {
+            console.log("Resetting histogram");
+            resetHistogram();
         });
     </script>
 </body>

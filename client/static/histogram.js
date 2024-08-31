@@ -27,6 +27,7 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
 
     // Initialize an empty buffer for transaction sizes
     let dataBuffer = [];
+    let x;
 
     function updateHistogram(dataValue) {
         // Ensure dataValue is valid
@@ -47,6 +48,8 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         // Automatically adjust the x-axis domain based on the data
         let xMin = d3.min(dataBuffer);
         let xMax = d3.max(dataBuffer);
+        console.log("xMin: ", xMin)
+        console.log("xMax: ", xMax)
 
         // Ensure the domain is valid
         if (xMin === xMax) {
@@ -55,7 +58,7 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         }
 
          // Logarithmic scale for the x-axis
-         const x = d3.scaleLog()
+         x = d3.scaleLog()
          .domain([Math.max(xMin, 0.001), xMax])
          .range([0, width]);
 
@@ -79,16 +82,17 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         const histogram = d3.histogram()
             .value(d => d)
             .domain(x.domain())
-            .thresholds(x.ticks(40)); // Number of bins
+            .thresholds(x.ticks(50)); // Number of bins
 
         // Compute the bins
         const bins = histogram(dataBuffer);
 
         // Check and log bin issues
         bins.forEach((bin, index) => {
-            const width = x(bin.x1) - x(bin.x0) - 1;
+            let width = x(bin.x1) - x(bin.x0) - 1;
             if (width <= 0) {
                 console.warn(`Bin ${index} has an invalid width: ${width}. Adjusting width to 1.`);
+                width = 1;
             }
         });
         // Update Y scale
@@ -142,11 +146,12 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         bars.exit().remove();
     }
 
-    // return updateHistogram;
 
     function resetHistogram() {
         dataBuffer = [];
-        updateHistogram(0); // Optionally clear the histogram display or add neutral data
+        svg.selectAll(".bar").remove();  // Clear the bars from the histogram
+        svg.select(".x.axis").call(d3.axisBottom(x).ticks(10, ",.1s"));
+        svg.select(".y.axis").call(d3.axisLeft(y));
     }
 
     return { updateHistogram, resetHistogram };
