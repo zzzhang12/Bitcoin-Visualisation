@@ -1,3 +1,5 @@
+const histogramDataBuffers = []; 
+
 export function createHistogram(containerId, barColor, xAxisLabel) {
     // Initial setup for the histogram
     const margin = {top: 20, right: 30, bottom: 250, left: 40}, 
@@ -26,10 +28,14 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         .text(xAxisLabel);
 
     // Initialize an empty buffer for transaction sizes
-    let dataBuffer = [];
+    // let dataBuffer = [];
+    // histogramDataBuffers[containerId] = [];
     let x;
 
     function updateHistogram(dataValue) {
+        // let dataBuffer = histogramDataBuffers[containerId];
+        let dataBuffer = histogramDataBuffers;
+
         // Ensure dataValue is valid
         if (isNaN(dataValue) || dataValue === null || dataValue === undefined) {
             console.warn('Invalid data value:', dataValue);
@@ -148,6 +154,7 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
 
 
     function resetHistogram() {
+        let dataBuffer = histogramDataBuffers[containerId];
         dataBuffer = [];
         svg.selectAll(".bar").remove();  // Clear the bars from the histogram
         svg.select(".x.axis").call(d3.axisBottom(x).ticks(10, ",.1s"));
@@ -155,4 +162,32 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
     }
 
     return { updateHistogram, resetHistogram };
+}
+
+
+export function saveHistogramSnapshot(name) {
+    console.log("--------------SAVING HISTOGRAM SNAPSHOT-------------");
+    const histogramData = {
+        histograms: {
+            [name]: histogramDataBuffers // Save the data buffer of the histogram
+        }
+    };
+    console.log(histogramData)
+
+    const now = new Date();
+    const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
+    const filename = `graph_snapshot_${timestamp}.json`;
+
+    fetch(`/save_snapshot?filename=${filename}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(histogramData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("Histogram snapshot saved:", data);
+    })
+    .catch(error => console.error('Error saving histogram snapshot:', error));
 }

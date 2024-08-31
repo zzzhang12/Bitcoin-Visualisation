@@ -54,7 +54,7 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script type="module">
-        import { createHistogram } from '../static/histogram.js';
+        import { createHistogram, saveHistogramSnapshot } from '../static/histogram.js';
 
         const { updateHistogram, resetHistogram } = createHistogram("histogram", "steelblue", "Transaction Value (mB)");
 
@@ -85,6 +85,13 @@
         socket.on('reload', function() {
             console.log("Resetting histogram");
             resetHistogram();
+        });
+
+        socket.on('controller_command', function(msg) {
+            console.log("Received controller command");
+            if (msg.action === 'saveSnapshot') {
+                saveHistogramSnapshot('tx_value');
+            }
         });
     </script>
 </body>

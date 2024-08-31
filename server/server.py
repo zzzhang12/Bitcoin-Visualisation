@@ -40,7 +40,9 @@ start_visualization = False # Initialised to false, True when visualisation star
 graph_data_accumulated = {
     "nodes": [],
     "edges": [],
-    "stats": {}
+    "stats": {},
+    "histograms": {},
+    "lineGraphs": {}
 }
 clients_received = 0
 
@@ -73,7 +75,7 @@ file_index = 0
 # ]
 
 # Canvas sizes
-NUM_CLIENTS = 12
+NUM_CLIENTS = 14
 NUM_ROWS = 4
 NUM_COLS = 3
 CLIENT_WIDTH = 1920
@@ -1033,21 +1035,40 @@ def save_snapshot():
 def accumulate_graph_data(new_data, filename):
     global graph_data_accumulated, clients_received
 
-    # Accumulate nodes and edges
-    graph_data_accumulated["nodes"].extend(new_data["nodes"])
-    graph_data_accumulated["edges"].extend(new_data["edges"])
+    with save_lock:
 
-    # Only set stats if they are not empty
-    if new_data["stats"]:
-        graph_data_accumulated['stats'] = new_data['stats']
+        # Accumulate nodes and edges if present
+        if "nodes" in new_data:
+            graph_data_accumulated["nodes"].extend(new_data["nodes"])
+        if "edges" in new_data:
+            graph_data_accumulated["edges"].extend(new_data["edges"])
 
-    clients_received += 1
-    print(f"Received data from client {clients_received}/{NUM_CLIENTS}")
+        # Accumulate stats if present
+        if "stats" in new_data and new_data["stats"]:
+            graph_data_accumulated['stats'] = new_data['stats']
 
-    # Only save to file when all clients have submitted their data
-    if clients_received == NUM_CLIENTS:
-        file_path = os.path.join(app.static_folder, 'snapshots', filename)
-        with save_lock:  # Ensure only one client can write at a time
+        # Accumulate histograms if present
+        if "histograms" in new_data and new_data["histograms"]:
+            for key, value in new_data["histograms"].items():
+                if key in graph_data_accumulated["histograms"]:
+                    graph_data_accumulated["histograms"][key].extend(value)
+                else:
+                    graph_data_accumulated["histograms"][key] = value
+
+        # Accumulate line graphs if present
+        if "lineGraphs" in new_data and new_data["lineGraphs"]:
+            for key, value in new_data["lineGraphs"].items():
+                if key in graph_data_accumulated["lineGraphs"]:
+                    graph_data_accumulated["lineGraphs"][key].extend(value)
+                else:
+                    graph_data_accumulated["lineGraphs"][key] = value
+
+        clients_received += 1
+        print(f"Received data from client {clients_received}/{NUM_CLIENTS}")
+
+        # Only save to file when all clients have submitted their data
+        if clients_received == NUM_CLIENTS:
+            file_path = os.path.join(app.static_folder, 'snapshots', filename)
             try:
                 with open(file_path, 'w') as f:
                     print("All client data received. Writing to file...")
@@ -1060,7 +1081,9 @@ def accumulate_graph_data(new_data, filename):
                 graph_data_accumulated = {
                     "nodes": [],
                     "edges": [],
-                    "stats": {}
+                    "stats": {},
+                    "histograms": {},
+                    "lineGraphs": {}
                 }
                 clients_received = 0
 
