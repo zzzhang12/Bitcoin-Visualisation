@@ -39,56 +39,46 @@
             padding: 20px;
             font-size: 24px;
         }
+        .legend {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            fill: white;
+        }
     </style>
 </head>
 <body>
-    <div id="header">Saved Line Graph</div>
+    <div id="header">Transaction Rate and Average Transaction Fee Over Time</div>
     <svg id="lineGraph"></svg>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const snapshot = urlParams.get('snapshot'); 
-            const lineGraphType = urlParams.get('lineGraphType'); 
-            loadLineGraphData(snapshot, lineGraphType);
+            const snapshot = urlParams.get('snapshot');
+            const lineGraphTypes = urlParams.get('lineGraphTypes').split(','); // Assume comma-separated types
+            loadLineGraphData(snapshot, lineGraphTypes);
         });
 
-        let lineColor, yAxisLabel, pageTitle;
-
-        function loadLineGraphData(snapshot, lineGraphType) {
+        function loadLineGraphData(snapshot, lineGraphTypes) {
             fetch(`/static/snapshots/${snapshot}`)
                 .then(response => response.json())
                 .then(data => {
-                    const lineGraphData = data.lineGraphs[lineGraphType];
-                    console.log(lineGraphData)
-                    if (lineGraphData) {
-                        if (lineGraphType == "tx_fee") {
-                            lineColor = "steelblue";
-                            yAxisLabel = "Average Transaction Fee (mB)";
-                            pageTitle = "Transaction Fee Over Time";
-                        } else if (lineGraphType == "tx_rate") {
-                            lineColor = "darkorange";
-                            yAxisLabel = "Transaction Rate (tps)";
-                            pageTitle = "Transaction Rate Over Time";
-                        }
-                        updatePageHeader(pageTitle);
-                        renderLineGraph(lineGraphData);
+                    const lineGraphData1 = data.lineGraphs[lineGraphTypes[0]];
+                    const lineGraphData2 = data.lineGraphs[lineGraphTypes[1]];
+
+                    if (lineGraphData1 && lineGraphData2) {
+                        renderLineGraph(lineGraphData1, lineGraphData2, lineGraphTypes);
                     } else {
-                        console.error(`Line graph data for ${lineGraphType} not found in the snapshot.`);
+                        console.error('Line graph data not found in the snapshot.');
                     }
                 })
                 .catch(error => console.error('Error loading line graph snapshot:', error));
         }
 
-        function updatePageHeader(title) {
-            document.getElementById('header').textContent = title;
-            document.title = title; // Update the HTML page title
-        }
 
-        function renderLineGraph(lineGraphData) {
+        function renderLineGraph(lineGraphData1, lineGraphData2, lineGraphTypes) {
             // Configuration for the line graph
-            const margin = { top: 20, right: 30, bottom: 150, left: 100 },
+            const margin = { top: 20, right: 100, bottom: 150, left: 100 },
                   width = window.innerWidth - margin.left - margin.right,
                   height = window.innerHeight - margin.top - margin.bottom;
 
@@ -101,38 +91,61 @@
             // X scale for time
             const x = d3.scaleTime()
                 .range([0, width])
-                .domain(d3.extent(lineGraphData, d => new Date(d.timestamp)));
+                .domain(d3.extent(lineGraphData1.concat(lineGraphData2), d => new Date(d.timestamp)));
 
             const xAxis = svg.append("g")
                 .attr("class", "x axis")
                 .attr("transform", `translate(0,${height})`)
                 .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%H:%M:%S")));
 
-            // Y scale for the values
-            const y = d3.scaleLinear()
+            // Y scales for the values
+            const yLeft = d3.scaleLinear()
                 .range([height, 0])
-                .domain([0, d3.max(lineGraphData, d => d.value)]);
+                .domain([0, d3.max(lineGraphData1, d => d.value)]);
 
-            const yAxis = svg.append("g")
+            const yRight = d3.scaleLinear()
+                .range([height, 0])
+                .domain([0, d3.max(lineGraphData2, d => d.value)]);
+
+            const yAxisLeft = svg.append("g")
                 .attr("class", "y axis")
-                .call(d3.axisLeft(y));
+                .call(d3.axisLeft(yLeft));
 
-            // Line generator function
-            const line = d3.line()
+            const yAxisRight = svg.append("g")
+                .attr("class", "y axis")
+                .attr("transform", `translate(${width},0)`)
+                .call(d3.axisRight(yRight));
+
+            // Line generator functions
+            const line1 = d3.line()
                 .x(d => x(new Date(d.timestamp)))
-                .y(d => y(d.value))
-                .curve(d3.curveMonotoneX);  // Apply curve for smoother line
+                .y(d => yLeft(d.value))
+                .curve(d3.curveMonotoneX);
 
-            // Append the line path
+            const line2 = d3.line()
+                .x(d => x(new Date(d.timestamp)))
+                .y(d => yRight(d.value))
+                .curve(d3.curveMonotoneX); 
+
+            // Append the first line path
             svg.append("path")
-                .datum(lineGraphData)
+                .datum(lineGraphData1)
                 .attr("class", "line")
                 .attr("fill", "none")
-                .attr("stroke", lineColor)
+                .attr("stroke", "steelblue")
                 .attr("stroke-width", 2)
-                .attr("d", line);
+                .attr("d", line1);
 
-            // Y-axis label
+            // Append the second line path
+            svg.append("path")
+                .datum(lineGraphData2)
+                .attr("class", "line")
+                .attr("fill", "none")
+                .attr("stroke", "darkorange")
+                .attr("stroke-width", 2)
+                .attr("d", line2);
+
+            // Y-axis labels
             svg.append("text")
                 .attr("class", "axis-label")
                 .attr("transform", "rotate(-90)")
@@ -140,7 +153,16 @@
                 .attr("y", -margin.left + 20)
                 .style("text-anchor", "middle")
                 .style("fill", "white")
-                .text(yAxisLabel);
+                .text("Average Transaction Fee (mB)");
+
+            svg.append("text")
+                .attr("class", "axis-label")
+                .attr("transform", "rotate(-90)")
+                .attr("x", -height / 2)
+                .attr("y", width + 60)
+                .style("text-anchor", "middle")
+                .style("fill", "white")
+                .text("Transaction Rate (tps)");
 
             // X-axis label
             svg.append("text")
@@ -150,7 +172,39 @@
                 .style("text-anchor", "middle")
                 .style("fill", "white")
                 .text("Time");
+
+            // Define the legend
+            const legend = svg.append("g")
+                .attr("class", "legend")
+                .attr("transform", `translate(${width - 200}, ${-margin.top + 10})`);
+
+            // Add the legend items
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", 0)
+                .attr("width", 10)
+                .attr("height", 10)
+                .style("fill", "steelblue");
+            legend.append("text")
+                .attr("x", 20)
+                .attr("y", 10)
+                .text("Average Transaction Fee")
+                .style("fill", "white");
+
+            legend.append("rect")
+                .attr("x", 0)
+                .attr("y", 20)
+                .attr("width", 10)
+                .attr("height", 10)
+                .style("fill", "darkorange");
+            legend.append("text")
+                .attr("x", 20)
+                .attr("y", 30)
+                .text("Transaction Rate")
+                .style("fill", "white");
         }
+
+        
     </script>
 </body>
 </html>

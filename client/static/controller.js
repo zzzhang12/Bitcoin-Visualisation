@@ -206,9 +206,7 @@ function displaySnapshotList(snapshots) {
                 // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank')
                 // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`, '_blank');
                 // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
-                // window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphType=tx_fee`, '_blank');
-                window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphType=tx_rate`, '_blank');
-
+                window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
 
                 button.style.backgroundColor = '#28a745'; // Green color to indicate success
                 regionButtons.remove();
