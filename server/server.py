@@ -1027,6 +1027,13 @@ def static_histogram():
     return render_template('static_histogram.html', snapshot=snapshot, histogramType=histogram_type)
 
 
+@app.route('/static_lineGraph', methods=['GET'])
+def static_line_graph():
+    snapshot = request.args.get('snapshot')
+    line_graph_type = request.args.get('lineGraphType', 'tx_fee')
+    return render_template('static_lineGraph.html', snapshot=snapshot, lineGraphType=line_graph_type)
+
+
 @app.route('/save_snapshot', methods=['POST'])
 def save_snapshot():
     print("SAVING SNAPSHOTS")
