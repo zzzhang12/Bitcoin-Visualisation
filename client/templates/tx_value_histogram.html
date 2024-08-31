@@ -56,7 +56,7 @@
     <script type="module">
         import { createHistogram } from '../static/histogram.js';
 
-        const updateHistogram = createHistogram("histogram", "steelblue", "Transaction Value (mB)");
+        const { updateHistogram, resetHistogram } = createHistogram("histogram", "steelblue", "Transaction Value (mB)");
 
         // WebSocket connection to the server
         const socket = io("http://localhost:3000", {
@@ -80,6 +80,11 @@
             console.log('Received updated statistics:', statistics);
             const txVal = statistics.txVal;
             updateHistogram(txVal);
+        });
+
+        socket.on('reload', function() {
+            console.log("Resetting histogram");
+            resetHistogram();
         });
     </script>
 </body>

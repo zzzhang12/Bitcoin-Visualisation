@@ -39,6 +39,11 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         dataBuffer.push(dataValue);
         if (dataBuffer.length > 1000) dataBuffer.shift(); // Limit the buffer size
 
+        if (dataBuffer.length < 2) {
+            console.warn('Not enough data to generate histogram');
+            return; // Early exit if not enough data
+        }
+
         // Automatically adjust the x-axis domain based on the data
         let xMin = d3.min(dataBuffer);
         let xMax = d3.max(dataBuffer);
@@ -51,7 +56,7 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
 
          // Logarithmic scale for the x-axis
          const x = d3.scaleLog()
-         .domain([Math.max(xMin, 1), xMax])
+         .domain([Math.max(xMin, 0.001), xMax])
          .range([0, width]);
 
         const xAxis = svg.select(".x.axis");
@@ -79,6 +84,13 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         // Compute the bins
         const bins = histogram(dataBuffer);
 
+        // Check and log bin issues
+        bins.forEach((bin, index) => {
+            const width = x(bin.x1) - x(bin.x0) - 1;
+            if (width <= 0) {
+                console.warn(`Bin ${index} has an invalid width: ${width}. Adjusting width to 1.`);
+            }
+        });
         // Update Y scale
         const yMax = d3.max(bins, d => d.length);
         y.domain([0, yMax]);
@@ -103,6 +115,10 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
                 if (calculatedWidth < 0) {
                     [d.x0, d.x1] = [d.x1, d.x0];
                     calculatedWidth = x(d.x1) - x(d.x0) - 1;
+                    if (calculatedWidth <= 0) {
+                        console.warn(`Negative or zero width detected: ${calculatedWidth}. Adjusting to minimum width of 1.`);
+                        calculatedWidth = 1; // Set a minimum width
+                    }
                 }
                 return calculatedWidth;
             })
@@ -117,7 +133,8 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
                 const x0 = x(d.x0);
                 const x1 = x(d.x1);
                 const width = x1 - x0 - 1;
-                return isNaN(width) ? 0 : width;
+                // return isNaN(width) ? 0 : width;
+                return width <= 0 ? 1 : width;
             })
             .attr("height", d => height - y(d.length));
 
@@ -125,5 +142,12 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         bars.exit().remove();
     }
 
-    return updateHistogram;
+    // return updateHistogram;
+
+    function resetHistogram() {
+        dataBuffer = [];
+        updateHistogram(0); // Optionally clear the histogram display or add neutral data
+    }
+
+    return { updateHistogram, resetHistogram };
 }

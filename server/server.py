@@ -727,9 +727,9 @@ def update_address_balance_stats():
     max_balance = np.max(balances)
 
     # Update balance stats
-    balance_stats["balanceMed"] = median_balance
-    balance_stats["balanceIQR"] = iqr
-    balance_stats["balanceMax"] = max_balance
+    balance_stats["balanceMed"] = int(median_balance)
+    balance_stats["balanceIQR"] = int(iqr)
+    balance_stats["balanceMax"] = int(max_balance)
 
 
 # def compute_graph(new_nodes, new_edges):
