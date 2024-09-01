@@ -26,7 +26,7 @@ nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
 broadcast_interval = 2 # Frequency in seconds to broadcast data to clients
-scale_factor = 3
+scale_factor = 2
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
 current_addresses = {} # Addresses in the current visualisation, resets to empty when server resetes
@@ -786,7 +786,7 @@ def update_address_balance_stats():
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions, scale_factor
 
-    total_iterations = 50
+    total_iterations = 80
     batch_size = 1  # Run one iteration at a time
 
     try:
@@ -812,9 +812,9 @@ def compute_graph(new_nodes, new_edges):
             barnesHutOptimize=True,
             barnesHutTheta=1.0,
             multiThreaded=False,
-            scalingRatio=40.0,
+            scalingRatio=35.0,
             strongGravityMode=False,
-            gravity=12.0,
+            gravity=20.0,
             verbose=False
         )
 
@@ -917,13 +917,21 @@ def create_graph_data(new_nodes, new_edges, positions):
             else:
                 new_edges_split.append(edge)
 
-     # Determine the range of x and y values
+    # Determine the range of x and y values
     x_min, x_max = min(all_x_values), max(all_x_values)
     y_min, y_max = min(all_y_values), max(all_y_values)
 
-    # Check how many nodes fall outside the specified range
+     # Calculate scaling factors for x and y
+    # x_scale_factor = (2880 * 2) / (x_max - x_min)
+    # y_scale_factor = (2160 * 2) / (y_max - y_min)
+
+    # Choose the smaller scaling factor to maintain aspect ratio
+    # scale_factor = min(x_scale_factor, y_scale_factor)
+    # scaled_x_values = [(x - x_min) * scale_factor - 2880 for x in all_x_values]
+    # scaled_y_values = [(y - y_min) * scale_factor - 2160 for y in all_y_values]
+
     for x in all_x_values:
-        if x < -1920 or x > 3840:
+        if x < -2880 or x > 2880:
             outside_x_range += 1
 
     for y in all_y_values:
@@ -940,6 +948,8 @@ def create_graph_data(new_nodes, new_edges, positions):
         'nodes': [{'id': node['id'], 
                    'x': positions[node['id']][0] * scale_factor, 
                    'y': positions[node['id']][1] * scale_factor, 
+                    # 'x': (positions[node['id']][0] - x_min) * scale_factor -2880, 
+                    # 'y': (positions[node['id']][1] - y_min) * scale_factor -2160, 
                    'color': node['color'], 
                    'type': node['type'], 
                    'size': node['size'] if node['type'] != 'intersection' else None,
