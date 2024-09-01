@@ -12,11 +12,6 @@ import requests
 import numpy as np
 import copy
 import os
-import logging
-
-# Set up logging
-logging.basicConfig(filename='intersections.log', level=logging.INFO, format='%(asctime)s - %(message)s')
-
                     
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -804,7 +799,7 @@ def compute_graph(new_nodes, new_edges):
             for node in new_nodes:
                 node_id = node['id']
                 if node_id not in node_positions or node_positions[node_id] == (0.0, 0.0):
-                    print ("initiliase node position")
+                    # print ("initialise node position")
                     node_positions[node_id] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
         # Initialize ForceAtlas2 with the desired parameters
@@ -881,17 +876,11 @@ def create_graph_data(new_nodes, new_edges, positions):
 
             intersections = []
 
-            logging.info(f"--------------edge {edge['source']} ({source_pos}) -> {edge['target']} ( {target_pos})-------------")
             for boundary in VERTICAL_BOUNDARIES:
                 if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
                     intersection = compute_intersection(source_pos, target_pos, boundary, True)
                     if intersection:
                         intersections.append(intersection)
-                         # Log the intersection point
-                        logging.info(f"YES VERTICAL {boundary}")
-                        logging.info(f"Calculated vertical intersection at {intersection} for edge {edge['source']} -> {edge['target']}")
-                    else:
-                        logging.info(f"no intersection for VERTICAL boundary {boundary}")
 
 
             for boundary in HORIZONTAL_BOUNDARIES:
@@ -899,11 +888,6 @@ def create_graph_data(new_nodes, new_edges, positions):
                     intersection = compute_intersection(source_pos, target_pos, boundary, False)
                     if intersection:
                         intersections.append(intersection)
-                        logging.info(f"YES HORIZONTAL {boundary}")
-                         # Log the intersection point
-                        logging.info(f"Calculated vertical intersection at {intersection} for edge {edge['source']} -> {edge['target']}")
-                    else:
-                        logging.info(f"no intersection for HORIZONTAL boundary {boundary}")
 
 
             intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
@@ -911,7 +895,6 @@ def create_graph_data(new_nodes, new_edges, positions):
             
             
             if intersections:
-                logging.info(f"All intersections: {intersections}")
                 for i, intersection in enumerate(intersections):
                     intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
                     positions[intersection_id] = intersection
@@ -940,7 +923,6 @@ def create_graph_data(new_nodes, new_edges, positions):
                     'z_score_tx': edge['z_score_tx']
                 })
             else:
-                logging.info(f"NO intersections")
                 new_edges_split.append(edge)
 
     # Determine the range of x and y values
@@ -992,12 +974,6 @@ def create_graph_data(new_nodes, new_edges, positions):
                    for edge in new_edges_split]
     }
     return graph_data
-   
-
-def is_different_client(p1, p2):
-    x1, y1 = p1
-    x2, y2 = p2
-    return (x1 // CLIENT_WIDTH) != (x2 // CLIENT_WIDTH) or (y1 // CLIENT_HEIGHT != y2 // CLIENT_HEIGHT)
 
 
 def compute_intersection(p1, p2, boundary, is_vertical):

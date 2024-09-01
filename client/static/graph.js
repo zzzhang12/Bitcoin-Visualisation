@@ -422,7 +422,6 @@ function renderGraph(graphData) {
         hasDisplayedRange = true;
     }
 
-
     // // Convert edges to reference the node objects
     // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
     // graphData.edges.forEach(d => {
@@ -532,8 +531,8 @@ function updateGraph(newGraphData) {
     // Add new nodes
     const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
-        // .attr("r", d => d.type === 'tx' ? 4 : 1)
-        .attr("r", d => 5)
+        .attr("r", d => d.type === 'tx' ? 4 : 1)
+        // .attr("r", d => 5)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         .style("fill", d => {
