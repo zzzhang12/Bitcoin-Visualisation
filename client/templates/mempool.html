@@ -67,6 +67,14 @@
         .stat-block div {
             display: inline;
         }
+        #infoBox {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -117,6 +125,7 @@
         
         <svg></svg>
     </div>
+    <div id="infoBox"></div>
     <!-- <div id="infoBox"><button id="saveGraphSnapshot">Save Graph Snapshot</button></div> -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
