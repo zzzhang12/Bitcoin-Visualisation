@@ -66,6 +66,16 @@ function displaySnapshotList(snapshots) {
 
     let activeRegionButtons = null; 
 
+    // Sort snapshots by timestamp
+    snapshots.sort((a, b) => {
+        const dateA = extractDateFromFilename(a.file_name);
+        const dateB = extractDateFromFilename(b.file_name);
+        console.log(`Comparing: ${dateA} and ${dateB}`);
+        return dateB.getTime() - dateA.getTime();  // most recent first)
+    });
+
+    console.log("Sorted snapshots:", snapshots);
+
     snapshots.forEach(snapshot => {
         const fileName = snapshot.file_name
         const snapshotName = fileName.replace('graph_snapshot_', '').replace('.json', '');
@@ -302,4 +312,17 @@ function displaySnapshotList(snapshots) {
     });
     });
     snapshotList.style.display = 'block'; // Show the list
+}
+
+// Helper function to extract Date object from filename
+function extractDateFromFilename(filename) {
+    const timestamp = filename.replace('graph_snapshot_', '').replace('.json', '');
+    const [datePart, timePart] = timestamp.split('_');
+    
+    const [year, month, day] = datePart.split('-');
+    const [hours, minutes, seconds] = timePart.split('-');
+    
+    const dateObj = new Date(year, month - 1, day, hours, minutes, seconds);
+    
+    return dateObj;
 }
