@@ -157,26 +157,123 @@ function displaySnapshotList(snapshots) {
             });
 
             regionButton.addEventListener('click', () => {
-                const x = (index * 2 + 2) * 1920;
-                const y = 0;
+                const WIDTH = 1920;
+                const HEIGHT = 1080;
 
                 console.log(x, y)
-                const payload = {
-                    app: {
-                        states: {
-                            load: {
-                                url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_graph?snapshot=${snapshot.file_name}`
-                            }
-                        },
-                        url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                    },
-                    x: x,    
-                    y: y,    
-                    w: 5760,       
-                    h: 4320,  
-                    space: "DOCluster"  
-                };
 
+                const payloads = [
+                    // Static graph snapshot -- 2 x 2 screens
+                    {
+                        app: {
+                            states: {
+                                load: {
+                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_graph?snapshot=${snapshot.file_name}`
+                                }
+                            },
+                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                        },
+                        x: (index * 2 + 2) * WIDTH,  
+                        y: 0,
+                        w: 2 * WIDTH,       
+                        h: 2 * HEIGHT,  
+                        space: "DOCluster"  
+                    },
+                    // Info panel 
+                    {
+                        app: {
+                            states: {
+                                load: {
+                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/snapshot_stats?snapshot=${snapshot.file_name}`
+                                }
+                            },
+                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                        },
+                        x: (index * 2 + 2) * 1920,  
+                        y: 2 * HEIGHT,
+                        w: WIDTH,       
+                        h: HEIGHT,  
+                        space: "DOCluster"  
+                    },
+                    // Line graphs of tx rate and tx fee
+                    {
+                        app: {
+                            states: {
+                                load: {
+                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
+                                }
+                            },
+                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                        },
+                        x: (index * 2 + 3) * 1920, 
+                        y: 2 * HEIGHT,
+                        w: WIDTH,       
+                        h: HEIGHT,  
+                        space: "DOCluster"  
+                    },
+                    // Histogram of tx value
+                    {
+                        app: {
+                            states: {
+                                load: {
+                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
+                                }
+                            },
+                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                        },
+                        x: (index * 2 + 2) * 1920,  
+                        y: 3 * HEIGHT,
+                        w: WIDTH,       
+                        h: HEIGHT,  
+                        space: "DOCluster"  
+                    },
+                    // Histogram of tx size
+                    {
+                        app: {
+                            states: {
+                                load: {
+                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
+                                }
+                            },
+                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                        },
+                        x: (index * 2 + 3) * 1920, 
+                        y: 3 * HEIGHT,
+                        w: WIDTH,       
+                        h: HEIGHT,  
+                        space: "DOCluster"  
+                    }
+                ];
+
+                // // Execute multiple fetch requests in parallel
+                // Promise.all(
+                //     payloads.map(payload => 
+                //         fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                //             method: "POST",
+                //             headers: {
+                //                 'Content-Type': 'application/json'
+                //             },
+                //             body: JSON.stringify(payload)
+                //         })
+                //         .then(response => {
+                //             if (!response.ok) {
+                //                 throw new Error('Failed to load snapshot.');
+                //             }
+                //             return response.json();
+                //         })
+                //     )
+                // )
+                // .then(dataArray => {
+                //     dataArray.forEach(data => {
+                //         console.log('Snapshot loaded into the observatory:', data);
+                //     });
+                //     button.style.backgroundColor = '#28a745'; // Green color to indicate success
+                //     regionButtons.remove();
+                //     activeRegionButtons = null; // Reset the active region buttons
+                // })
+                // .catch(error => {
+                //     console.error('Error loading snapshot into the observatory:', error);
+                // });
                 // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
                 //     method: "POST",
                 //     headers: {
@@ -185,21 +282,6 @@ function displaySnapshotList(snapshots) {
                 //     body: JSON.stringify(payload)
                 // })
                 
-                // .then(response => {
-                //     if (!response.ok) {
-                //         throw new Error('Failed to load snapshot.');
-                //     }
-                //     return response.json();
-                // })
-                // .then(data => {
-                //     console.log('Snapshot loaded into the observatory:', data);
-                //     button.style.backgroundColor = '#28a745'; // Green color to indicate success
-                //     regionButtons.remove();
-                //     activeRegionButtons = null; // Reset the active region buttons
-                // })
-                // .catch(error => {
-                //     console.error('Error loading snapshot into the observatory:', error);
-                // });
 
                 // For local testing only
                 // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank')
