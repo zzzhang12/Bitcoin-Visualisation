@@ -12,7 +12,12 @@ import requests
 import numpy as np
 import copy
 import os
+import logging
 
+# Set up logging
+logging.basicConfig(filename='intersections.log', level=logging.INFO, format='%(asctime)s - %(message)s')
+
+                    
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
@@ -26,7 +31,7 @@ nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
 broadcast_interval = 2 # Frequency in seconds to broadcast data to clients
-scale_factor = 2
+scale_factor = 2.0
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
 current_addresses = {} # Addresses in the current visualisation, resets to empty when server resetes
@@ -80,8 +85,8 @@ NUM_ROWS = 4
 NUM_COLS = 3
 CLIENT_WIDTH = 1920
 CLIENT_HEIGHT = 1080
-HORIZONTAL_BOUNDARIES = [-1080, 0, 1080] 
-VERTICAL_BOUNDARIES = [1920, 3840]
+HORIZONTAL_BOUNDARIES = [-2160, -1080, 0, 1080, 2160] 
+VERTICAL_BOUNDARIES = [-2880, -960, 960, 2880]
    
 # Global statistics variables
 lastRateTx = 0
@@ -832,11 +837,16 @@ def compute_graph(new_nodes, new_edges):
 
             # Update the global node positions with the new positions calculated by ForceAtlas2
             node_positions.update(positions)
+            
+            scaled_positions = node_positions.copy()
+            for node_id in scaled_positions:
+                x, y = scaled_positions[node_id]
+                scaled_positions[node_id] = (x * scale_factor, y * scale_factor)
 
             # print(f"Completed iteration {i + 1}/{total_iterations}")
 
         # After all iterations, create and emit the final graph data
-        final_graph_data = create_graph_data(new_nodes, new_edges, node_positions)
+        final_graph_data = create_graph_data(new_nodes, new_edges, scaled_positions)
 
         socketio.emit('graph_data', final_graph_data)
         print(f"Completed {total_iterations} iteration ")
@@ -869,24 +879,39 @@ def create_graph_data(new_nodes, new_edges, positions):
             all_y_values.append(source_pos[1])
             all_y_values.append(target_pos[1])
 
-            if is_different_client(source_pos, target_pos):
-                intersections = []
+            intersections = []
 
-                for boundary in VERTICAL_BOUNDARIES:
-                    if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
-                        intersection = compute_intersection(source_pos, target_pos, boundary, True)
-                        if intersection:
-                            intersections.append(intersection)
+            logging.info(f"--------------edge {edge['source']} ({source_pos}) -> {edge['target']} ( {target_pos})-------------")
+            for boundary in VERTICAL_BOUNDARIES:
+                if min(source_pos[0], target_pos[0]) < boundary < max(source_pos[0], target_pos[0]):
+                    intersection = compute_intersection(source_pos, target_pos, boundary, True)
+                    if intersection:
+                        intersections.append(intersection)
+                         # Log the intersection point
+                        logging.info(f"YES VERTICAL {boundary}")
+                        logging.info(f"Calculated vertical intersection at {intersection} for edge {edge['source']} -> {edge['target']}")
+                    else:
+                        logging.info(f"no intersection for VERTICAL boundary {boundary}")
 
-                for boundary in HORIZONTAL_BOUNDARIES:
-                    if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
-                        intersection = compute_intersection(source_pos, target_pos, boundary, False)
-                        if intersection:
-                            intersections.append(intersection)
 
-                intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
-                last_node_id = edge['source']
+            for boundary in HORIZONTAL_BOUNDARIES:
+                if min(source_pos[1], target_pos[1]) < boundary < max(source_pos[1], target_pos[1]):
+                    intersection = compute_intersection(source_pos, target_pos, boundary, False)
+                    if intersection:
+                        intersections.append(intersection)
+                        logging.info(f"YES HORIZONTAL {boundary}")
+                         # Log the intersection point
+                        logging.info(f"Calculated vertical intersection at {intersection} for edge {edge['source']} -> {edge['target']}")
+                    else:
+                        logging.info(f"no intersection for HORIZONTAL boundary {boundary}")
 
+
+            intersections.sort(key=lambda p: ((p[0] - source_pos[0])**2 + (p[1] - source_pos[1])**2)**0.5)
+            last_node_id = edge['source']
+            
+            
+            if intersections:
+                logging.info(f"All intersections: {intersections}")
                 for i, intersection in enumerate(intersections):
                     intersection_id = f"intersection_{edge['source']}_{edge['target']}_{i}"
                     positions[intersection_id] = intersection
@@ -915,6 +940,7 @@ def create_graph_data(new_nodes, new_edges, positions):
                     'z_score_tx': edge['z_score_tx']
                 })
             else:
+                logging.info(f"NO intersections")
                 new_edges_split.append(edge)
 
     # Determine the range of x and y values
@@ -946,8 +972,8 @@ def create_graph_data(new_nodes, new_edges, positions):
 
     graph_data = {
         'nodes': [{'id': node['id'], 
-                   'x': positions[node['id']][0] * scale_factor, 
-                   'y': positions[node['id']][1] * scale_factor, 
+                   'x': positions[node['id']][0], 
+                   'y': positions[node['id']][1], 
                     # 'x': (positions[node['id']][0] - x_min) * scale_factor -2880, 
                     # 'y': (positions[node['id']][1] - y_min) * scale_factor -2160, 
                    'color': node['color'], 

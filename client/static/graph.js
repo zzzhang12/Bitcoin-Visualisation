@@ -13,6 +13,7 @@ let firstLoaded = false
 let startTime
 let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
+let hasDisplayedRange = false
 
 window.addEventListener("load", init, false);
 
@@ -396,21 +397,31 @@ function renderGraph(graphData) {
     // yMin = -10000
 
     // Calculate the filtered nodes
-    let filteredNodes = graphData.nodes.filter(node => {
+    // let filteredNodes = graphData.nodes.filter(node => {
 
-        const xInRange = node.x >= xMin && node.x <= xMax
-        const yInRange = node.y >= yMin && node.y <= yMax
-        // const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
-        // const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
-        // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
+    //     const xInRange = node.x >= xMin && node.x <= xMax
+    //     const yInRange = node.y >= yMin && node.y <= yMax
+    //     // const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
+    //     // const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
+    //     // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
+    //     return xInRange && yInRange;
+    // });
+
+    let filteredNodes = JSON.parse(JSON.stringify(graphData.nodes)).filter(node => {
+        const xInRange = node.x >= xMin && node.x <= xMax;
+        const yInRange = node.y >= yMin && node.y <= yMax;
         return xInRange && yInRange;
     });
 
-    console.log("Filtered nodes:", filteredNodes);
+    // console.log("Filtered nodes:", filteredNodes);
 
-    console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
-    console.log(`Client x range: [${xMin}, ${xMax}]`);
-    console.log(`Client y range: [${yMin}, ${yMax}]`);
+    // console.log(`Client offset (x, y): (${offsetX}, ${offsetY})`);
+    if (!hasDisplayedRange){
+        console.log(`Client x range: [${xMin}, ${xMax}]`);
+        console.log(`Client y range: [${yMin}, ${yMax}]`);
+        hasDisplayedRange = true;
+    }
+
 
     // // Convert edges to reference the node objects
     // const nodeById = new Map(graphData.nodes.map(d => [d.id, d]));
@@ -445,7 +456,7 @@ function renderGraph(graphData) {
         const sourceInFilteredNodes = filteredNodes.find(node => node.id === edge.source);
         const targetInFilteredNodes = filteredNodes.find(node => node.id === edge.target);
 
-        // console.log(`Edge from ${edge.source} to ${edge.target} - source in filtered nodes: ${!!sourceInFilteredNodes}, target in filtered nodes: ${!!targetInFilteredNodes}`);
+        // console.log(`Edge from ${edge.source} to ${edge.target} - source in: ${!!sourceInFilteredNodes}, target in: ${!!targetInFilteredNodes}`);
 
         return sourceInFilteredNodes && targetInFilteredNodes;
     });
@@ -521,7 +532,8 @@ function updateGraph(newGraphData) {
     // Add new nodes
     const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
-        .attr("r", d => d.type === 'tx' ? 4 : 1)
+        // .attr("r", d => d.type === 'tx' ? 4 : 1)
+        .attr("r", d => 5)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         .style("fill", d => {
