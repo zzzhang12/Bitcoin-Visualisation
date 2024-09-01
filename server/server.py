@@ -578,7 +578,7 @@ def process_transaction(transactions):
                 'txRate': round(txRate, 2)
             }
             statistics.update(balance_stats)
-
+            print (statistics)
             socketio.emit('update_stats', statistics)
              
             # Emit updated statistics to clients rendering histograms and line graphs
@@ -729,9 +729,9 @@ def update_address_balance_stats():
     max_balance = np.max(balances)
 
     # Update balance stats
-    balance_stats["balanceMed"] = int(median_balance)
-    balance_stats["balanceIQR"] = int(iqr)
-    balance_stats["balanceMax"] = int(max_balance)
+    balance_stats["balanceMed"] = float(median_balance)
+    balance_stats["balanceIQR"] = float(iqr)
+    balance_stats["balanceMax"] = float(max_balance)
 
 
 # def compute_graph(new_nodes, new_edges):
@@ -947,10 +947,10 @@ def create_graph_data(new_nodes, new_edges, positions):
             outside_y_range += 1
 
     # Print the range of x and y values and how many are outside the boundaries
-    print(f"X range: ({x_min}, {x_max})")
-    print(f"Y range: ({y_min}, {y_max})")
-    print(f"Nodes outside X range: {outside_x_range}")
-    print(f"Nodes outside Y range: {outside_y_range}")
+    # print(f"X range: ({x_min}, {x_max})")
+    # print(f"Y range: ({y_min}, {y_max})")
+    # print(f"Nodes outside X range: {outside_x_range}")
+    # print(f"Nodes outside Y range: {outside_y_range}")
 
     graph_data = {
         'nodes': [{'id': node['id'], 
