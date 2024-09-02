@@ -146,11 +146,11 @@ function sendApiCall(payload) {
     });
 }
 
-// // Send all API calls
-// Promise.all(payloads.map(payload => sendApiCall(payload)))
-//     .then(() => {
-//         console.log('All API calls completed.');
-//     })
-//     .catch(error => {
-//         console.error('Error in processing API calls:', error);
-//     });
+// Send all API calls
+Promise.all(payloads.map(payload => sendApiCall(payload)))
+    .then(() => {
+        console.log('All API calls completed.');
+    })
+    .catch(error => {
+        console.error('Error in processing API calls:', error);
+    });
