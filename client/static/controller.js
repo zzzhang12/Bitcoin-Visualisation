@@ -8,7 +8,11 @@ function init() {
 }
 
 function runWebSocket() {
-    socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
+    // socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
+    //     withCredentials: true,
+    //     }
+    // )
+    socket = io("http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/",{
         withCredentials: true,
         }
     )
@@ -172,18 +176,22 @@ function displaySnapshotList(snapshots) {
 
                 // console.log(x, y)
 
+                // let x, Y
+                // if (index == 0){
+                //     x = 
+                // }
                 const payloads = [
                     // Static graph snapshot -- 2 x 2 screens
                     {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_graph?snapshot=${snapshot.file_name}`
+                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_graph?snapshot=${snapshot.file_name}`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
                         },
-                        x: (index * 2 + 2) * WIDTH,  
+                        x: (index * 2 + 4) * WIDTH,  
                         y: 0,
                         w: 2 * WIDTH,       
                         h: 2 * HEIGHT,  
@@ -194,12 +202,12 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/snapshot_stats?snapshot=${snapshot.file_name}`
+                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/snapshot_stats?snapshot=${snapshot.file_name}`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
                         },
-                        x: (index * 2 + 2) * 1920,  
+                        x: (index * 2 + 4) * 1920,  
                         y: 2 * HEIGHT,
                         w: WIDTH,       
                         h: HEIGHT,  
@@ -210,12 +218,12 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
+                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
                         },
-                        x: (index * 2 + 3) * 1920, 
+                        x: (index * 2 + 5) * 1920, 
                         y: 2 * HEIGHT,
                         w: WIDTH,       
                         h: HEIGHT,  
@@ -226,12 +234,12 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
+                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
                         },
-                        x: (index * 2 + 2) * 1920,  
+                        x: (index * 2 + 4) * 1920,  
                         y: 3 * HEIGHT,
                         w: WIDTH,       
                         h: HEIGHT,  
@@ -242,12 +250,12 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
+                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
                         },
-                        x: (index * 2 + 3) * 1920, 
+                        x: (index * 2 + 5) * 1920, 
                         y: 3 * HEIGHT,
                         w: WIDTH,       
                         h: HEIGHT,  

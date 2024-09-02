@@ -31,7 +31,7 @@ function createPayload(row, col, x, y) {
         app: {
             states: {
                 load: {
-                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/?row=${row}&col=${col}`
+                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/?row=${row}&col=${col}`
                 }
             },
             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -52,7 +52,7 @@ const payloads = [
         app: {
             states: {
                 load: {
-                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/tx_fee`
+                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/tx_fee`
                 }
             },
             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -68,7 +68,7 @@ const payloads = [
         app: {
             states: {
                 load: {
-                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/tx_rate`
+                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/tx_rate`
                 }
             },
             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -84,7 +84,7 @@ const payloads = [
         app: {
             states: {
                 load: {
-                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/tx_value`
+                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/tx_value`
                 }
             },
             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -100,7 +100,7 @@ const payloads = [
         app: {
             states: {
                 load: {
-                    url: `http://gdo-apps.dsi.ic.ac.uk:9080/tx_size`
+                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/tx_size`
                 }
             },
             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"

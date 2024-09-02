@@ -25,7 +25,11 @@ function init() {
 
 
 function runWebSocket() {
-    socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
+    // socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
+    //     withCredentials: true,
+    //     }
+    // )
+    socket = io("http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/",{
         withCredentials: true,
         }
     )
