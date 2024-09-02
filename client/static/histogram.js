@@ -1,4 +1,4 @@
-const histogramDataBuffers = []; 
+let dataBuffer = []; 
 
 export function createHistogram(containerId, barColor, xAxisLabel) {
     // Initial setup for the histogram
@@ -34,7 +34,6 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
 
     function updateHistogram(dataValue) {
         // let dataBuffer = histogramDataBuffers[containerId];
-        let dataBuffer = histogramDataBuffers;
 
         // Ensure dataValue is valid
         if (isNaN(dataValue) || dataValue === null || dataValue === undefined) {
@@ -154,7 +153,6 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
 
 
     function resetHistogram() {
-        let dataBuffer = histogramDataBuffers[containerId];
         dataBuffer = [];
         svg.selectAll(".bar").remove();  // Clear the bars from the histogram
         svg.select(".x.axis").call(d3.axisBottom(x).ticks(10, ",.1s"));
