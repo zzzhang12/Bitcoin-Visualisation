@@ -578,7 +578,7 @@ def process_transaction(transactions):
                 'txRate': round(txRate, 2)
             }
             statistics.update(balance_stats)
-            print (statistics)
+
             socketio.emit('update_stats', statistics)
              
             # Emit updated statistics to clients rendering histograms and line graphs

@@ -170,7 +170,7 @@ function displaySnapshotList(snapshots) {
                 const WIDTH = 1920;
                 const HEIGHT = 1080;
 
-                console.log(x, y)
+                // console.log(x, y)
 
                 const payloads = [
                     // Static graph snapshot -- 2 x 2 screens
@@ -296,9 +296,9 @@ function displaySnapshotList(snapshots) {
                 // For local testing only
                 // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank')
                 // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank')
-                // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`, '_blank');
+                window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`, '_blank');
                 // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
-                window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
+                // window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
 
                 button.style.backgroundColor = '#28a745'; // Green color to indicate success
                 regionButtons.remove();
