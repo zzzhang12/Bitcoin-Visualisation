@@ -167,7 +167,7 @@ export function saveHistogramSnapshot(name) {
     console.log("--------------SAVING HISTOGRAM SNAPSHOT-------------");
     const histogramData = {
         histograms: {
-            [name]: histogramDataBuffers // Save the data buffer of the histogram
+            [name]: dataBuffer // Save the data buffer of the histogram
         }
     };
     console.log(histogramData)
