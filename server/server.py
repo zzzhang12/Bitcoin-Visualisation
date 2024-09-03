@@ -1033,8 +1033,9 @@ def tx_rate():
 
 @app.route('/static_graph', methods=['GET'])
 def static_graph():
-    snapshot = request.args.get('snapshot', 'saved_graph.json')
-    return render_template('static_graph.html', snapshot=snapshot)
+    snapshot = request.args.get('snapshot')
+    timestamp = snapshot.replace('graph_snapshot_', '').replace('.json', '')
+    return render_template('static_graph.html', snapshot=snapshot, timestamp=timestamp)
 
 
 @app.route('/static_histogram', methods=['GET'])
@@ -1138,14 +1139,13 @@ def list_snapshots():
 
 @app.route('/snapshot_stats', methods=['GET'])
 def snapshot_stats():
-    snapshot = request.args.get('snapshot', 'saved_graph.json')
+    snapshot = request.args.get('snapshot')
     file_path = os.path.join(app.static_folder, 'snapshots', snapshot)
     try:
         with open(file_path, 'r') as f:
             graph_data = json.load(f)
             stats = graph_data.get('stats', {})
-            timestamp = snapshot.replace('graph_snapshot_', '').replace('.json', '')
-            return render_template('snapshot_info.html', stats=stats, timestamp=timestamp)
+            return render_template('snapshot_info.html', stats=stats)
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
