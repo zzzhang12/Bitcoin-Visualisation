@@ -61,6 +61,8 @@ function displaySnapshotList(snapshots) {
     snapshotList.innerHTML = ''; // Clear previous list
 
     let activeRegionButtons = null; 
+    const regionMapping = {}; // To track which snapshot is loaded into which region
+
 
     // Sort snapshots by timestamp
     snapshots.sort((a, b) => {
@@ -155,11 +157,22 @@ function displaySnapshotList(snapshots) {
             regionButton.textContent = region;
             regionButton.className = 'region-button';
 
+            // Check if this region already has a snapshot loaded
+            if (regionMapping[region] && regionMapping[region] === snapshotName) {
+                regionButton.style.backgroundColor = '#28a745'; // Green to indicate it’s loaded
+            } else {
+                regionButton.style.backgroundColor = '#444'; // Default color
+            }
+
             regionButton.addEventListener('mouseenter', () => {
                 regionButton.style.backgroundColor = '#666';
             });
             regionButton.addEventListener('mouseleave', () => {
-                regionButton.style.backgroundColor = '#444';
+                if (regionMapping[region] === snapshotName) {
+                    regionButton.style.backgroundColor = '#28a745'; // Keep green if already loaded
+                } else {
+                    regionButton.style.backgroundColor = '#444';
+                }
             });
 
             regionButton.addEventListener('click', () => {
@@ -300,9 +313,22 @@ function displaySnapshotList(snapshots) {
                 // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
                 // window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
 
-                // button.style.backgroundColor = '#28a745'; // Green color to indicate success
-                // regionButtons.remove();
-                // activeRegionButtons = null; // Reset the active region buttons
+                // If this region was previously occupied by another snapshot, reset its color
+                if (regionMapping[region] && regionMapping[region] !== snapshotName) {
+                    const previousSnapshotButton = Array.from(document.querySelectorAll('.snapshot-button'))
+                        .find(btn => btn.textContent === regionMapping[region]);
+                    if (previousSnapshotButton) {
+                        previousSnapshotButton.style.backgroundColor = '#444';
+                    }
+                }
+
+                // Update the region mapping to the new snapshot
+                regionMapping[region] = snapshotName;
+                button.style.backgroundColor = '#28a745'; // Green color to indicate success
+
+                // Remove region buttons after selecting one
+                regionButtons.remove();
+                activeRegionButtons = null;
             });
 
             regionButtons.appendChild(regionButton);
