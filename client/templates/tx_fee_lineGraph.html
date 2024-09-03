@@ -44,25 +44,18 @@
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script type="text/javascript">
+        const SOCKET_IP = "{{ socket_ip }}";
+    </script>
     <script type="module">
         import { createLineGraph, saveLineGraphSnapshot } from '../static/lineGraph.js';
 
         // Initialize the line graph with parameters
         const { updateLineGraph, resetLineGraph } = createLineGraph("lineGraph", "Average Transaction Fee (mB)", "steelblue");
 
-        // WebSocket connection to the server
-        // const socket = io("http://localhost:3000", {
-        //     withCredentials: true,
-        // });
-
-        // const socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000",{
-        //         withCredentials: true,
-        //     }
-        // )
-        const socket = io("http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/",{
-        withCredentials: true,
-        }
-        )
+        const socket = io(`http://${SOCKET_IP}:3000/`,{
+            withCredentials: true,
+        })
 
         socket.on('connect', function() {
             console.log("Connected to server WebSocket");

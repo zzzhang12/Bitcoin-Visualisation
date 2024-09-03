@@ -8,17 +8,9 @@ function init() {
 }
 
 function runWebSocket() {
-    // socket = io("http://[2a0c:5bc0:40:2e26:4961:8fe2:345d:7569]:3000/",{
-    //     withCredentials: true,
-    //     }
-    // )
-    socket = io("http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/",{
+    const socket = io(`http://${SOCKET_IP}:3000/`,{
         withCredentials: true,
-        }
-    )
-    // socket = io("http://localhost:3000", {
-    //     withCredentials: true,
-    // }); 
+    })
 
     socket.on('connect', function() {
         console.log("Connected to server WebSocket");
@@ -156,7 +148,7 @@ function displaySnapshotList(snapshots) {
         const regionButtons = document.createElement('div');
         regionButtons.className = 'region-buttons'
 
-        const regions = ['Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5'];
+        const regions = ['Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5', 'Region 6'];
 
         regions.forEach((region, index) => {
             const regionButton = document.createElement('button');
@@ -186,7 +178,7 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_graph?snapshot=${snapshot.file_name}`
+                                    url: `http://${SOCKET_IP}:3000/static_graph?snapshot=${snapshot.file_name}`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -202,7 +194,7 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/snapshot_stats?snapshot=${snapshot.file_name}`
+                                    url: `http://${SOCKET_IP}:3000/snapshot_stats?snapshot=${snapshot.file_name}`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -218,7 +210,7 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
+                                    url: `http://${SOCKET_IP}:3000/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -234,7 +226,7 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
+                                    url: `http://${SOCKET_IP}:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
@@ -250,7 +242,7 @@ function displaySnapshotList(snapshots) {
                         app: {
                             states: {
                                 load: {
-                                    url: `http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
+                                    url: `http://${SOCKET_IP}:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
                                 }
                             },
                             url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"

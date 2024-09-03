@@ -12,9 +12,14 @@ import requests
 import numpy as np
 import copy
 import os
+from dotenv import load_dotenv
                     
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
+
+# Load environment variables from the .env file
+load_dotenv()
+SOCKET_IP = os.getenv('IP_ADDRESS')
 
 # WebSocket to receive Bitcoin transactionss
 BITCOIN_WS_URL = "wss://ws.blockchain.info/inv"
@@ -998,32 +1003,32 @@ def static_proxy(path):
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('mempool.html')
+    return render_template('mempool.html', socket_ip=SOCKET_IP)
 
 
 @app.route('/controller')
 def controller():
-    return render_template('controller.html')
+    return render_template('controller.html', socket_ip=SOCKET_IP)
 
 
 @app.route('/tx_value')
 def tx_value():
-    return render_template('tx_value_histogram.html')
+    return render_template('tx_value_histogram.html', socket_ip=SOCKET_IP)
 
 
 @app.route('/tx_size')
 def tx_size():
-    return render_template('tx_size_histogram.html')
+    return render_template('tx_size_histogram.html', socket_ip=SOCKET_IP)
 
 
 @app.route('/tx_fee')
 def tx_fee():
-    return render_template('tx_fee_lineGraph.html')
+    return render_template('tx_fee_lineGraph.html', socket_ip=SOCKET_IP)
 
 
 @app.route('/tx_rate')
 def tx_rate():
-    return render_template('tx_rate_lineGraph.html')
+    return render_template('tx_rate_lineGraph.html', socket_ip=SOCKET_IP)
 
 
 @app.route('/static_graph', methods=['GET'])
@@ -1240,6 +1245,5 @@ if __name__ == '__main__':
     # threading.Thread(target=start_ws).start()
     # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
-    # socketio.run(app, host='2a0c:5bc0:40:2e26:4961:8fe2:345d:7569', port=3000)
-    socketio.run(app, host='2a0c:5bc0:40:2e26:a057:9103:9bbd:da99', port=3000)
-    # socketio.run(app, host='0.0.0.0', port=3000)
+    # socketio.run(app, host='2a0c:5bc0:40:2e26:a057:9103:9bbd:da99', port=3000)
+    socketio.run(app, host='0.0.0.0', port=3000)

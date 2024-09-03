@@ -29,13 +29,14 @@ function runWebSocket() {
     //     withCredentials: true,
     //     }
     // )
-    socket = io("http://[2a0c:5bc0:40:2e26:a057:9103:9bbd:da99]:3000/",{
+    socket = io(`http://${SOCKET_IP}:3000/`,{
         withCredentials: true,
         }
     )
     // socket = io("http://localhost:3000",{
     //     withCredentials: true,
     // }) // For local testing
+    
     socket.on('connect', function() {
         console.log("Connected to server WebSocket");
     });
