@@ -89,7 +89,7 @@ HORIZONTAL_BOUNDARIES = [-2160, -1080, 0, 1080, 2160]
 VERTICAL_BOUNDARIES = [-2880, -960, 960, 2880]
    
 # Global statistics variables
-btc_price = 0
+usd_price = 0
 lastRateTx = 0
 timeOfLastTx = time.time()
 txRate = 0
@@ -122,7 +122,7 @@ def load_transaction_stats():
 
 def reset_server_state():
     global nodes, edges, node_ids, nx_graph, node_positions
-    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses, btc_price, clients_connected
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses, usd_price, clients_connected
 
     nodes = []
     edges = []
@@ -144,7 +144,7 @@ def reset_server_state():
     txRate = 0
     current_addresses = {}
     balance_stats = {}
-    btc_price = 0
+    usd_price = 0
     clients_connected = 0
 
     print("Server state has been reset.")
@@ -997,8 +997,8 @@ def compute_intersection(p1, p2, boundary, is_vertical):
         return (x, boundary)
 
 
-def get_btc_price():
-    global btc_price
+def get_usd_price():
+    global usd_price
     print ("Fetching bitcoin USD price")
     # Get the API key from the environment variable
     api_key = os.getenv('BTC_API_KEY')
@@ -1023,16 +1023,16 @@ def get_btc_price():
     # if response.status_code == 200:
     #     data = response.json()
     #     # Extract the USD price from the response
-    #     btc_price = data['data']['1']['quote']['USD']['price']
-    #     btc_price = 57717.04792391205
-    #     socketio.emit('btc_price', btc_price)
+    #     usd_price = data['data']['1']['quote']['USD']['price']
+    #     usd_price = 57717.04792391205
+    #     socketio.emit('usd_price', usd_price)
     # else:
     #     # If the request failed, print the error and return None
     #     print(f"Error {response.status_code}: {response.text}")
     #     return None
 
-    btc_price = 57717.04792391205
-    socketio.emit('btc_price', btc_price)
+    usd_price = 57717.04792391205
+    socketio.emit('usd_price', usd_price)
 
 
 @app.route('/static/<path:path>', methods=['GET'])
@@ -1200,7 +1200,7 @@ def handle_controller_command(data):
             start_visualization = True
             threading.Thread(target=start_ws).start()
             threading.Thread(target=periodic_broadcast).start()
-            # get_btc_price()
+            # get_usd_price()
             print("Visualization started.")
 
     elif action == 'resetGraph':
@@ -1220,7 +1220,7 @@ def handle_connect():
     emit('connection_response', {'data': 'Connected to server'})
     clients_connected += 1
     if clients_connected >= NUM_GRAPH_CLIENTS:
-        get_btc_price()
+        get_usd_price()
         clients_connected = 0
 
 

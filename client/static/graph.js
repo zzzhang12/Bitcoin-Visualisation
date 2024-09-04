@@ -14,7 +14,7 @@ let startTime
 let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false
-let btcPrice
+let usdPrice
 
 window.addEventListener("load", init, false);
 
@@ -73,9 +73,9 @@ function runWebSocket() {
         location.reload(); 
     });
 
-    socket.on('btc_price', function(msg) {
+    socket.on('usd_price', function(msg) {
         console.log("Received bitcoin price");
-        btcPrice = msg;
+        usdPrice = msg;
     });
 
     socket.on('controller_command', function(msg) {
@@ -116,25 +116,25 @@ function updateStats(stats) {
     // console.log(stats)
     document.getElementById('statTxRate').innerHTML = stats.txRate ? stats.txRate.toLocaleString() : 'N/A';
     document.getElementById('txMaxVal').innerHTML = (stats.txMaxVal / 100000000).toLocaleString() + ' B /  ' + '<span class="usd-price">$'+ 
-                                                    (btcPrice * stats.txMaxVal / 100000000).toFixed(2).toLocaleString() + '</span>';
+                                                    (usdPrice * stats.txMaxVal / 100000000).toFixed(2).toLocaleString() + '</span>';
     document.getElementById('txTotalVal').innerHTML = (stats.txTotalVal / 100000000).toLocaleString() + ' B /  ' + '<span class="usd-price">$'+ 
-                                                    (btcPrice * stats.txTotalVal / 100000000).toFixed(2).toLocaleString() + '</span>';
+                                                    (usdPrice * stats.txTotalVal / 100000000).toFixed(2).toLocaleString() + '</span>';
     document.getElementById('txAvgVal').innerHTML = ((stats.txTotalVal / stats.numTx) * 1000 / 100000000).toLocaleString() + ' mB /  ' + '<span class="usd-price">$' +
-                                                    ((btcPrice * stats.txTotalVal / stats.numTx) / 100000000).toFixed(2).toLocaleString() + '</span>';
+                                                    ((usdPrice * stats.txTotalVal / stats.numTx) / 100000000).toFixed(2).toLocaleString() + '</span>';
 
     document.getElementById('txMaxFee').innerHTML = (stats.txMaxFee * 1000 / 100000000).toLocaleString() + ' mB /  ' + '<span class="usd-price">$'+
-                                                    (btcPrice * stats.txMaxFee / 100000000).toFixed(2).toLocaleString()+ '</span>';
+                                                    (usdPrice * stats.txMaxFee / 100000000).toFixed(2).toLocaleString()+ '</span>';
     document.getElementById('txTotalFee').innerHTML = (stats.txTotalFee / 100000000).toLocaleString() + ' B /  ' + '<span class="usd-price">$' +
-                                                    (btcPrice * stats.txTotalFee / 100000000).toFixed(2).toLocaleString()+ '</span>';
+                                                    (usdPrice * stats.txTotalFee / 100000000).toFixed(2).toLocaleString()+ '</span>';
     document.getElementById('txAvgFee').innerHTML = ((stats.txTotalFee / stats.numTx) * 1000 / 100000000).toLocaleString() + ' mB /  ' + '<span class="usd-price">$' + 
-                                                    ((btcPrice * stats.txTotalFee / stats.numTx) / 100000000).toFixed(2).toLocaleString()+ '</span>';
+                                                    ((usdPrice * stats.txTotalFee / stats.numTx) / 100000000).toFixed(2).toLocaleString()+ '</span>';
 
     document.getElementById('txMaxSize').innerHTML = stats.txMaxSize.toLocaleString() + ' bytes'; 
     document.getElementById('txTotalSize').innerHTML = stats.txTotalSize.toLocaleString() + ' bytes';
     document.getElementById('txAvgSize').innerHTML = (stats.txTotalSize / stats.numTx).toLocaleString() + ' bytes';
 
     document.getElementById('txAvgFeeDens').innerHTML = (stats.txTotalFee / stats.txTotalSize).toLocaleString() + ' sat/byte / $' + 
-                                                        (btcPrice * 1024 * stats.txTotalFee/(stats.txTotalSize*100000000)).toFixed(2).toLocaleString() + '/kB';;
+                                                        (usdPrice * 1024 * stats.txTotalFee/(stats.txTotalSize*100000000)).toFixed(2).toLocaleString() + '/kB';;
 
     document.getElementById('statNumTx').innerHTML = stats.numTx.toLocaleString();
     document.getElementById('statNumIn').innerHTML = stats.numIn.toLocaleString();
@@ -143,13 +143,13 @@ function updateStats(stats) {
 
     document.getElementById('balanceMax').innerHTML = stats.balanceMax ? 
                                                     stats.balanceMax.toLocaleString() + ' B /  ' + 
-                                                    '<span class="usd-price">$' + (btcPrice * stats.balanceMax).toLocaleString()+ '</span>': 'N/A';
+                                                    '<span class="usd-price">$' + (usdPrice * stats.balanceMax).toLocaleString()+ '</span>': 'N/A';
     document.getElementById('balanceMed').innerHTML =(stats.balanceMed !== null && stats.balanceMed !== undefined) ? 
                                                     (stats.balanceMed * 1000).toLocaleString() + ' mB /  ' + 
-                                                    '<span class="usd-price">$' + (btcPrice * stats.balanceMed).toFixed(2).toLocaleString()+ '</span>': 'N/A';
+                                                    '<span class="usd-price">$' + (usdPrice * stats.balanceMed).toFixed(2).toLocaleString()+ '</span>': 'N/A';
     document.getElementById('balanceIQR').innerHTML = (stats.balanceIQR !== null && stats.balanceMed !== undefined)? 
                                                     (stats.balanceIQR * 1000).toLocaleString() + ' mB /  ' + 
-                                                    '<span class="usd-price">$' + (btcPrice * stats.balanceIQR).toFixed(2).toLocaleString()+ '</span>': 'N/A';
+                                                    '<span class="usd-price">$' + (usdPrice * stats.balanceIQR).toFixed(2).toLocaleString()+ '</span>': 'N/A';
 }
 
 // Bind Controller
