@@ -145,6 +145,8 @@ def reset_server_state():
     balance_stats = {}
     btc_price = 0
 
+    get_btc_price()
+
     print("Server state has been reset.")
 
 
@@ -962,8 +964,6 @@ def create_graph_data(new_nodes, new_edges, positions):
         'nodes': [{'id': node['id'], 
                    'x': positions[node['id']][0], 
                    'y': positions[node['id']][1], 
-                    # 'x': (positions[node['id']][0] - x_min) * scale_factor -2880, 
-                    # 'y': (positions[node['id']][1] - y_min) * scale_factor -2160, 
                    'color': node['color'], 
                    'type': node['type'], 
                    'size': node['size'] if node['type'] != 'intersection' else None,
@@ -999,6 +999,7 @@ def compute_intersection(p1, p2, boundary, is_vertical):
 
 def get_btc_price():
     global btc_price
+    print ("Fetching bitcoin USD price")
     # Get the API key from the environment variable
     api_key = os.getenv('BTC_API_KEY')
 
@@ -1023,7 +1024,7 @@ def get_btc_price():
         data = response.json()
         # Extract the USD price from the response
         btc_price = data['data']['1']['quote']['USD']['price']
-        # socketio.emit('btc_price', btc_price)
+        socketio.emit('btc_price', btc_price)
     else:
         # If the request failed, print the error and return None
         print(f"Error {response.status_code}: {response.text}")
@@ -1195,6 +1196,7 @@ def handle_controller_command(data):
             start_visualization = True
             threading.Thread(target=start_ws).start()
             threading.Thread(target=periodic_broadcast).start()
+            get_btc_price()
             print("Visualization started.")
 
     elif action == 'resetGraph':
