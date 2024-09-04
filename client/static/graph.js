@@ -637,6 +637,7 @@ function updateGraph(newGraphData) {
             } else {
                 const zScore = d.z_score_tx || 0.5;
                 const strokeWidth = mapZScoreToThickness(zScore);
+                console.log(zScore, strokeWidth)
                 return strokeWidth;
             }
         })
@@ -898,19 +899,22 @@ function updateGraph(newGraphData) {
 
 
 // Function to map z-score to edge thickness
-
 function mapZScoreToThickness(zScore) {
     const minThickness = 0.4;
-    const maxThickness = 3.0; 
+    const maxThickness = 6.0;
 
-    const logScale = d3.scaleLog()
-        .domain([0.1, 10]) 
+    // Apply different scaling based on the sign of the zScore
+    let scaleFactor = zScore >= 0 ? 6.0 : 7.0;  // Increase scale for positive values
+
+    const adjustedZScore = Math.pow(Math.abs(zScore) + 0.1, scaleFactor);
+
+    const linearScale = d3.scaleLinear()
+        .domain([Math.pow(0.1, scaleFactor), Math.pow(10, scaleFactor)])  // Domain range for both positive and negative
         .range([minThickness, maxThickness])
         .clamp(true);
 
-    const adjustedZScore = Math.abs(zScore) + 0.1;
-
-    return logScale(adjustedZScore);
+    // Multiply thickness based on the sign of the Z-score
+    return zScore >= 0 ? linearScale(adjustedZScore) : linearScale(adjustedZScore) * 0.7;
 }
 
 
