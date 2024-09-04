@@ -14,6 +14,7 @@ let startTime
 let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false
+let btc_price
 
 window.addEventListener("load", init, false);
 
@@ -36,7 +37,7 @@ function runWebSocket() {
     // socket = io("http://localhost:3000",{
     //     withCredentials: true,
     // }) // For local testing
-    
+
     socket.on('connect', function() {
         console.log("Connected to server WebSocket");
     });
@@ -69,8 +70,13 @@ function runWebSocket() {
     
     socket.on('reload', function() {
         console.log("Reloading page because the server state has been reset");
-        location.reload();  // This reloads the iframe or page
+        location.reload(); 
     });
+
+    // socket.on('btc_price', function(msg) {
+    //     console.log("Received bitcoin price");
+    //     console.log(msg)
+    // });
 
     socket.on('controller_command', function(msg) {
         console.log("Received controller command")

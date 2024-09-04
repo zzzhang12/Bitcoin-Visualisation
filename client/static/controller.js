@@ -8,7 +8,7 @@ function init() {
 }
 
 function runWebSocket() {
-    const socket = io(`http://${SOCKET_IP}:3000/`,{
+    socket = io(`http://${SOCKET_IP}:3000/`,{
         withCredentials: true,
     })
 

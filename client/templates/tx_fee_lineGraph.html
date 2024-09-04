@@ -48,12 +48,13 @@
         const SOCKET_IP = "{{ socket_ip }}";
     </script>
     <script type="module">
+        let socket;
         import { createLineGraph, saveLineGraphSnapshot } from '../static/lineGraph.js';
 
         // Initialize the line graph with parameters
         const { updateLineGraph, resetLineGraph } = createLineGraph("lineGraph", "Average Transaction Fee (mB)", "steelblue");
 
-        const socket = io(`http://${SOCKET_IP}:3000/`,{
+        socket = io(`http://${SOCKET_IP}:3000/`,{
             withCredentials: true,
         })
 

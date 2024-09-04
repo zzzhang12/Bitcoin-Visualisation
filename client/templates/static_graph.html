@@ -39,7 +39,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const snapshot = urlParams.get('snapshot') || 'saved_graph.json'; // Fallback to 'saved_graph.json' if not provided
+            const snapshot = urlParams.get('snapshot'); 
             loadSnapshot(snapshot);
         });
 

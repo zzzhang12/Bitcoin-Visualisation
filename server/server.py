@@ -10,7 +10,6 @@ import time
 import random 
 import requests
 import numpy as np
-import copy
 import os
 from dotenv import load_dotenv
                     
@@ -89,6 +88,7 @@ HORIZONTAL_BOUNDARIES = [-2160, -1080, 0, 1080, 2160]
 VERTICAL_BOUNDARIES = [-2880, -960, 960, 2880]
    
 # Global statistics variables
+btc_price = 0
 lastRateTx = 0
 timeOfLastTx = time.time()
 txRate = 0
@@ -121,7 +121,7 @@ def load_transaction_stats():
 
 def reset_server_state():
     global nodes, edges, node_ids, nx_graph, node_positions
-    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses, btc_price
 
     nodes = []
     edges = []
@@ -143,6 +143,7 @@ def reset_server_state():
     txRate = 0
     current_addresses = {}
     balance_stats = {}
+    btc_price = 0
 
     print("Server state has been reset.")
 
@@ -994,6 +995,39 @@ def compute_intersection(p1, p2, boundary, is_vertical):
             return None  # Avoid division by zero
         x = x1 + (boundary - y1) * (x2 - x1) / (y2 - y1)
         return (x, boundary)
+
+
+def get_btc_price():
+    global btc_price
+    # Get the API key from the environment variable
+    api_key = os.getenv('BTC_API_KEY')
+
+    # API endpoint
+    url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
+    
+    # Parameters for the API call
+    parameters = {
+        'id': '1',  # Bitcoin ID in CoinMarketCap API
+        'convert': 'USD'  # Get the price in USD
+    }
+
+    headers = {
+        'Accepts': 'application/json',
+        'X-CMC_PRO_API_KEY': api_key,
+    }
+
+    response = requests.get(url, headers=headers, params=parameters)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+        # Extract the USD price from the response
+        btc_price = data['data']['1']['quote']['USD']['price']
+        # socketio.emit('btc_price', btc_price)
+    else:
+        # If the request failed, print the error and return None
+        print(f"Error {response.status_code}: {response.text}")
+        return None
 
 
 @app.route('/static/<path:path>', methods=['GET'])

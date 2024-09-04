@@ -57,12 +57,13 @@
         const SOCKET_IP = "{{ socket_ip }}";
     </script>
     <script type="module">
+        let socket;
         import { createHistogram, saveHistogramSnapshot } from '../static/histogram.js';
 
         const { updateHistogram, resetHistogram } = createHistogram("histogram", "steelblue", "Transaction Value (mB)");
 
         // WebSocket connection to the server
-        const socket = io(`http://${SOCKET_IP}:3000/`,{
+        socket = io(`http://${SOCKET_IP}:3000/`,{
             withCredentials: true,
         })
     
