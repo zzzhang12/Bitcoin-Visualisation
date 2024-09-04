@@ -113,12 +113,12 @@ def calculate_statistics():
     p75_balance = np.percentile(log_balances, 75)
     iqr_balance = p75_balance - p25_balance
 
-    print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}, IQR Tx: {iqr_tx}")
-    print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}, IQR Balance: {iqr_balance}")
+    print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}, p25_tx: {p25_tx}, IQR Tx: {iqr_tx}")
+    print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}, p25_balance: {p25_balance}, IQR Balance: {iqr_balance}")
     with open('./server/transaction_stats.json', 'w') as f:
         json.dump({
-            'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'iqr_tx': iqr_tx,
-            'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance, 'iqr_balance': iqr_balance
+            'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'p25_tx': p25_tx,'iqr_tx': iqr_tx,
+            'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance, 'p25_balance': p25_balance, 'iqr_balance': iqr_balance
         }, f)
 
 
