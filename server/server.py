@@ -49,7 +49,7 @@ graph_data_accumulated = {
     "lineGraphs": {}
 }
 clients_received = 0
-
+clients_connected = 0
 
 # Locks
 queue_lock = threading.Lock()
@@ -79,7 +79,8 @@ file_index = 0
 # ]
 
 # Canvas sizes
-NUM_CLIENTS = 16 
+NUM_CLIENTS = 16
+NUM_GRAPH_CLIENTS = 12
 NUM_ROWS = 4
 NUM_COLS = 3
 CLIENT_WIDTH = 1920
@@ -121,7 +122,7 @@ def load_transaction_stats():
 
 def reset_server_state():
     global nodes, edges, node_ids, nx_graph, node_positions
-    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses, btc_price
+    global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txTotalSize, txMaxSize, numTx, lastRateTx, timeOfLastTx, txRate, current_addresses, btc_price, clients_connected
 
     nodes = []
     edges = []
@@ -144,8 +145,7 @@ def reset_server_state():
     current_addresses = {}
     balance_stats = {}
     btc_price = 0
-
-    get_btc_price()
+    clients_connected = 0
 
     print("Server state has been reset.")
 
@@ -1017,18 +1017,22 @@ def get_btc_price():
         'X-CMC_PRO_API_KEY': api_key,
     }
 
-    response = requests.get(url, headers=headers, params=parameters)
+    # response = requests.get(url, headers=headers, params=parameters)
 
-    # Check if the request was successful
-    if response.status_code == 200:
-        data = response.json()
-        # Extract the USD price from the response
-        btc_price = data['data']['1']['quote']['USD']['price']
-        socketio.emit('btc_price', btc_price)
-    else:
-        # If the request failed, print the error and return None
-        print(f"Error {response.status_code}: {response.text}")
-        return None
+    # # Check if the request was successful
+    # if response.status_code == 200:
+    #     data = response.json()
+    #     # Extract the USD price from the response
+    #     btc_price = data['data']['1']['quote']['USD']['price']
+    #     btc_price = 57717.04792391205
+    #     socketio.emit('btc_price', btc_price)
+    # else:
+    #     # If the request failed, print the error and return None
+    #     print(f"Error {response.status_code}: {response.text}")
+    #     return None
+
+    btc_price = 57717.04792391205
+    socketio.emit('btc_price', btc_price)
 
 
 @app.route('/static/<path:path>', methods=['GET'])
@@ -1196,7 +1200,7 @@ def handle_controller_command(data):
             start_visualization = True
             threading.Thread(target=start_ws).start()
             threading.Thread(target=periodic_broadcast).start()
-            get_btc_price()
+            # get_btc_price()
             print("Visualization started.")
 
     elif action == 'resetGraph':
@@ -1211,8 +1215,13 @@ def handle_controller_command(data):
 
 @socketio.on('connect')
 def handle_connect():
+    global clients_connected
     print('Client connected') 
     emit('connection_response', {'data': 'Connected to server'})
+    clients_connected += 1
+    if clients_connected >= NUM_GRAPH_CLIENTS:
+        get_btc_price()
+        clients_connected = 0
 
 
 @socketio.on('disconnect')
