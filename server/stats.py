@@ -97,18 +97,29 @@ def start_ws():
 
 def calculate_statistics():
     global transaction_values, address_balances
+
+    # Transaction size statistics
     mean_tx = np.mean(transaction_values)
     std_dev_tx = np.std(transaction_values) 
+    p25_tx = np.percentile(transaction_values, 25)
+    p75_tx = np.percentile(transaction_values, 75)
+    iqr_tx = p75_tx - p25_tx
 
-    # Log-transform address balance
+    # Address balance statistics with log transformation
     log_balances = np.log1p(address_balances)
     mean_balance = np.mean(log_balances)
     std_dev_balance = np.std(log_balances)
+    p25_balance = np.percentile(log_balances, 25)
+    p75_balance = np.percentile(log_balances, 75)
+    iqr_balance = p75_balance - p25_balance
 
-    print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}")
-    print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}")
+    print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}, IQR Tx: {iqr_tx}")
+    print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}, IQR Balance: {iqr_balance}")
     with open('./server/transaction_stats.json', 'w') as f:
-        json.dump({'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance}, f)
+        json.dump({
+            'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'iqr_tx': iqr_tx,
+            'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance, 'iqr_balance': iqr_balance
+        }, f)
 
 
 if __name__ == "__main__":
