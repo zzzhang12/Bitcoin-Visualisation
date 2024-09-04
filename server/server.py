@@ -1203,8 +1203,8 @@ def handle_controller_command(data):
         with start_lock:
             if start_visualization:
                 print("Reset graph command received.")
+                socketio.emit('reload')
                 reset_server_state()
-                socketio.emit('reload')  
     elif action == 'saveSnapshot':
           emit('controller_command', data, broadcast=True)
 
