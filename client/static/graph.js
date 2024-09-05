@@ -142,13 +142,13 @@ function updateStats(stats) {
     document.getElementById('statNumNodes').innerHTML = stats.numNodes.toLocaleString();
 
     document.getElementById('balanceMax').innerHTML = stats.balanceMax ? 
-                                                    stats.balanceMax.toLocaleString() + ' B /  ' + 
+                                                    (stats.balanceMax / 100000000).toLocaleString() + ' B /  ' + 
                                                     '<span class="usd-price">$' + (usdPrice * stats.balanceMax).toLocaleString()+ '</span>': 'N/A';
     document.getElementById('balanceMed').innerHTML =(stats.balanceMed !== null && stats.balanceMed !== undefined) ? 
-                                                    (stats.balanceMed * 1000).toLocaleString() + ' mB /  ' + 
+                                                    (stats.balanceMed * 1000 / 100000000).toLocaleString() + ' mB /  ' + 
                                                     '<span class="usd-price">$' + (usdPrice * stats.balanceMed).toFixed(2).toLocaleString()+ '</span>': 'N/A';
     document.getElementById('balanceIQR').innerHTML = (stats.balanceIQR !== null && stats.balanceMed !== undefined)? 
-                                                    (stats.balanceIQR * 1000).toLocaleString() + ' mB /  ' + 
+                                                    (stats.balanceIQR * 1000 / 100000000).toLocaleString() + ' mB /  ' + 
                                                     '<span class="usd-price">$' + (usdPrice * stats.balanceIQR).toFixed(2).toLocaleString()+ '</span>': 'N/A';
 }
 
@@ -272,12 +272,13 @@ function saveGraphSnapshot() {
             id: d.id,
             x: d.x,
             y: d.y,
-            color: (d.type === 'input' || d.type === 'output') ? mapZScoreToColor(d.z_score_balance, d.color) : d.color,
+            color: d.color,
             type: d.type,
             size: d.size,
-            z_score_tx: d.z_score_tx,
+            iqr_score_tx: d.iqr_score_tx,
             balance: d.balance,
             z_score_balance: d.z_score_balance,
+            iqr_score_balance: d.iqr_score_balance
         });
     });
 
@@ -289,8 +290,8 @@ function saveGraphSnapshot() {
             color: d.color,
             type: d.type,
             size: d.size,
-            z_score_tx: d.z_score_tx,
-            strokeWidth: mapZScoreToThickness(d.z_score_tx)
+            iqr_score_tx: d.iqr_score_tx,
+            strokeWidth: mapIqrScoreToThickness(d.iqr_score_tx)
         });
     });
 
@@ -555,24 +556,29 @@ function updateGraph(newGraphData) {
     // Add new nodes
     const nodeEnter = node.enter().append("circle")
         .attr("class", d => `node node-${d.id}`)
-        .attr("r", d => d.type === 'tx' ? 4 : 1)
+        // .attr("r", d => d.type === 'tx' ? 4 : 1)
+        .attr("r", d => {
+            if (d.type === 'tx'){
+                return 4;
+            }
+            else if (d.type === 'input' || d.type === 'output'){
+                return mapIqrScoreToRadius(d.iqr_score_balance);
+            }
+            else{
+                return 1;
+            }
+        })
         // .attr("r", d => 5)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
-        .style("fill", d => {
-            if (d.z_score_balance) {
-                if (d.type === 'input' || d.type === 'output') {
-                    d.color = mapZScoreToColor(d.z_score_balance, d.color);
-                }
-            }
-            return d.color;
-        })
+        .style("fill", d => d.color)
         .on("click", function (event, d) {
             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
         })
         .on("mouseover", function (event, d) {
             if (d.type !== 'tx' && d.balance !== null && d.balance !== undefined) {
-                displayValue('balance', d.balance, event.pageX, event.pageY, d.id);
+                let value = (d.balance / 100000000).toPrecision(4);
+                displayValue('balance', value, event.pageX, event.pageY, d.id);
             }
         });
 
@@ -636,8 +642,10 @@ function updateGraph(newGraphData) {
                 return 0.3;
             } else {
                 const zScore = d.z_score_tx || 0.5;
-                const strokeWidth = mapZScoreToThickness(zScore);
-                console.log(zScore, strokeWidth)
+                const iqr = d.iqr_score_tx || 0.5;
+                // const strokeWidth = mapZScoreToThickness(zScore);
+                const strokeWidth = mapIqrScoreToThickness(iqr);
+                // console.log(zScore, strokeWidth)
                 return strokeWidth;
             }
         })
@@ -897,44 +905,56 @@ function updateGraph(newGraphData) {
 //     ticked();
 // }
 
-
-// Function to map z-score to edge thickness
-function mapZScoreToThickness(zScore) {
-    const minThickness = 0.4;
+function mapIqrScoreToThickness(iqrScore) {
+    const minThickness = 0.6;
+    const medThickness = 2.0;
     const maxThickness = 6.0;
 
-    // Apply different scaling based on the sign of the zScore
-    let scaleFactor = zScore >= 0 ? 6.0 : 7.0;  // Increase scale for positive values
+    let thickness;
 
-    const adjustedZScore = Math.pow(Math.abs(zScore) + 0.1, scaleFactor);
+    if (iqrScore <= 1) {
+        const linearScale = d3.scaleLinear()
+            .domain([-1, 0, 1])
+            .range([minThickness, 1.0, medThickness])
+            .clamp(true);
+        
+        thickness = linearScale(iqrScore);
+    } else if (iqrScore > 1 && iqrScore <= 20){
+        const largeValueScale = d3.scaleLinear()
+            .domain([1, 50]) 
+            .range([medThickness, 3.5])
+            .clamp(true);
+        
+        thickness = largeValueScale(iqrScore);
+    }
+    else{
+        const ExtremeValueScale = d3.scaleLinear()
+            .domain([20, 300])  // For larger values of IQR score
+            .range([3.5, maxThickness])
+            .clamp(true);
+        
+        thickness = ExtremeValueScale(iqrScore);
+    }
+    console.log(`IQR Score: ${iqrScore}, Thickness: ${thickness}`);
+    return thickness
+}
+
+function mapIqrScoreToRadius(iqrScore) {
+    const minRadius = 0.9;
+    const medRadius = 2.0;
+    const maxRadius = 6.0;
 
     const linearScale = d3.scaleLinear()
-        .domain([Math.pow(0.1, scaleFactor), Math.pow(10, scaleFactor)])  // Domain range for both positive and negative
-        .range([minThickness, maxThickness])
+        .domain([-1, 0, 1])  // Account for negative and positive IQR scores
+        .range([minRadius, medRadius, maxRadius])  // Assign midpoints around typical values
         .clamp(true);
 
-    // Multiply thickness based on the sign of the Z-score
-    return zScore >= 0 ? linearScale(adjustedZScore) : linearScale(adjustedZScore) * 0.7;
+    // Map the IQR score to the radius based on sign
+    const radius = linearScale(iqrScore);
+    console.log(`IQR Score: ${iqrScore}, Radius: ${radius}`);
+    return radius
 }
 
-
-function mapZScoreToColor(zScore, baseColor) {
-    // Scale for color saturation/vibrancy
-    const scale = d3.scaleLinear()
-        .domain([-3, 0, 3])
-        .range([0.3, 1, 1.7])
-        .clamp(true);
-
-    const intensity = scale(zScore);
-
-    // Convert hex color to HSL
-    const baseHSL = d3.hsl(baseColor);
-
-    // Adjust lightness based on z-score
-    baseHSL.l = baseHSL.l * intensity;
-
-    return baseHSL.toString();
-}
 
 // function ticked() {
 //     // node.each(function(d) {

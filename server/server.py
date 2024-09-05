@@ -12,6 +12,11 @@ import requests
 import numpy as np
 import os
 from dotenv import load_dotenv
+import logging
+
+# Set up logging to a file
+logging.basicConfig(filename='iqr_score_log.txt', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
                     
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -59,9 +64,15 @@ save_lock = threading.Lock()
 
 # Statistics 
 mean_tx = 0 # Mean of transaction values
-std_dev_tx = 0 # Standard deviation of transaction values 
+std_dev_tx = 0 # Standard deviation of transaction values
+p25_tx = 0 # 25th percentile of transaction values
+p75_tx = 0 # 75th percentile of transaction values
+iqr_tx = 0 # interquartile range of transaction values
 mean_balance = 0 # Mean of address balances
 std_dev_balance = 0 # Standard deviation of address balances
+p25_balance = 0 # 25th percentile of address balances
+p75_balance = 0 # 75th percentile of address balances
+iqr_balance = 0 # interquartile range of address balances
 
 # For testing - send local files
 file_index = 0
@@ -111,13 +122,19 @@ txMaxSize = 0
 
 
 def load_transaction_stats():
-    global mean_tx, std_dev_tx, mean_balance, std_dev_balance
+    global mean_tx, std_dev_tx, p25_tx, p75_tx, iqr_tx, mean_balance, std_dev_balance, p25_balance, p75_balance, iqr_balance
     with open('./server/transaction_stats.json') as f:
         transaction_stats = json.load(f)
         mean_tx = transaction_stats.get('mean_tx')
         std_dev_tx = transaction_stats.get('std_dev_tx')
+        p25_tx = transaction_stats.get('p25_tx')
+        p75_tx = transaction_stats.get('p75_tx')
+        iqr_tx = transaction_stats.get('iqr_tx')
         mean_balance = transaction_stats.get('mean_balance')
         std_dev_balance = transaction_stats.get('std_dev_balance')
+        p25_balance = transaction_stats.get('p25_balance')
+        p75_balance = transaction_stats.get('p75_balance')
+        iqr_balance = transaction_stats.get('iqr_balance')
 
 
 def reset_server_state():
@@ -324,6 +341,7 @@ def process_transaction(transactions):
                 addr = currInput['prev_out']['addr']
                 size = currInput['prev_out']['value']
                 z_score_tx = calculate_z_score(size, "tx")
+                iqr_score_tx = calculate_iqr_score(size, "tx")
                 orig_in_color = '#FF9933'
                 in_color = '#FF9933'
                 
@@ -341,6 +359,7 @@ def process_transaction(transactions):
                             'addr': addr, 
                             'size': size,
                             'z_score_tx': z_score_tx,
+                            'iqr_score_tx': iqr_score_tx,
                             'z_score_balance': 0, # initialized to 0. will be retrieved in compute_graph()
                             'orig_in_color': orig_in_color,
                             'color': in_color, 
@@ -379,7 +398,8 @@ def process_transaction(transactions):
                             'type': 'in_link',
                             'weight': 5,
                             'size': size,
-                            'z_score_tx': z_score_tx
+                            'z_score_tx': z_score_tx,
+                            'iqr_score_tx': iqr_score_tx
                             }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -413,7 +433,8 @@ def process_transaction(transactions):
                             'type': 'in_link',
                             'weight': 20,
                             'size': size,
-                            'z_score_tx': z_score_tx
+                            'z_score_tx': z_score_tx,
+                            'iqr_score_tx': iqr_score_tx
                             }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -435,6 +456,7 @@ def process_transaction(transactions):
                 currID = f"{currOutput['tx_index']}:{currOutput['n']}"
                 size = currOutput['value']
                 z_score_tx = calculate_z_score(size, "tx")
+                iqr_score_tx = calculate_iqr_score(size, "tx")
                 addr = currOutput['addr']
                 to_text = f" to {currOutput['addr']}"
 
@@ -455,6 +477,7 @@ def process_transaction(transactions):
                             'tag' :currOutput.get('addr_tag'), 
                             'size': size, 
                             'z_score_tx': z_score_tx,
+                            'iqr_score_tx': iqr_score_tx,
                             'z_score_balance': 0, # initialized to 0. will be retrieved in compute_graph()
                             'orig_out_color': orig_out_color,
                             'color': out_color, 
@@ -493,7 +516,8 @@ def process_transaction(transactions):
                             'type': 'out_link',
                             'weight': 5,
                             'size': size,
-                            'z_score_tx': z_score_tx
+                            'z_score_tx': z_score_tx,
+                            'iqr_score_tx': iqr_score_tx,
                         }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -524,7 +548,8 @@ def process_transaction(transactions):
                             'type': 'out_link',
                             'weight': 5,
                             'size': size,
-                            'z_score_tx': z_score_tx
+                            'z_score_tx': z_score_tx,
+                            'iqr_score_tx': iqr_score_tx,
                         }
                         edges.append(edge)
                         new_edges.append(edge)
@@ -677,6 +702,56 @@ def calculate_z_score(value, type):
         return (value - mean_balance) / std_dev_balance
 
 
+def calculate_iqr_score(value, type):
+    global p25_tx, p75_tx, iqr_tx, p25_balance, p75_balance, iqr_balance
+
+    # if type == "tx":
+    #     if value < p25_tx:
+    #         # Value is below the 25th percentile
+            
+    #         return (value - p25_tx) / iqr_tx
+    #     else:
+    #         # Value is above the 75th percentile
+    #         return (value - p75_tx) / iqr_tx
+    # elif type == "balance":
+    #     if value < p25_balance:
+    #         # Value is below the 25th percentile
+    #         return (value - p25_balance) / iqr_balance
+    #     else:
+    #         # Value is above the 75th percentile
+    #         return (value - p75_balance) / iqr_balance
+    if type == "tx":
+        if iqr_tx == 0:  # Avoid division by zero
+            logging.warning(f"Transaction IQR is 0. Cannot calculate IQR score for value {value}.")
+            return 0
+
+        if value < p25_tx:
+            # Value is below the 25th percentile
+            iqr_score = (value - p25_tx) / iqr_tx
+            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
+            return iqr_score
+        else:
+            # Value is above the 75th percentile
+            iqr_score = (value - p75_tx) / iqr_tx
+            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
+            return iqr_score
+
+    elif type == "balance":
+        if iqr_balance == 0:  # Avoid division by zero
+            logging.warning(f"Balance IQR is 0. Cannot calculate IQR score for value {value}.")
+            return 0
+
+        if value < p25_balance:
+            # Value is below the 25th percentile
+            iqr_score = (value - p25_balance) / iqr_balance
+            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
+            return iqr_score
+        else:
+            # Value is above the 75th percentile
+            iqr_score = (value - p75_balance) / iqr_balance
+            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
+            return iqr_score
+
 def drop_connected(tx_id):
     nodes_to_drop = set()
     txnbrs = nx_graph.adj[tx_id]
@@ -702,7 +777,8 @@ def get_address_balances(addresses):
     response = requests.get(url)
     if response.status_code == 200:
         data = response.json()
-        balances = {addr['address']: addr['final_balance'] / 1e8 for addr in data['addresses']}  # Convert from satoshis to BTC
+        balances = {addr['address']: addr['final_balance'] for addr in data['addresses']}  # Convert from satoshis to BTC
+        print (balances)
         return balances
     else:
         print("Error fetching balances:", response.status_code)
@@ -916,7 +992,8 @@ def create_graph_data(new_nodes, new_edges, positions):
                         'type': edge['type'],
                         'color': edge['color'],
                         'size': edge['size'],
-                        'z_score_tx': edge['z_score_tx']
+                        'z_score_tx': edge['z_score_tx'],
+                        'iqr_score_tx': edge['iqr_score_tx']
                     })
                     new_nodes.append({'id': intersection_id, 'x': intersection[0], 'y': intersection[1], 'color': '#000000', 'type': 'intersection'})
 
@@ -928,7 +1005,8 @@ def create_graph_data(new_nodes, new_edges, positions):
                     'type': edge['type'],
                     'color': edge['color'],
                     'size': edge['size'],
-                    'z_score_tx': edge['z_score_tx']
+                    'z_score_tx': edge['z_score_tx'],
+                    'iqr_score_tx': edge['iqr_score_tx']
                 })
             else:
                 new_edges_split.append(edge)
@@ -969,14 +1047,16 @@ def create_graph_data(new_nodes, new_edges, positions):
                    'size': node['size'] if node['type'] != 'intersection' else None,
                    'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                    'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' and node['type'] != 'intersection' else None,
-                   'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None
+                   'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
+                   'iqr_score_balance': calculate_iqr_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                  } for node in new_nodes if node['id'] in positions],
         'edges': [{'source': edge['source'], 
                    'target': edge['target'], 
                    'color': edge['color'], 
                    'type': edge['type'],
                    'size': edge['size'],
-                   'z_score_tx': edge['z_score_tx']} 
+                   'z_score_tx': edge['z_score_tx'],
+                   'iqr_score_tx': edge['iqr_score_tx']} 
                    for edge in new_edges_split]
     }
     return graph_data
