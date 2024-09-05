@@ -300,7 +300,7 @@ def process_transaction(transactions):
             tx_color = '#ffffff'
 
             if tx_id not in node_ids:
-                node = {
+                tx_node = {
                     'id': tx_id, 
                     'label': tx_hash, 
                     'txHash': tx_hash,
@@ -315,8 +315,8 @@ def process_transaction(transactions):
                     'color': tx_color,
                     'type': 'tx'
                 }
-                nodes.append(node)
-                new_nodes.append(node)
+                nodes.append(tx_node)
+                new_nodes.append(tx_node)
                 node_ids.add(tx_id)
                 nx_graph.add_node(tx_id)
                 node_positions[tx_id] = (random.uniform(-1, 1), random.uniform(-1, 1))
@@ -566,10 +566,11 @@ def process_transaction(transactions):
             # Update transaction node values
             tx_fee = max(inVals - outVals, 0)
             tx_label = f'{outVals * 1000 / 100000000:.2f}mB + {tx_fee * 1000 / 100000000:.2f}mBFee {tx_id}'
-            nodes[-1]['inVals'] = inVals
-            nodes[-1]['outVals'] = outVals
-            nodes[-1]['fee'] = tx_fee
-            nodes[-1]['label'] = tx_label
+            tx_node['inVals'] = inVals
+            tx_node['outVals'] = outVals
+            tx_node['fee'] = tx_fee
+            tx_node['label'] = tx_label
+
 
             txTotalVal += outVals
             txMaxVal = max(txMaxVal, outVals)
@@ -778,7 +779,6 @@ def get_address_balances(addresses):
     if response.status_code == 200:
         data = response.json()
         balances = {addr['address']: addr['final_balance'] for addr in data['addresses']}  # Convert from satoshis to BTC
-        print (balances)
         return balances
     else:
         print("Error fetching balances:", response.status_code)
@@ -1044,7 +1044,10 @@ def create_graph_data(new_nodes, new_edges, positions):
                    'y': positions[node['id']][1], 
                    'color': node['color'], 
                    'type': node['type'], 
-                   'size': node['size'] if node['type'] != 'intersection' else None,
+                   'size': node['size'] if node['type'] == 'tx' else None,
+                   'inVals': node['inVals'] if node['type'] == 'tx' else None,
+                   'outVals': node['outVals'] if node['type'] == 'tx' else None,
+                   'fee': node['fee'] if node['type'] == 'tx' else None,
                    'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                    'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                    'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
