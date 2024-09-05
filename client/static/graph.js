@@ -268,11 +268,20 @@ function saveGraphSnapshot() {
     }
     // Capture the current state of nodes
     originalGraphData.nodes.forEach(d => {
+        let nodeRadius;
+        if (d.type === 'tx') {
+            nodeRadius = 4;
+        } else if (d.type === 'input' || d.type === 'output') {
+            nodeRadius = mapIqrScoreToRadius(d.iqr_score_balance); // Calculate the radius based on IQR score
+        } else {
+            nodeRadius = 1;
+        }
         graphData.nodes.push({
             id: d.id,
             x: d.x,
             y: d.y,
             color: d.color,
+            radius: nodeRadius,
             type: d.type,
             size: d.size,
             iqr_score_tx: d.iqr_score_tx,

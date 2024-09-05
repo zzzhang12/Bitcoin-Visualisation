@@ -110,7 +110,7 @@
 
             const nodeEnter = node.enter().append("circle")
                 .attr("class", d => `node node-${d.id}`)
-                .attr("r", d => d.type === 'tx' ? 4 * scaleFactor : 1 * scaleFactor)
+                .attr("r", d => d.nodeRadius)
                 .attr("cx", d => d.x)
                 .attr("cy", d => d.y) 
                 .style("fill", d => d.color)
