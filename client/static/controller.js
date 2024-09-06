@@ -86,9 +86,19 @@ document.getElementById('applyBalanceFilter').addEventListener('click', () => {
         socket.emit('controller_command', { 
             action: 'filterNodes', 
             filterType: 'addressBalance', 
-            percentile: percentileVal
+            percentile: percentileBalance
         });
         document.getElementById('filterBalance').style.backgroundColor = '#28a745' ;
+
+        // Change the filter button to green to indicate success
+        const filterBalance = document.getElementById('filterBalance');
+        filterBalance.style.backgroundColor = '#28a745' ; // Change background color to green
+        filterBalance.style.color = '#fff' ; // Change text color to white
+
+        // Change the "Apply Filter" button to indicate success
+        const applyBalanceFilter = document.getElementById('applyBalanceFilter');
+        applyBalanceFilter.style.backgroundColor = '#28a745' ; // Change background color to green
+        applyBalanceFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
         console.log('Sent filter address balance command with percentile:', percentileBalance);
     }
 });
