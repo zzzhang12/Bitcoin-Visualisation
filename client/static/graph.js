@@ -15,6 +15,8 @@ let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false
 let usdPrice
+let orderedTxNodesByOutVals = [];
+let orderedNodesByBalance = [];
 
 window.addEventListener("load", init, false);
 
@@ -282,7 +284,7 @@ function initializeGraph() {
     node = g.selectAll(".node");
 }
 
-var count = 0
+
 function renderGraph(graphData) {
     console.log("Attempting to render graph");
     // console.log("Received graph data structure:", graphData);
@@ -318,7 +320,20 @@ function renderGraph(graphData) {
     graphData.nodes.forEach(node => {
         node.x = node.x * scaleFactorX;
         node.y = node.y * scaleFactorY;
+
+        // Add node to global ordered lists
+        if (node.type === 'tx') {
+            // Update the ordered transaction list by outVals
+            orderedTxNodesByOutVals.push(node);
+        } else if (node.type === 'input' || node.type === 'output') {
+            // Update the ordered nodes list by balance
+            orderedNodesByBalance.push(node);
+        }
     });
+    
+    // Sort the global lists (descending order by default)
+    orderedTxNodesByOutVals.sort((a, b) => b.outVals - a.outVals);
+    orderedNodesByBalance.sort((a, b) => b.balance - a.balance);
     
     // x and y value ranges based on client position
     let xMax, xMin, yMax, yMin
@@ -416,7 +431,6 @@ function renderGraph(graphData) {
         initializeGraph();
     }
 
-    count++
     // updateGraph(graphData);  // for testing with only client
     // updateGraph({nodes: filteredNodes, edges: filteredEdges}, count);
     updateGraph({nodes: filteredNodes, edges: filteredEdges});
