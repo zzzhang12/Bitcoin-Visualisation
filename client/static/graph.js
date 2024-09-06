@@ -16,7 +16,9 @@ let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false
 let usdPrice
 let highlightedNodesByBalance = new Set();
+let highlightedEdgesByBalance = new Set();
 let highlightedNodesByTxValue = new Set();
+let highlightedEdgesByTxValue = new Set();
 
 // Sorted arrays of nodes
 let orderedTxNodesByOutVals = []; // Sorted transaction nodes based on outVals
@@ -603,11 +605,10 @@ function updateGraph(newGraphData) {
         .attr("class", "link")
         // .style("stroke", d => d.color)
         .style("stroke", d => {
-            if (highlightedNodesByBalance.has(d.source.id) || highlightedNodesByBalance.has(d.target.id) || 
-                highlightedNodesByTxValue.has(d.source.id) || highlightedNodesByTxValue.has(d.target.id)) {
-                return 'red';  // Highlight links connected to highlighted nodes
-            } 
-            else {
+            if ((highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`)) || (highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`))) {
+                return 'red'; 
+            }
+            else{
                 return d.color;
             }
         })
@@ -644,8 +645,9 @@ function updateGraph(newGraphData) {
 function applyTransactionValueFilter(percentile) {
     console.log(`Applying transaction value filter for top ${percentile}%`);
 
-     // Clear the set before applying a new filter
+     // Clear the sets before applying a new filter
      highlightedNodesByTxValue.clear();
+     highlightedEdgesByTxValue.clear(); 
 
     // Get the threshold value for the top percentile of transaction values
     const sortedTransactions = [...orderedTxNodesByOutVals];
@@ -656,7 +658,19 @@ function applyTransactionValueFilter(percentile) {
 
     originalGraphData.nodes.forEach(node => {
         if (node.type === 'tx' && node.outVals >= thresholdValue) {
+            // Highlight the transaction node
             highlightedNodesByTxValue.add(node.id); 
+
+            // Highlight connected edges and input/output nodes
+            originalGraphData.edges.forEach(edge => {
+                if (edge.source === node.id || edge.target === node.id) {
+                    highlightedEdgesByTxValue.add(`${edge.source}-${edge.target}`);
+
+                    // Highlight input/output nodes connected to this transaction node
+                    const connectedNodeId = edge.source === node.id ? edge.target : edge.source;
+                    highlightedNodesByTxValue.add(connectedNodeId)
+                }
+            });
         }
     });
 
@@ -668,8 +682,9 @@ function applyTransactionValueFilter(percentile) {
 function applyAddressBalanceFilter(percentile) {
     console.log(`Applying address balance filter for top ${percentile}%`);
 
-    // Clear the set before applying a new filter
+    // Clear the sets before applying a new filter
     highlightedNodesByBalance.clear();
+    highlightedEdgesByBalance.clear();
 
     // Get the threshold value for the top percentile of address balances
     const sortedAddresses = [...orderedNodesByBalance];
@@ -678,7 +693,15 @@ function applyAddressBalanceFilter(percentile) {
 
     originalGraphData.nodes.forEach(node => {
         if ((node.type === 'input' || node.type === 'output') && node.balance >= thresholdBalance){
+            // Highlight the node
             highlightedNodesByBalance.add(node.id); 
+
+            // Highlight the edge connected to this input/output node
+            originalGraphData.edges.forEach(edge => {
+                if (edge.source === node.id || edge.target === node.id) {
+                    highlightedEdgesByBalance.add(`${edge.source}-${edge.target}`);
+                }
+            });
         }
     });
 
