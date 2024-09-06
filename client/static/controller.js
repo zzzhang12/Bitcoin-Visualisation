@@ -45,6 +45,34 @@ document.getElementById('resetGraph').addEventListener('click', () => {
     console.log('Sent reset graph command');
 });
 
+// Function to toggle visibility of the input fields
+document.getElementById('filterTxVal').addEventListener('click', () => {
+    const txValSection = document.getElementById('txValInputSection');
+    txValSection.style.display = txValSection.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('filterBalance').addEventListener('click', () => {
+    const balanceSection = document.getElementById('balanceInputSection');
+    balanceSection.style.display = balanceSection.style.display === 'none' ? 'block' : 'none';
+});
+
+// Send filter command for Transaction Value
+document.getElementById('applyTxValFilter').addEventListener('click', () => {
+    const percentileVal = document.getElementById('percentileValFilter').value;
+    if (percentileVal) {
+        socket.emit('controller_command', { action: 'filterTxVal', percentile: percentileVal });
+        console.log('Sent filter transaction value command with percentile:', percentileVal);
+    }
+});
+
+// Send filter command for Address Balance
+document.getElementById('applyBalanceFilter').addEventListener('click', () => {
+    const percentileBalance = document.getElementById('percentileBalanceFilter').value;
+    if (percentileBalance) {
+        socket.emit('controller_command', { action: 'filterBalance', percentile: percentileBalance });
+        console.log('Sent filter address balance command with percentile:', percentileBalance);
+    }
+});
 
 function fetchSnapshots() {
     fetch('/list_snapshots')

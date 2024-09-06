@@ -10,6 +10,14 @@
             font-family: Arial, sans-serif;
             padding: 20px;
         }
+        #controllerContainer {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        #controllerColumn1, #controllerColumn2 {
+            width: 45%;
+        }
         button {
             display: block;
             margin: 10px 0;
@@ -106,14 +114,52 @@
         .region-button:hover {
             background-color: #666;
         }
+
+        .apply-filter-btn {
+            width: 20%;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #txValInputSection, #balanceInputSection {
+            display: flex;
+            align-items: center;
+        }
+
+        input{
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>Controller</h1>
-    <button id="startVisualization">Start Visualization</button>
-    <button id="saveSnapshot">Save Graph Snapshot</button>
-    <button id="showSnapshot">Show Snapshot</button>
-    <button id="resetGraph">Reset Graph</button>
+    <div id="controllerContainer">
+        <div id="controllerColumn1">
+            <button id="startVisualization">Start Visualization</button>
+            <button id="saveSnapshot">Save Graph Snapshot</button>
+            <button id="showSnapshot">Show Snapshot</button>
+            <button id="resetGraph">Reset Graph</button>
+        </div>
+
+        <div id="controllerColumn2">
+            <button id="filterTxVal">Filter Nodes by Transaction Value</button>
+            <div id="txValInputSection" style="display: none;">
+                <label for="percentileValFilter">Highlight nodes with top X% Transaction Value:</label>
+                <input type="text" id="percentileValFilter" placeholder="Enter Percentile">
+                <button id="applyTxValFilter" class="apply-filter-btn">Apply</button>
+            </div>
+
+            <button id="filterBalance">Filter Nodes by Address Balance</button>
+            <div id="balanceInputSection" style="display: none;">
+                <label for="percentileBalanceFilter">Highlight nodes with top X% Address Balance:</label>
+                <input type="text" id="percentileBalanceFilter" placeholder="Enter Percentile">
+                <button id="applyBalanceFilter" class="apply-filter-btn">Apply</button>
+            </div>
+        </div>
+    </div>
     <div id="snapshotList"></div>
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
