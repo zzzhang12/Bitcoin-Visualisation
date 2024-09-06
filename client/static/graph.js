@@ -85,6 +85,18 @@ function runWebSocket() {
         if (msg.action === 'saveSnapshot') {
             saveGraphSnapshot();
         }
+        else if (msg.action === 'filterNodes'){
+            const filterType = msg.filterType;
+            const percentile = parseFloat(msg.percentile);
+
+            console.log(`Applying filter: ${filterType}, top ${percentile}%`);
+
+            if (filterType === 'transactionValue') {
+                applyTransactionValueFilter(percentile);
+            } else if (filterType === 'addressBalance') {
+                applyAddressBalanceFilter(percentile);
+            }
+        }
     });
 };
 
@@ -334,7 +346,7 @@ function renderGraph(graphData) {
     // Sort the global lists (descending order by default)
     orderedTxNodesByOutVals.sort((a, b) => b.outVals - a.outVals);
     orderedNodesByBalance.sort((a, b) => b.balance - a.balance);
-    
+
     // x and y value ranges based on client position
     let xMax, xMin, yMax, yMin
     if (col == 0){
@@ -604,6 +616,59 @@ function updateGraph(newGraphData) {
     ticked();
 }
 
+
+// Function to apply transaction value filter
+function applyTransactionValueFilter(percentile) {
+    console.log(`Applying transaction value filter for top ${percentile}%`);
+
+    // Get the threshold value for the top percentile of transaction values
+    const sortedTransactions = [...orderedTxNodesByOutVals];
+    const thresholdIndex = Math.ceil(sortedTransactions.length * (percentile / 100));
+    const thresholdValue = sortedTransactions[thresholdIndex - 1].outVals;
+
+    graphData.nodes.forEach(node => {
+        if (node.type === 'tx') {
+            node.highlighted = node.outVals >= thresholdValue;
+        }
+    });
+
+    // Update the graph to reflect the highlighted nodes
+    highlightNodes(graphData);
+}
+
+// Function to apply address balance filter
+function applyAddressBalanceFilter(percentile) {
+    console.log(`Applying address balance filter for top ${percentile}%`);
+
+    // Get the threshold value for the top percentile of address balances
+    const sortedAddresses = [...orderedNodesByBalance];
+    const thresholdIndex = Math.ceil(sortedAddresses.length * (percentile / 100));
+    const thresholdBalance = sortedAddresses[thresholdIndex - 1].balance;
+
+    graphData.nodes.forEach(node => {
+        if (node.type === 'input' || node.type === 'output') {
+            node.highlighted = node.balance >= thresholdBalance;
+        }
+    });
+
+    // Update the graph to reflect the highlighted nodes
+    highlightNodes(graphData);
+}
+
+// Update graph function to apply highlighting
+function highlightNodes(graphData) {
+    const svg = d3.select('svg');
+
+    // Update node appearance
+    svg.selectAll('circle.node')
+        .data(graphData.nodes)
+        .attr('fill', d => d.highlighted ? 'red' : d.color);
+
+    // Ensure edges connected to highlighted nodes are also highlighted
+    svg.selectAll('line.edge')
+        .data(graphData.edges)
+        .attr('stroke', d => (graphData.nodes.find(n => n.id === d.source).highlighted || graphData.nodes.find(n => n.id === d.target).highlighted) ? 'red' : d.color);
+}
 
 // function updateGraph(newGraphData, count) {
 //     console.log("Updating graph with new data:", newGraphData);

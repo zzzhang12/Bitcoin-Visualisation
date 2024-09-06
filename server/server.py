@@ -1295,6 +1295,11 @@ def handle_controller_command(data):
     elif action == 'saveSnapshot':
           emit('controller_command', data, broadcast=True)
 
+    elif action == 'filterNodes':
+        filter_type = data.get('filterType')
+        percentile = data.get('percentile')
+        emit('filterNodes', {'filterType': filter_type, 'percentile': percentile}, broadcast = True)
+
 
 @socketio.on('connect')
 def handle_connect():
