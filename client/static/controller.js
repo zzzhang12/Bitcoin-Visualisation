@@ -60,16 +60,34 @@ document.getElementById('filterBalance').addEventListener('click', () => {
 document.getElementById('applyTxValFilter').addEventListener('click', () => {
     const percentileVal = document.getElementById('percentileValFilter').value;
     if (percentileVal) {
-        socket.emit('controller_command', { action: 'filterTxVal', percentile: percentileVal });
+        socket.emit('controller_command', { 
+            action: 'filterNodes', 
+            filterType: 'transactionValue', 
+            percentile: percentileVal 
+        });
+        // Change the filter button to green to indicate success
+        const filterTxVal = document.getElementById('filterTxVal');
+        filterTxVal.style.backgroundColor = '#28a745' ; // Change background color to green
+        filterTxVal.style.color = '#fff' ; // Change text color to white
+
+        // Change the "Apply Filter" button to indicate success
+        const applyTxValFilter = document.getElementById('applyTxValFilter');
+        applyTxValFilter.style.backgroundColor = '#28a745' ; // Change background color to green
+        applyTxValFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
         console.log('Sent filter transaction value command with percentile:', percentileVal);
     }
-});
+});z
 
 // Send filter command for Address Balance
 document.getElementById('applyBalanceFilter').addEventListener('click', () => {
     const percentileBalance = document.getElementById('percentileBalanceFilter').value;
     if (percentileBalance) {
-        socket.emit('controller_command', { action: 'filterBalance', percentile: percentileBalance });
+        socket.emit('controller_command', { 
+            action: 'filterNodes', 
+            filterType: 'addressBalance', 
+            percentile: percentileVal
+        });
+        document.getElementById('filterBalance').style.backgroundColor = '#28a745' ;
         console.log('Sent filter address balance command with percentile:', percentileBalance);
     }
 });
