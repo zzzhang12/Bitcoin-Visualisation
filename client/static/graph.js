@@ -15,8 +15,16 @@ let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false
 let usdPrice
-let orderedTxNodesByOutVals = [];
-let orderedNodesByBalance = [];
+let highlightedNodesByBalance = new Set();
+let highlightedNodesByTxValue = new Set();
+
+// Sorted arrays of nodes
+let orderedTxNodesByOutVals = []; // Sorted transaction nodes based on outVals
+let orderedNodesByBalance = []; // Sorted input and output nodes based on address balance
+
+// Maps to track which nodes are already added to the lists
+const txNodesById = new Map();  // For transaction nodes by outVals
+const nodesByBalanceId = new Map();  // For input/output nodes by balance
 
 window.addEventListener("load", init, false);
 
@@ -85,19 +93,19 @@ function runWebSocket() {
         if (msg.action === 'saveSnapshot') {
             saveGraphSnapshot();
         }
-        else if (msg.action === 'filterNodes'){
-            const filterType = msg.filterType;
-            const percentile = parseFloat(msg.percentile);
-
-            console.log(`Applying filter: ${filterType}, top ${percentile}%`);
-
-            if (filterType === 'transactionValue') {
-                applyTransactionValueFilter(percentile);
-            } else if (filterType === 'addressBalance') {
-                applyAddressBalanceFilter(percentile);
-            }
-        }
     });
+    socket.on('filter_nodes', function(msg){
+        const filterType = msg.filterType;
+        const percentile = parseFloat(msg.percentile);
+
+        console.log(`Applying filter: ${filterType}, top ${percentile}%`);
+
+        if (filterType === 'transactionValue') {
+            applyTransactionValueFilter(percentile);
+        } else if (filterType === 'addressBalance') {
+            applyAddressBalanceFilter(percentile);
+        }
+    })
 };
 
 
@@ -333,14 +341,20 @@ function renderGraph(graphData) {
         node.x = node.x * scaleFactorX;
         node.y = node.y * scaleFactorY;
 
-        // Add node to global ordered lists
-        if (node.type === 'tx') {
-            // Update the ordered transaction list by outVals
+    // Add node to global ordered lists only if it's not already present
+    if (node.type === 'tx') {
+        // Check if the node is already in the list by ID
+        if (!txNodesById.has(node.id)) {
+            txNodesById.set(node.id, node);
             orderedTxNodesByOutVals.push(node);
-        } else if (node.type === 'input' || node.type === 'output') {
-            // Update the ordered nodes list by balance
+        }
+    } else if (node.type === 'input' || node.type === 'output') {
+        // Check if the node is already in the list by ID
+        if (!nodesByBalanceId.has(node.id)) {
+            nodesByBalanceId.set(node.id, node);
             orderedNodesByBalance.push(node);
         }
+    }
     });
     
     // Sort the global lists (descending order by default)
@@ -375,14 +389,6 @@ function renderGraph(graphData) {
 
     // Calculate the filtered nodes
     // let filteredNodes = graphData.nodes.filter(node => {
-
-    //     const xInRange = node.x >= xMin && node.x <= xMax
-    //     const yInRange = node.y >= yMin && node.y <= yMax
-    //     // const xInRange = col > 0 ? (node.x >= offsetX && node.x <= (offsetX + CLIENT_WIDTH)) : (node.x < offsetX && node.x >= (offsetX - CLIENT_WIDTH));
-    //     // const yInRange = row > 0 ? (node.y >= offsetY && node.y <= (offsetY + CLIENT_HEIGHT)) : (node.y < offsetY && node.y >= (offsetY - CLIENT_HEIGHT));
-    //     // console.log(`Checking node ${node.id} at (${node.x}, ${node.y}): xInRange = ${xInRange}, yInRange = ${yInRange}`);
-    //     return xInRange && yInRange;
-    // });
 
     let filteredNodes = JSON.parse(JSON.stringify(graphData.nodes)).filter(node => {
         const xInRange = node.x >= xMin && node.x <= xMax;
@@ -522,7 +528,15 @@ function updateGraph(newGraphData) {
         // .attr("r", d => 5)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
-        .style("fill", d => d.color)
+        // .style("fill", d => d.color)
+        .style("fill", d => {
+            if (highlightedNodesByBalance.has(d.id) || highlightedNodesByTxValue.has(d.id) ) {
+                return 'red';  // Highlight
+            } 
+            else{
+                return d.color; 
+            }
+        })
         .on("click", function (event, d) {
             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
         })
@@ -587,7 +601,16 @@ function updateGraph(newGraphData) {
 
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
-        .style("stroke", d => d.color)
+        // .style("stroke", d => d.color)
+        .style("stroke", d => {
+            if (highlightedNodesByBalance.has(d.source.id) || highlightedNodesByBalance.has(d.target.id) || 
+                highlightedNodesByTxValue.has(d.source.id) || highlightedNodesByTxValue.has(d.target.id)) {
+                return 'red';  // Highlight links connected to highlighted nodes
+            } 
+            else {
+                return d.color;
+            }
+        })
         .style("stroke-width", d => {
             if (d.type === 'addr_link') {
                 return 0.3;
@@ -621,42 +644,51 @@ function updateGraph(newGraphData) {
 function applyTransactionValueFilter(percentile) {
     console.log(`Applying transaction value filter for top ${percentile}%`);
 
+     // Clear the set before applying a new filter
+     highlightedNodesByTxValue.clear();
+
     // Get the threshold value for the top percentile of transaction values
     const sortedTransactions = [...orderedTxNodesByOutVals];
+    console.log("number of all transaction nodes: ", sortedTransactions.length)
+    console.log(sortedTransactions)
     const thresholdIndex = Math.ceil(sortedTransactions.length * (percentile / 100));
     const thresholdValue = sortedTransactions[thresholdIndex - 1].outVals;
 
-    graphData.nodes.forEach(node => {
-        if (node.type === 'tx') {
-            node.highlighted = node.outVals >= thresholdValue;
+    originalGraphData.nodes.forEach(node => {
+        if (node.type === 'tx' && node.outVals >= thresholdValue) {
+            highlightedNodesByTxValue.add(node.id); 
         }
     });
 
     // Update the graph to reflect the highlighted nodes
-    highlightNodes(graphData);
+    // highlightNodes(originalGraphData);
 }
 
 // Function to apply address balance filter
 function applyAddressBalanceFilter(percentile) {
     console.log(`Applying address balance filter for top ${percentile}%`);
 
+    // Clear the set before applying a new filter
+    highlightedNodesByBalance.clear();
+
     // Get the threshold value for the top percentile of address balances
     const sortedAddresses = [...orderedNodesByBalance];
     const thresholdIndex = Math.ceil(sortedAddresses.length * (percentile / 100));
     const thresholdBalance = sortedAddresses[thresholdIndex - 1].balance;
 
-    graphData.nodes.forEach(node => {
-        if (node.type === 'input' || node.type === 'output') {
-            node.highlighted = node.balance >= thresholdBalance;
+    originalGraphData.nodes.forEach(node => {
+        if ((node.type === 'input' || node.type === 'output') && node.balance >= thresholdBalance){
+            highlightedNodesByBalance.add(node.id); 
         }
     });
 
     // Update the graph to reflect the highlighted nodes
-    highlightNodes(graphData);
+    // highlightNodes(originalGraphData);
 }
 
 // Update graph function to apply highlighting
 function highlightNodes(graphData) {
+    console.log("Highlighted nodes")
     const svg = d3.select('svg');
 
     // Update node appearance
@@ -939,7 +971,7 @@ function mapIqrScoreToThickness(iqrScore) {
         
         thickness = ExtremeValueScale(iqrScore);
     }
-    console.log(`IQR Score: ${iqrScore}, Thickness: ${thickness}`);
+    // console.log(`IQR Score: ${iqrScore}, Thickness: ${thickness}`);
     return thickness
 }
 
@@ -955,7 +987,7 @@ function mapIqrScoreToRadius(iqrScore) {
 
     // Map the IQR score to the radius based on sign
     const radius = linearScale(iqrScore);
-    console.log(`IQR Score: ${iqrScore}, Radius: ${radius}`);
+    // console.log(`IQR Score: ${iqrScore}, Radius: ${radius}`);
     return radius
 }
 

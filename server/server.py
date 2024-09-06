@@ -1296,9 +1296,10 @@ def handle_controller_command(data):
           emit('controller_command', data, broadcast=True)
 
     elif action == 'filterNodes':
+        print ("Filter nodes command received")
         filter_type = data.get('filterType')
         percentile = data.get('percentile')
-        emit('filterNodes', {'filterType': filter_type, 'percentile': percentile}, broadcast = True)
+        emit('filter_nodes', {'filterType': filter_type, 'percentile': percentile}, broadcast = True)
 
 
 @socketio.on('connect')

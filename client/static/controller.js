@@ -76,7 +76,8 @@ document.getElementById('applyTxValFilter').addEventListener('click', () => {
         applyTxValFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
         console.log('Sent filter transaction value command with percentile:', percentileVal);
     }
-});z
+});
+
 
 // Send filter command for Address Balance
 document.getElementById('applyBalanceFilter').addEventListener('click', () => {
