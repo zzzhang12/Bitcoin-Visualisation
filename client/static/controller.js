@@ -74,8 +74,27 @@ document.getElementById('applyTxValFilter').addEventListener('click', () => {
         const applyTxValFilter = document.getElementById('applyTxValFilter');
         applyTxValFilter.style.backgroundColor = '#28a745' ; // Change background color to green
         applyTxValFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
+
+        document.getElementById('cancelTxValFilter').style.display = 'inline-block'; // Display the cancel filter button
         console.log('Sent filter transaction value command with percentile:', percentileVal);
     }
+});
+
+
+// Send cancel filter command for Transaction Value
+document.getElementById('cancelTxValFilter').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'cancelFilter',
+        filterType: 'transactionValue'
+    });
+
+    // Reset the buttons and input fields
+    document.getElementById('filterTxVal').style.backgroundColor = '';
+    document.getElementById('filterTxVal').style.color = '#000000';
+    document.getElementById('applyTxValFilter').innerHTML = 'Apply';
+    document.getElementById('applyTxValFilter').style.backgroundColor = '#007BFF';
+    document.getElementById('cancelTxValFilter').style.display = 'none';
+    console.log('Cancelled transaction value filter');
 });
 
 
@@ -99,9 +118,30 @@ document.getElementById('applyBalanceFilter').addEventListener('click', () => {
         const applyBalanceFilter = document.getElementById('applyBalanceFilter');
         applyBalanceFilter.style.backgroundColor = '#28a745' ; // Change background color to green
         applyBalanceFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
+
+        document.getElementById('cancelBalanceFilter').style.display = 'inline-block'; // Display the cancel filter button
         console.log('Sent filter address balance command with percentile:', percentileBalance);
     }
 });
+
+
+// Send cancel filter command for Address Balance
+document.getElementById('cancelBalanceFilter').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'cancelFilter',
+        filterType: 'addressBalance'
+    });
+
+    // Reset the buttons and input fields
+    document.getElementById('filterBalance').style.backgroundColor = '';
+    document.getElementById('filterBalance').style.color = '#000000';
+    document.getElementById('applyBalanceFilter').innerHTML = 'Apply';
+    document.getElementById('applyBalanceFilter').style.backgroundColor = '#007BFF';
+    document.getElementById('cancelBalanceFilter').style.display = 'none';
+
+    console.log('Cancelled address balance filter');
+});
+
 
 function fetchSnapshots() {
     fetch('/list_snapshots')

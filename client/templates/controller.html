@@ -90,7 +90,6 @@
             flex: 1;
             margin-right: 20px;
             text-align: left;
-            /* flex: 1 1 calc(33.33% - 100px);  */
         }
         b {
             color: yellow;
@@ -115,7 +114,7 @@
             background-color: #666;
         }
 
-        .apply-filter-btn {
+        .apply-filter-btn, .cancel-filter-btn{
             width: 20%;
             background-color: #007BFF;
             color: white;
@@ -123,14 +122,22 @@
             padding: 10px;
             cursor: pointer;
         }
-
+        .cancel-filter-btn {
+            margin-left: 10px;
+            background-color: #FF4C4C; /* Red for cancel button */
+        }
         #txValInputSection, #balanceInputSection {
             display: flex;
             align-items: center;
         }
-
         input{
             padding: 10px;
+        }
+        .filter-input-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
         }
     </style>
 </head>
@@ -149,14 +156,20 @@
             <div id="txValInputSection" style="display: none;">
                 <label for="percentileValFilter">Highlight nodes with top X% Transaction Value:</label>
                 <input type="text" id="percentileValFilter" placeholder="Enter Percentile">
-                <button id="applyTxValFilter" class="apply-filter-btn">Apply</button>
+                <div class="filter-input-container">
+                    <button id="applyTxValFilter" class="apply-filter-btn">Apply</button>
+                    <button id="cancelTxValFilter" class="cancel-filter-btn" style="display: none;">Cancel</button>
+                </div>
             </div>
 
             <button id="filterBalance">Filter Nodes by Address Balance</button>
             <div id="balanceInputSection" style="display: none;">
                 <label for="percentileBalanceFilter">Highlight nodes with top X% Address Balance:</label>
                 <input type="text" id="percentileBalanceFilter" placeholder="Enter Percentile">
-                <button id="applyBalanceFilter" class="apply-filter-btn">Apply</button>
+                <div class="filter-input-container">
+                    <button id="applyBalanceFilter" class="apply-filter-btn">Apply</button>
+                    <button id="cancelBalanceFilter" class="cancel-filter-btn" style="display: none;">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
