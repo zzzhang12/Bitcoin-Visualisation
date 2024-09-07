@@ -70,12 +70,20 @@ document.getElementById('applyTxValFilter').addEventListener('click', () => {
         filterTxVal.style.backgroundColor = '#28a745' ; // Change background color to green
         filterTxVal.style.color = '#fff' ; // Change text color to white
 
-        // Change the "Apply Filter" button to indicate success
-        const applyTxValFilter = document.getElementById('applyTxValFilter');
-        applyTxValFilter.style.backgroundColor = '#28a745' ; // Change background color to green
-        applyTxValFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
+        // Display the cancel filter button
+        document.getElementById('cancelTxValFilter').style.display = 'inline-block'; 
 
-        document.getElementById('cancelTxValFilter').style.display = 'inline-block'; // Display the cancel filter button
+        // Display success message
+        let messageElement = document.getElementById('txValMessage');
+        if (!messageElement) {
+            messageElement = document.createElement('p');
+            messageElement.id = 'txValMessage';
+            messageElement.textContent = "Filter applied. To update the filter, input a new percentile and click 'Apply' again.";
+            document.getElementById('txValInputSection').appendChild(messageElement);
+            // Style
+            messageElement.style.textAlign = 'center';
+            document.getElementById('txValInputSection').insertBefore(messageElement, txValInputSection.firstChild);
+        }
         console.log('Sent filter transaction value command with percentile:', percentileVal);
     }
 });
@@ -91,9 +99,13 @@ document.getElementById('cancelTxValFilter').addEventListener('click', () => {
     // Reset the buttons and input fields
     document.getElementById('filterTxVal').style.backgroundColor = '';
     document.getElementById('filterTxVal').style.color = '#000000';
-    document.getElementById('applyTxValFilter').innerHTML = 'Apply';
-    document.getElementById('applyTxValFilter').style.backgroundColor = '#007BFF';
     document.getElementById('cancelTxValFilter').style.display = 'none';
+
+    // Remove the success message
+    const messageElement = document.getElementById('txValMessage');
+    if (messageElement) {
+        messageElement.remove();
+    }
     console.log('Cancelled transaction value filter');
 });
 
@@ -114,12 +126,22 @@ document.getElementById('applyBalanceFilter').addEventListener('click', () => {
         filterBalance.style.backgroundColor = '#28a745' ; // Change background color to green
         filterBalance.style.color = '#fff' ; // Change text color to white
 
-        // Change the "Apply Filter" button to indicate success
-        const applyBalanceFilter = document.getElementById('applyBalanceFilter');
-        applyBalanceFilter.style.backgroundColor = '#28a745' ; // Change background color to green
-        applyBalanceFilter.innerHTML = 'Applied' ; // Change text from "Apply" to "Applied"
+        // Display the cancel filter button
+        document.getElementById('cancelBalanceFilter').style.display = 'inline-block'; 
 
-        document.getElementById('cancelBalanceFilter').style.display = 'inline-block'; // Display the cancel filter button
+        // Display success message
+        let messageElement = document.getElementById('BalanceMessage');
+        if (!messageElement) {
+            messageElement = document.createElement('p');
+            messageElement.id = 'balanceMessage';
+            messageElement.textContent = "Filter applied. To update the filter, input a new percentile and click 'Apply' again.";
+            document.getElementById('balanceInputSection').appendChild(messageElement);
+
+            // Style
+            messageElement.style.textAlign = 'center'; 
+            document.getElementById('balanceInputSection').insertBefore(messageElement, balanceInputSection.firstChild);
+        }
+        
         console.log('Sent filter address balance command with percentile:', percentileBalance);
     }
 });
@@ -135,9 +157,13 @@ document.getElementById('cancelBalanceFilter').addEventListener('click', () => {
     // Reset the buttons and input fields
     document.getElementById('filterBalance').style.backgroundColor = '';
     document.getElementById('filterBalance').style.color = '#000000';
-    document.getElementById('applyBalanceFilter').innerHTML = 'Apply';
-    document.getElementById('applyBalanceFilter').style.backgroundColor = '#007BFF';
     document.getElementById('cancelBalanceFilter').style.display = 'none';
+
+    // Remove the success message
+    const messageElement = document.getElementById('balanceMessage');
+    if (messageElement) {
+        messageElement.remove();
+    }
 
     console.log('Cancelled address balance filter');
 });
