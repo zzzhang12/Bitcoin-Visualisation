@@ -546,7 +546,7 @@ function updateGraph(newGraphData) {
                 if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
                     return 1.0;  // Full opacity for highlighted nodes
                 }
-                return 0.5;  // Dim unhighlighted nodes
+                return 0.3;  // Dim unhighlighted nodes
             }
             else{
                 return 1.0;
@@ -651,8 +651,7 @@ function updateGraph(newGraphData) {
             } else {
                 const zScore = d.z_score_tx || 0.5;
                 const iqr = d.iqr_score_tx || 0.5;
-                // const strokeWidth = mapZScoreToThickness(zScore);
-                strokeWidth = mapIqrScoreToThickness(iqr);
+                const strokeWidth = mapIqrScoreToThickness(iqr);
                 return strokeWidth
                 // console.log(zScore, strokeWidth)
             }
