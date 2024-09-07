@@ -15,7 +15,10 @@ let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false;
 let usdPrice
-let filterApplied = false; // Initiliased to false, set to true when at least one filter is applied
+
+let txValFilterApplied = false;  // Initiliased to false, set to true when at least one filter is applied
+let balanceFilterApplied = false;  // Initiliased to false, set to true when at least one filter is applied
+
 let highlightedNodesByBalance = new Set();
 let highlightedEdgesByBalance = new Set();
 let highlightedNodesByTxValue = new Set();
@@ -107,6 +110,16 @@ function runWebSocket() {
             applyTransactionValueFilter(percentile);
         } else if (filterType === 'addressBalance') {
             applyAddressBalanceFilter(percentile);
+        }
+    })
+    socket.on('cancel_filter', function(msg){
+        const filterType = msg.filterType;
+        console.log(`Cancelling filter: ${filterType}`);
+
+        if (filterType === 'transactionValue') {
+            cancelTransactionValueFilter();
+        } else if (filterType === 'addressBalance') {
+            cancelAddressBalanceFilter();
         }
     })
 };
@@ -542,7 +555,7 @@ function updateGraph(newGraphData) {
         // })
         .style("fill", d => d.color)  // Keep original color
         .style("opacity", d => {
-            if (filterApplied){
+            if (txValFilterApplied || balanceFilterApplied){
                 if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
                     return 1.0;  // Full opacity for highlighted nodes
                 }
@@ -634,7 +647,7 @@ function updateGraph(newGraphData) {
         // })
         .style("stroke", d => d.color)
         .style("stroke-opacity", d => {
-            if (filterApplied){
+            if (txValFilterApplied || balanceFilterApplied){
                 if (highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`) || highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`)) {
                     return 1.0;  // Full opacity for highlighted edges
                 }
@@ -677,7 +690,7 @@ function updateGraph(newGraphData) {
 function applyTransactionValueFilter(percentile) {
     console.log(`Applying transaction value filter for top ${percentile}%`);
 
-    filterApplied = true
+    txValFilterApplied = true
 
      // Clear the sets before applying a new filter
      highlightedNodesByTxValue.clear();
@@ -709,14 +722,14 @@ function applyTransactionValueFilter(percentile) {
     });
 
     // Update the graph to reflect the highlighted nodes
-    // highlightNodes(originalGraphData);
+    updateOpacityForAllNodesAndEdges();
 }
 
 // Function to apply address balance filter
 function applyAddressBalanceFilter(percentile) {
     console.log(`Applying address balance filter for top ${percentile}%`);
 
-    filterApplied = true
+    balanceFilterApplied = true
 
     // Clear the sets before applying a new filter
     highlightedNodesByBalance.clear();
@@ -742,24 +755,62 @@ function applyAddressBalanceFilter(percentile) {
     });
 
     // Update the graph to reflect the highlighted nodes
-    // highlightNodes(originalGraphData);
+    updateOpacityForAllNodesAndEdges();
 }
 
-// Update graph function to apply highlighting
-function highlightNodes(graphData) {
-    console.log("Highlighted nodes")
-    const svg = d3.select('svg');
+// Function to cancel the transaction value filter
+function cancelTransactionValueFilter(){
+    console.log(`Cancelling transaction value filter`);
 
-    // Update node appearance
-    svg.selectAll('circle.node')
-        .data(graphData.nodes)
-        .attr('fill', d => d.highlighted ? 'red' : d.color);
+    txValFilterApplied = false
 
-    // Ensure edges connected to highlighted nodes are also highlighted
-    svg.selectAll('line.edge')
-        .data(graphData.edges)
-        .attr('stroke', d => (graphData.nodes.find(n => n.id === d.source).highlighted || graphData.nodes.find(n => n.id === d.target).highlighted) ? 'red' : d.color);
+    highlightedNodesByTxValue.clear();
+    highlightedEdgesByTxValue.clear(); 
+
+    updateOpacityForAllNodesAndEdges();
 }
+
+// Function to cancel the address balance filter
+function cancelAddressBalanceFilter(){
+    console.log(`Cancelling address balance filter`);
+
+    balanceFilterApplied = false
+
+    highlightedNodesByBalance.clear();
+    highlightedEdgesByBalance.clear(); 
+
+    updateOpacityForAllNodesAndEdges();
+}
+
+// Function to update the opacity for all nodes and edges based on filter states
+function updateOpacityForAllNodesAndEdges() {
+    // Update nodes
+    d3.selectAll('circle.node')
+        .style('opacity', function(d) {
+            if (txValFilterApplied || balanceFilterApplied) {
+                if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
+                    return 1.0;  // Highlighted nodes at full opacity
+                }
+                return 0.3;  // Dim unhighlighted nodes
+            } else {
+                return 1.0;  // Full opacity when no filter is applied
+            }
+        });
+
+    // Update edges
+    d3.selectAll('line.link')
+        .style('stroke-opacity', function(d) {
+            if (txValFilterApplied || balanceFilterApplied) {
+                if (highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`) || highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`)) {
+                    return 1.0;  // Highlighted edges at full opacity
+                }
+                return 0.5;  // Dim unhighlighted edges
+            } else {
+                return 1.0;  // Full opacity when no filter is applied
+            }
+        });
+}
+
 
 // function updateGraph(newGraphData, count) {
 //     console.log("Updating graph with new data:", newGraphData);
