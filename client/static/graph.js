@@ -13,8 +13,9 @@ let firstLoaded = false
 let startTime
 let isTopLeft
 let originalGraphData = { nodes: [], edges: [] };
-let hasDisplayedRange = false
+let hasDisplayedRange = false;
 let usdPrice
+let filterApplied = false; // Initiliased to false, set to true when at least one filter is applied
 let highlightedNodesByBalance = new Set();
 let highlightedEdgesByBalance = new Set();
 let highlightedNodesByTxValue = new Set();
@@ -531,14 +532,33 @@ function updateGraph(newGraphData) {
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
         // .style("fill", d => d.color)
-        .style("fill", d => {
-            if (highlightedNodesByBalance.has(d.id) || highlightedNodesByTxValue.has(d.id) ) {
-                return 'red';  // Highlight
-            } 
-            else{
-                return d.color; 
+        // .style("fill", d => {
+        //     if (highlightedNodesByBalance.has(d.id) || highlightedNodesByTxValue.has(d.id) ) {
+        //         return 'red';  // Highlight
+        //     } 
+        //     else{
+        //         return d.color; 
+        //     }
+        // })
+        .style("fill", d => d.color)  // Keep original color
+        .style("opacity", d => {
+            if (filterApplied){
+                if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
+                    return 1.0;  // Full opacity for highlighted nodes
+                }
+                return 0.5;  // Dim unhighlighted nodes
             }
+            else{
+                return 1.0;
+            }
+            
         })
+        // .style("stroke", d => {
+        //     if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
+        //         return 'white';  // Add a white stroke to highlight
+        //     }
+        //     return 'none';
+        // })
         .on("click", function (event, d) {
             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
         })
@@ -604,13 +624,26 @@ function updateGraph(newGraphData) {
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
         // .style("stroke", d => d.color)
-        .style("stroke", d => {
-            if ((highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`)) || (highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`))) {
-                return 'red'; 
+        // .style("stroke", d => {
+        //     if ((highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`)) || (highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`))) {
+        //         return 'red'; 
+        //     }
+        //     else{
+        //         return d.color;
+        //     }
+        // })
+        .style("stroke", d => d.color)
+        .style("stroke-opacity", d => {
+            if (filterApplied){
+                if (highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`) || highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`)) {
+                    return 1.0;  // Full opacity for highlighted edges
+                }
+                return 0.5;  // Dim unhighlighted edges
             }
             else{
-                return d.color;
+                return 1.0;
             }
+            
         })
         .style("stroke-width", d => {
             if (d.type === 'addr_link') {
@@ -619,9 +652,9 @@ function updateGraph(newGraphData) {
                 const zScore = d.z_score_tx || 0.5;
                 const iqr = d.iqr_score_tx || 0.5;
                 // const strokeWidth = mapZScoreToThickness(zScore);
-                const strokeWidth = mapIqrScoreToThickness(iqr);
+                strokeWidth = mapIqrScoreToThickness(iqr);
+                return strokeWidth
                 // console.log(zScore, strokeWidth)
-                return strokeWidth;
             }
         })
         .on("mouseover", function (event, d) {
@@ -644,6 +677,8 @@ function updateGraph(newGraphData) {
 // Function to apply transaction value filter
 function applyTransactionValueFilter(percentile) {
     console.log(`Applying transaction value filter for top ${percentile}%`);
+
+    filterApplied = true
 
      // Clear the sets before applying a new filter
      highlightedNodesByTxValue.clear();
@@ -681,6 +716,8 @@ function applyTransactionValueFilter(percentile) {
 // Function to apply address balance filter
 function applyAddressBalanceFilter(percentile) {
     console.log(`Applying address balance filter for top ${percentile}%`);
+
+    filterApplied = true
 
     // Clear the sets before applying a new filter
     highlightedNodesByBalance.clear();
