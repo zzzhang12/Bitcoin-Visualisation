@@ -1301,6 +1301,11 @@ def handle_controller_command(data):
         percentile = data.get('percentile')
         emit('filter_nodes', {'filterType': filter_type, 'percentile': percentile}, broadcast = True)
 
+    elif action == 'cancelFilter':
+        print ("Cancel filter command received")
+        filter_type = data.get('filterType')
+        emit('cancel_filter', {'filterType': filter_type}, broadcast = True)
+
 
 @socketio.on('connect')
 def handle_connect():
