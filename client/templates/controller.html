@@ -150,7 +150,14 @@
             padding: 10px;
             font-size: 1em;
             cursor: pointer;
-            width: 100px;
+            width: 20%;
+        }
+        .previous-next {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 10px; /* Optional: Adds some space between the buttons */
         }
     </style>
 </head>
@@ -178,8 +185,10 @@
             <!-- View Transaction Info for Transaction Value Filter -->
             <div id="viewTxValInfoSection" class="viewInfoSection">
                 <button id="viewTransactionInfoTxVal">View Transaction Information</button>
-                <button id="previousTxValNode" class="navigation-btn">Previous</button>
-                <button id="nextTxValNode" class="navigation-btn">Next</button>
+                <div class="previous-next">
+                    <button id="previousTxValNode" class="navigation-btn">Previous</button>
+                    <button id="nextTxValNode" class="navigation-btn">Next</button>
+                </div>
             </div>
 
             <br><br>
@@ -197,8 +206,10 @@
             <!-- View Transaction Info for Address Balance Filter -->
             <div id="viewBalanceInfoSection" class="viewInfoSection">
                 <button id="viewTransactionInfoBalance">View Transaction Information</button>
-                <button id="previousBalanceNode" class="navigation-btn">Previous</button>
-                <button id="nextBalanceNode" class="navigation-btn">Next</button>
+                <div class="previous-next">
+                    <button id="previousBalanceNode" class="navigation-btn">Previous</button>
+                    <button id="nextBalanceNode" class="navigation-btn">Next</button>
+                </div>
             </div>
         </div>
     </div>

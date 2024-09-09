@@ -106,6 +106,8 @@ document.getElementById('cancelTxValFilter').addEventListener('click', () => {
     document.getElementById('filterTxVal').style.color = '#000000';
     document.getElementById('cancelTxValFilter').style.display = 'none';
     document.getElementById('viewTxValInfoSection').style.display = 'none';
+    document.getElementById('previousTxValNode').style.display = 'none';
+    document.getElementById('nextTxValNode').style.display = 'none';
 
     // Remove the success message
     const messageElement = document.getElementById('txValMessage');
@@ -169,6 +171,8 @@ document.getElementById('cancelBalanceFilter').addEventListener('click', () => {
     document.getElementById('filterBalance').style.color = '#000000';
     document.getElementById('cancelBalanceFilter').style.display = 'none';
     document.getElementById('viewBalanceInfoSection').style.display = 'none';
+    document.getElementById('previousBalanceNode').style.display = 'none';
+    document.getElementById('nextBalanceNode').style.display = 'none';
 
     // Remove the success message
     const messageElement = document.getElementById('balanceMessage');
@@ -186,6 +190,11 @@ document.getElementById('viewTransactionInfoTxVal').addEventListener('click', ()
         action: 'viewTransactionInfo',
         filterType: 'transactionValue'
     });
+
+    // Show Previous and Next buttons
+    document.getElementById('previousTxValNode').style.display = 'block';
+    document.getElementById('nextTxValNode').style.display = 'block';
+    
     console.log('Viewing transaction info for transaction value filter');
 });
 
@@ -196,8 +205,14 @@ document.getElementById('viewTransactionInfoBalance').addEventListener('click', 
         action: 'viewTransactionInfo',
         filterType: 'addressBalance'
     });
+
+    // Show Previous and Next buttons
+    document.getElementById('previousBalanceNode').style.display = 'block';
+    document.getElementById('nextBalanceNode').style.display = 'block';
+
     console.log('Viewing address info for balance filter');
 });
+
 
 function fetchSnapshots() {
     fetch('/list_snapshots')
