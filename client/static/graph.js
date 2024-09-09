@@ -698,8 +698,6 @@ function applyTransactionValueFilter(percentile) {
 
     // Get the threshold value for the top percentile of transaction values
     const sortedTransactions = [...orderedTxNodesByOutVals];
-    console.log("number of all transaction nodes: ", sortedTransactions.length)
-    console.log(sortedTransactions)
     const thresholdIndex = Math.ceil(sortedTransactions.length * (percentile / 100));
     const thresholdValue = sortedTransactions[thresholdIndex - 1].outVals;
 

@@ -73,6 +73,9 @@ document.getElementById('applyTxValFilter').addEventListener('click', () => {
         // Display the cancel filter button
         document.getElementById('cancelTxValFilter').style.display = 'inline-block'; 
 
+        // Show View Transaction Info section for Transaction Value filter
+        document.getElementById('viewTxValInfoSection').style.display = 'block';
+
         // Display success message
         let messageElement = document.getElementById('txValMessage');
         if (!messageElement) {
@@ -84,7 +87,9 @@ document.getElementById('applyTxValFilter').addEventListener('click', () => {
             messageElement.style.textAlign = 'center';
             document.getElementById('txValInputSection').insertBefore(messageElement, txValInputSection.firstChild);
         }
+
         console.log('Sent filter transaction value command with percentile:', percentileVal);
+
     }
 });
 
@@ -100,6 +105,7 @@ document.getElementById('cancelTxValFilter').addEventListener('click', () => {
     document.getElementById('filterTxVal').style.backgroundColor = '';
     document.getElementById('filterTxVal').style.color = '#000000';
     document.getElementById('cancelTxValFilter').style.display = 'none';
+    document.getElementById('viewTxValInfoSection').style.display = 'none';
 
     // Remove the success message
     const messageElement = document.getElementById('txValMessage');
@@ -129,6 +135,9 @@ document.getElementById('applyBalanceFilter').addEventListener('click', () => {
         // Display the cancel filter button
         document.getElementById('cancelBalanceFilter').style.display = 'inline-block'; 
 
+        // Show View Address Info section for Address Balance filter
+        document.getElementById('viewBalanceInfoSection').style.display = 'block';
+
         // Display success message
         let messageElement = document.getElementById('BalanceMessage');
         if (!messageElement) {
@@ -143,6 +152,7 @@ document.getElementById('applyBalanceFilter').addEventListener('click', () => {
         }
         
         console.log('Sent filter address balance command with percentile:', percentileBalance);
+
     }
 });
 
@@ -158,6 +168,7 @@ document.getElementById('cancelBalanceFilter').addEventListener('click', () => {
     document.getElementById('filterBalance').style.backgroundColor = '';
     document.getElementById('filterBalance').style.color = '#000000';
     document.getElementById('cancelBalanceFilter').style.display = 'none';
+    document.getElementById('viewBalanceInfoSection').style.display = 'none';
 
     // Remove the success message
     const messageElement = document.getElementById('balanceMessage');
@@ -168,6 +179,25 @@ document.getElementById('cancelBalanceFilter').addEventListener('click', () => {
     console.log('Cancelled address balance filter');
 });
 
+
+// View Transaction Info for Transaction Value
+document.getElementById('viewTransactionInfoTxVal').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'viewTransactionInfo',
+        filterType: 'transactionValue'
+    });
+    console.log('Viewing transaction info for transaction value filter');
+});
+
+
+// View Address Info for Balance Filter
+document.getElementById('viewTransactionInfoBalance').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'viewTransactionInfo',
+        filterType: 'addressBalance'
+    });
+    console.log('Viewing address info for balance filter');
+});
 
 function fetchSnapshots() {
     fetch('/list_snapshots')

@@ -139,6 +139,19 @@
             justify-content: space-between;
             width: 100%;
         }
+        .viewInfoSection {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .navigation-btn {
+            display: none;
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            width: 100px;
+        }
     </style>
 </head>
 <body>
@@ -162,6 +175,15 @@
                 </div>
             </div>
 
+            <!-- View Transaction Info for Transaction Value Filter -->
+            <div id="viewTxValInfoSection" class="viewInfoSection">
+                <button id="viewTransactionInfoTxVal">View Transaction Information</button>
+                <button id="previousTxValNode" class="navigation-btn">Previous</button>
+                <button id="nextTxValNode" class="navigation-btn">Next</button>
+            </div>
+
+            <br><br>
+
             <button id="filterBalance">Filter Nodes by Address Balance</button>
             <div id="balanceInputSection" style="display: none;">
                 <label for="percentileBalanceFilter">Highlight nodes with top X% Address Balance:</label>
@@ -170,6 +192,13 @@
                     <button id="applyBalanceFilter" class="apply-filter-btn">Apply</button>
                     <button id="cancelBalanceFilter" class="cancel-filter-btn" style="display: none;">Cancel</button>
                 </div>
+            </div> 
+
+            <!-- View Transaction Info for Address Balance Filter -->
+            <div id="viewBalanceInfoSection" class="viewInfoSection">
+                <button id="viewTransactionInfoBalance">View Transaction Information</button>
+                <button id="previousBalanceNode" class="navigation-btn">Previous</button>
+                <button id="nextBalanceNode" class="navigation-btn">Next</button>
             </div>
         </div>
     </div>
