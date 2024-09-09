@@ -11,7 +11,7 @@ let socket, svg, g, link, node;
 let offsetX, offsetY
 let firstLoaded = false
 let startTime
-let isTopLeft
+let isTopLeft, isTopRight
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false;
 let usdPrice
@@ -134,10 +134,19 @@ function runWebSocket() {
         const filterType = msg.filterType;
         console.log(`Received view transaction info for filter: ${filterType}`);
     
-        if (filterType === 'transactionValue') {
-            handleTransactionValueInfo();
-        } else if (filterType === 'addressBalance') {
-            handleAddressBalanceInfo();
+        if (isTopRight) {
+            // Ensure the infoBox is visible again when reapplying the filter
+            const infoBox = document.getElementById('infoBox');
+            infoBox.style.visibility = 'visible';  // Show the infoBox again
+            infoBox.style.opacity = '1';  // Restore opacity
+    
+            if (filterType === 'transactionValue') {
+                // Logic to handle viewing transaction info for transaction value filter
+                handleTransactionValueInfo();
+            } else if (filterType === 'addressBalance') {
+                // Logic to handle viewing transaction info for balance filter
+                handleAddressBalanceInfo();
+            }
         }
     });
 };
@@ -351,12 +360,19 @@ function renderGraph(graphData) {
     const row = parseInt(getUrlParameter('row'), 10);
     const col = parseInt(getUrlParameter('col'), 10);
 
-    // Determine if this is the top-left screen
+    // Determine if this is the top-left / top-rightscreen
     isTopLeft = (row === 2 && col === -1);
+    isTopRight = (row ===2 && col === 1);
+
     const infoArea = document.getElementById('infoArea');
+    const infoBox = document.getElementById('infoBox')
     if (isTopLeft) {
         infoArea.style.visibility = 'visible';
         infoArea.style.opacity = '1';
+    }
+    if (isTopRight){
+        infoBox.style.visibility = 'visible';
+        infoBox.style.opacity = '1';
     }
 
      // Calculate offsets based on col and row
@@ -784,6 +800,7 @@ function cancelTransactionValueFilter(){
     highlightedEdgesByTxValue.clear(); 
 
     updateOpacityForAllNodesAndEdges();
+    resetChosenNodesAndEdges();
 }
 
 // Function to cancel the address balance filter
@@ -796,6 +813,7 @@ function cancelAddressBalanceFilter(){
     highlightedEdgesByBalance.clear(); 
 
     updateOpacityForAllNodesAndEdges();
+    resetColourForChosenNodesAndEdges();
 }
 
 // Function to update the opacity for all nodes and edges based on filter states
@@ -953,6 +971,21 @@ function renderChosenNodesEdgesGreen() {
         }
         return d.color;  // Keep original color for other edges
     })
+}
+
+function resetChosenNodesAndEdges(){
+    // Clear the sets for chosen nodes and edges
+    chosenNodes.clear();
+    chosenEdges.clear();
+
+    // Reset the color for all nodes and edges to their original colors
+    node.style("fill", d => d.color)
+    link.style("stroke", d => d.color)
+
+    // Clear and hide the info box
+    const infoBox = document.getElementById('infoBox');
+    infoBox.innerHTML = '';  // Clear the content
+    infoBox.style.display = 'none';  // Hide the info box
 }
 
 // function updateGraph(newGraphData, count) {
