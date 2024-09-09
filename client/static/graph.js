@@ -879,9 +879,9 @@ function showTransactionValueInfo(nodeId) {
         <h3>Transaction Node Info</h3>
         <p>Node ID: ${node.id}</p>
         <p>Size: ${node.size} bytes</p>
-        <p>inVals: ${node.inVals * 1000 / 10000000} mB</p>
-        <p>outVals: ${node.outVals * 1000 / 10000000} mB</p>
-        <p>Fee: ${node.fee}</p>
+        <p>inVals: ${(node.inVals * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.inVals).toFixed(2).toLocaleString()}</p>
+        <p>outVals: ${(node.outVals * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.outVals).toFixed(2).toLocaleString()}</p>
+        <p>Fee: ${(node.fee * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.fee).toFixed(2).toLocaleString()}</p>
     `;
 
     // Highlight the current node and its connected edges and nodes
@@ -935,8 +935,8 @@ function showAddressBalanceInfo(nodeId) {
     infoBox.innerHTML = `
         <h3>${nodeTypeTitle}</h3>
         <p>Node ID: ${node.id}</p>
-        <p>Balance size: ${node.balance * 1000 / 10000000} mB</p>
-        <p>Value: ${edgeSize/10000000} B</p>
+        <p>Balance size: ${(node.balance * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.balance).toFixed(2).toLocaleString()}</p>
+        <p>Value: ${(edgeSize * 1000 / 10000000).toLocaleString()} mB  / $${(usdPrice * node.balance).toFixed(2).toLocaleString()}</p>
     `;
 
     // Highlight the current node and its connected edge
