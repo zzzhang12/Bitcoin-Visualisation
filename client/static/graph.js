@@ -139,14 +139,13 @@ function runWebSocket() {
             const infoBox = document.getElementById('infoBox');
             infoBox.style.visibility = 'visible';  // Show the infoBox again
             infoBox.style.opacity = '1';  // Restore opacity
-    
-            if (filterType === 'transactionValue') {
-                // Logic to handle viewing transaction info for transaction value filter
-                handleTransactionValueInfo();
-            } else if (filterType === 'addressBalance') {
-                // Logic to handle viewing transaction info for balance filter
-                handleAddressBalanceInfo();
-            }
+        }
+        if (filterType === 'transactionValue') {
+            // Logic to handle viewing transaction info for transaction value filter
+            handleTransactionValueInfo();
+        } else if (filterType === 'addressBalance') {
+            // Logic to handle viewing transaction info for balance filter
+            handleAddressBalanceInfo();
         }
     });
 };
@@ -578,16 +577,14 @@ function updateGraph(newGraphData) {
         // .attr("r", d => 5)
         .attr("cx", d => d.x)
         .attr("cy", d => d.y)
-        // .style("fill", d => d.color)
-        // .style("fill", d => {
-        //     if (highlightedNodesByBalance.has(d.id) || highlightedNodesByTxValue.has(d.id) ) {
-        //         return 'red';  // Highlight
-        //     } 
-        //     else{
-        //         return d.color; 
-        //     }
-        // })
-        .style("fill", d => d.color)  // Keep original color
+        .style("fill", d => {
+            if (chosenNodes.has(d.id)) {
+                return 'green';
+            } 
+            else{
+                return d.color; 
+            }
+        })
         .style("opacity", d => {
             if (txValFilterApplied || balanceFilterApplied){
                 if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
@@ -600,12 +597,6 @@ function updateGraph(newGraphData) {
             }
             
         })
-        // .style("stroke", d => {
-        //     if (highlightedNodesByTxValue.has(d.id) || highlightedNodesByBalance.has(d.id)) {
-        //         return 'white';  // Add a white stroke to highlight
-        //     }
-        //     return 'none';
-        // })
         .on("click", function (event, d) {
             document.getElementById('infoBox').innerText = `Node ID: ${d.id}`;
         })
@@ -670,16 +661,14 @@ function updateGraph(newGraphData) {
 
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
-        // .style("stroke", d => d.color)
-        // .style("stroke", d => {
-        //     if ((highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`)) || (highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`))) {
-        //         return 'red'; 
-        //     }
-        //     else{
-        //         return d.color;
-        //     }
-        // })
-        .style("stroke", d => d.color)
+        .style("stroke", d => {
+            if (chosenEdges.has(`${d.source.id}-${d.target.id}`)) {
+                return 'green'; 
+            }
+            else{
+                return d.color;
+            }
+        })
         .style("stroke-opacity", d => {
             if (txValFilterApplied || balanceFilterApplied){
                 if (highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`) || highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`)) {
