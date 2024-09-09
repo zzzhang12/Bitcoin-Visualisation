@@ -191,9 +191,9 @@ document.getElementById('viewTransactionInfoTxVal').addEventListener('click', ()
         filterType: 'transactionValue'
     });
 
-    // Show Previous and Next buttons
-    document.getElementById('previousTxValNode').style.display = 'block';
-    document.getElementById('nextTxValNode').style.display = 'block';
+    // // Show Previous and Next buttons
+    // document.getElementById('previousTxValNode').style.display = 'block';
+    // document.getElementById('nextTxValNode').style.display = 'block';
     
     console.log('Viewing transaction info for transaction value filter');
 });
@@ -206,9 +206,9 @@ document.getElementById('viewTransactionInfoBalance').addEventListener('click', 
         filterType: 'addressBalance'
     });
 
-    // Show Previous and Next buttons
-    document.getElementById('previousBalanceNode').style.display = 'block';
-    document.getElementById('nextBalanceNode').style.display = 'block';
+    // // Show Previous and Next buttons
+    // document.getElementById('previousBalanceNode').style.display = 'block';
+    // document.getElementById('nextBalanceNode').style.display = 'block';
 
     console.log('Viewing address info for balance filter');
 });

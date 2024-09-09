@@ -32,6 +32,14 @@ let orderedNodesByBalance = []; // Sorted input and output nodes based on addres
 const txNodesById = new Map();  // For transaction nodes by outVals
 const nodesByBalanceId = new Map();  // For input/output nodes by balance
 
+let currentTxValNodeIndex = 0;
+let currentBalanceNodeIndex = 0;
+let txValFilteredNodes = [];
+let balanceFilteredNodes = [];
+
+let chosenNodes = new Set();
+let chosenEdges = new Set();
+
 window.addEventListener("load", init, false);
 
 
@@ -122,6 +130,16 @@ function runWebSocket() {
             cancelAddressBalanceFilter();
         }
     })
+    socket.on('view_transaction_info', function(msg) {
+        const filterType = msg.filterType;
+        console.log(`Received view transaction info for filter: ${filterType}`);
+    
+        if (filterType === 'transactionValue') {
+            handleTransactionValueInfo();
+        } else if (filterType === 'addressBalance') {
+            handleAddressBalanceInfo();
+        }
+    });
 };
 
 
@@ -809,6 +827,133 @@ function updateOpacityForAllNodesAndEdges() {
         });
 }
 
+
+// Function to handle transaction value information
+function handleTransactionValueInfo() {
+    // Get all highlighted nodes of type 'tx' for transaction value
+    txValFilteredNodes = Array.from(highlightedNodesByTxValue).filter(nodeId => {
+        const node = originalGraphData.nodes.find(n => n.id === nodeId);
+        return node && node.type === 'tx';
+    });
+
+    if (txValFilteredNodes.length === 0) {
+        console.log("No transaction nodes found in the filtered set.");
+        return;
+    }
+
+    // Show the first node's information
+    currentTxValNodeIndex = 0;
+    showTransactionValueInfo(txValFilteredNodes[currentTxValNodeIndex]);
+
+    // Show the navigation buttons
+    document.getElementById('previousTxValNode').style.display = 'inline-block';
+    document.getElementById('nextTxValNode').style.display = 'inline-block';
+}
+
+// Function to show transaction value information
+function showTransactionValueInfo(nodeId) {
+    const node = originalGraphData.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Display node information (size, inVals, outVals, fee)
+    const infoBox = document.getElementById('infoBox');
+    infoBox.innerHTML = `
+        <h3>Transaction Node Info</h3>
+        <p>Node ID: ${node.id}</p>
+        <p>Size: ${node.size} bytes</p>
+        <p>inVals: ${node.inVals * 1000 / 10000000} mB</p>
+        <p>outVals: ${node.outVals * 1000 / 10000000} mB</p>
+        <p>Fee: ${node.fee}</p>
+    `;
+
+    // Highlight the current node and its connected edges and nodes
+    highlightTransactionNode(node);
+}
+
+// Highlight the current transaction node and connected components
+function highlightTransactionNode(node) {
+    console.log("Highlight transaction node")
+    chosenNodes.add(node.id);
+
+    // Highlight connected edges and input/output nodes
+    originalGraphData.edges.forEach(edge => {
+        if (edge.source === node.id || edge.target === node.id) {
+            chosenEdges.add(`${edge.source}-${edge.target}`);
+
+            const connectedNodeId = edge.source === node.id ? edge.target : edge.source;
+            chosenNodes.add(connectedNodeId);
+        }
+    });
+
+    renderChosenNodesEdgesGreen()
+}
+
+// Function to handle address balance information
+function handleAddressBalanceInfo() {
+    // Get all highlighted nodes of type 'input' or 'output'
+    balanceFilteredNodes = Array.from(highlightedNodesByBalance);
+
+    if (balanceFilteredNodes.length === 0) {
+        console.log("No input/output nodes found in the filtered set.");
+        return;
+    }
+
+    // Show the first node's information
+    currentBalanceNodeIndex = 0;
+    showAddressBalanceInfo(balanceFilteredNodes[currentBalanceNodeIndex]);
+}
+
+// Function to show address balance information
+function showAddressBalanceInfo(nodeId) {
+    const node = originalGraphData.nodes.find(n => n.id === nodeId);
+    if (!node) return;
+
+    // Display node information
+    const nodeTypeTitle = node.type === 'input' ? 'Input Node Info' : 'Output Node Info';
+    const connectedEdge = originalGraphData.edges.find(edge => edge.source === node.id || edge.target === node.id);
+    const edgeSize = connectedEdge ? connectedEdge.size : 'N/A';
+
+    const infoBox = document.getElementById('infoBox');
+    infoBox.innerHTML = `
+        <h3>${nodeTypeTitle}</h3>
+        <p>Node ID: ${node.id}</p>
+        <p>Balance size: ${node.balance * 1000 / 10000000} mB</p>
+        <p>Value: ${edgeSize/10000000} B</p>
+    `;
+
+    // Highlight the current node and its connected edge
+    highlightAddressNode(node, connectedEdge);
+}
+
+// Highlight the current address node and its connected edge
+function highlightAddressNode(node, edge) {
+    console.log("Highlighting: ", node.id, `${edge.source}-${edge.target}`)
+    chosenNodes.add(node.id);
+    if (edge) {
+        chosenEdges.add(`${edge.source}-${edge.target}`);
+    }
+
+    renderChosenNodesEdgesGreen();  // Re-render graph with updated highlights
+}
+
+// Function to update the colour of the currently chosen nodes and edges green
+function renderChosenNodesEdgesGreen() {
+    node.style("fill", d => {
+        if (chosenNodes.has(d.id)) {
+            return 'green';  // Highlight chosen nodes in green
+        }
+        return d.color;  // Keep original color for other nodes
+    })
+
+    // Update edge appearance based on the chosen set
+    link.style("stroke", d => {
+        const edgeId = `${d.source.id}-${d.target.id}`;
+        if (chosenEdges.has(edgeId)) {
+            return 'green';  // Highlight chosen edges in green
+        }
+        return d.color;  // Keep original color for other edges
+    })
+}
 
 // function updateGraph(newGraphData, count) {
 //     console.log("Updating graph with new data:", newGraphData);

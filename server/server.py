@@ -1306,6 +1306,11 @@ def handle_controller_command(data):
         filter_type = data.get('filterType')
         emit('cancel_filter', {'filterType': filter_type}, broadcast = True)
 
+    elif action == 'viewTransactionInfo':
+        print ("view transaction info command received")
+        filter_type = data.get('filterType')
+        emit('view_transaction_info', {'filterType': filter_type}, broadcast = True)
+
 
 @socketio.on('connect')
 def handle_connect():
