@@ -916,16 +916,39 @@ def compute_graph(new_nodes, new_edges):
 
             # Update the global node positions with the new positions calculated by ForceAtlas2
             node_positions.update(positions)
-            
+
+            x_range = (-2880, 2880)
+            y_range = (-2160, 2160)
+
             scaled_positions = node_positions.copy()
             for node_id in scaled_positions:
                 x, y = scaled_positions[node_id]
                 scaled_positions[node_id] = (x * scale_factor, y * scale_factor)
 
+            # Extract x and y coordinates
+            x_coords = np.array([pos[0] for pos in scaled_positions.values()])
+            y_coords = np.array([pos[1] for pos in scaled_positions.values()])
+
+           # Normalize the x coordinates to fit within [-2880, 2880]
+            x_min, x_max = x_coords.min(), x_coords.max()
+            if x_max == x_min:
+                x_max = x_min + 1  # Prevent division by zero
+            x_normalized = (x_coords - x_min) / (x_max - x_min) * (y_range[1] - y_range[0]) + x_range[0]
+
+            # Normalize the y coordinates to fit within [-2160, 2160]
+            y_min, y_max = y_coords.min(), y_coords.max()
+            if y_max == y_min:
+                y_max = y_min + 1  # Prevent division by zero
+            y_normalized = (y_coords - y_min) / (y_max - y_min) * (y_range[1] - y_range[0]) + y_range[0]
+
+            # Update the positions with the normalized coordinates
+            normalized_positions = {node: (x, y) for node, x, y in zip(scaled_positions.keys(), x_normalized, y_normalized)}
+
             # print(f"Completed iteration {i + 1}/{total_iterations}")
 
         # After all iterations, create and emit the final graph data
         final_graph_data = create_graph_data(new_nodes, new_edges, scaled_positions)
+        # final_graph_data = create_graph_data(new_nodes, new_edges, normalized_positions)
 
         socketio.emit('graph_data', final_graph_data)
         print(f"Completed {total_iterations} iteration ")
@@ -1033,10 +1056,10 @@ def create_graph_data(new_nodes, new_edges, positions):
             outside_y_range += 1
 
     # Print the range of x and y values and how many are outside the boundaries
-    # print(f"X range: ({x_min}, {x_max})")
-    # print(f"Y range: ({y_min}, {y_max})")
-    # print(f"Nodes outside X range: {outside_x_range}")
-    # print(f"Nodes outside Y range: {outside_y_range}")
+    print(f"X range: ({x_min}, {x_max})")
+    print(f"Y range: ({y_min}, {y_max})")
+    print(f"Nodes outside X range: {outside_x_range}")
+    print(f"Nodes outside Y range: {outside_y_range}")
 
     graph_data = {
         'nodes': [{'id': node['id'], 
