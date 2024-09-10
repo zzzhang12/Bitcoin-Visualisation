@@ -662,6 +662,18 @@ function updateGraph(newGraphData) {
     const linkEnter = link.enter().append("line")
         .attr("class", "link")
         .style("stroke", d => {
+            const sourceId = String(d.source.id);
+            const targetId = String(d.target.id);
+            // Check if it's an intersection edge
+            if (sourceId.includes('intersection_') || targetId.includes('intersection_'))  {
+                let originalSource, originalTarget;
+                ({originalSource, originalTarget} = getOriginalSourceAndTarget(sourceId, targetId));
+    
+                // Check if the original source and target exist in chosenEdges
+                if (chosenEdges.has(`${originalSource}-${originalTarget}`) || chosenEdges.has(`${originalTarget}-${originalSource}`)) {
+                    return 'green';  // Highlight the intersection edge
+                }
+            }
             if (chosenEdges.has(`${d.source.id}-${d.target.id}`)) {
                 return 'green'; 
             }
@@ -671,6 +683,17 @@ function updateGraph(newGraphData) {
         })
         .style("stroke-opacity", d => {
             if (txValFilterApplied || balanceFilterApplied){
+                const sourceId = String(d.source.id);
+                const targetId = String(d.target.id);
+                // Check if it's an intersection edge
+                if (sourceId.includes('intersection_') || targetId.includes('intersection_')) {
+                    let originalSource, originalTarget;
+                    ({originalSource, originalTarget} = getOriginalSourceAndTarget(sourceId, targetId));
+                    
+                    if (highlightedEdgesByBalance.has(`${originalSource}-${originalTarget}`) || highlightedEdgesByTxValue.has(`${originalSource}-${originalTarget}`)) {
+                        return 1.0;  // Full opacity for highlighted intersection edges
+                    }
+                }
                 if (highlightedEdgesByBalance.has(`${d.source.id}-${d.target.id}`) || highlightedEdgesByTxValue.has(`${d.source.id}-${d.target.id}`)) {
                     return 1.0;  // Full opacity for highlighted edges
                 }
@@ -706,6 +729,22 @@ function updateGraph(newGraphData) {
     node.raise()
 
     ticked();
+}
+
+// Helper function that gets the original source and target of an intersection edge
+function getOriginalSourceAndTarget(sourceId, targetId){
+    let originalSource, originalTarget;
+
+    if (sourceId.includes('intersection_')) {
+        const parts = sourceId.split('_');
+        originalSource = parts[1];
+        originalTarget = parts[2];
+    } else if (targetId.includes('intersection_')) {
+        const parts = targetId.split('_');
+        originalSource = parts[1];
+        originalTarget = parts[2];
+    }
+    return {originalSource, originalTarget}
 }
 
 
@@ -851,10 +890,6 @@ function handleTransactionValueInfo() {
     // Show the first node's information
     currentTxValNodeIndex = 0;
     showTransactionValueInfo(txValFilteredNodes[currentTxValNodeIndex]);
-
-    // Show the navigation buttons
-    document.getElementById('previousTxValNode').style.display = 'inline-block';
-    document.getElementById('nextTxValNode').style.display = 'inline-block';
 }
 
 // Function to show transaction value information
