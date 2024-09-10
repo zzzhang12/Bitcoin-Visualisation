@@ -148,6 +148,33 @@ function runWebSocket() {
             handleAddressBalanceInfo();
         }
     });
+    // Handle navigation for transaction value nodes
+    socket.on('navigate_tx_val_node', function(msg) {
+        const direction = msg.direction;
+        console.log("navigate tx val")
+        console.log(direction)
+        if (direction === 'previous') {
+            currentTxValNodeIndex = (currentTxValNodeIndex - 1 + txValFilteredNodes.length) % txValFilteredNodes.length;
+        } else if (direction === 'next') {
+            currentTxValNodeIndex = (currentTxValNodeIndex + 1) % txValFilteredNodes.length;
+        }
+
+        updateTxValNodeInfo(currentTxValNodeIndex);
+    });
+
+    // Handle navigation for address balance nodes
+    socket.on('navigate_balance_node', function(msg) {
+        const direction = msg.direction;
+        console.log("navigate balance")
+        console.log(direction)
+        if (direction === 'previous') {
+            currentBalanceNodeIndex = (currentBalanceNodeIndex - 1 + balanceFilteredNodes.length) % balanceFilteredNodes.length;
+        } else if (direction === 'next') {
+            currentBalanceNodeIndex = (currentBalanceNodeIndex + 1) % balanceFilteredNodes.length;
+        }
+
+        updateBalanceNodeInfo(currentBalanceNodeIndex);
+});
 };
 
 
@@ -894,6 +921,7 @@ function handleTransactionValueInfo() {
 
 // Function to show transaction value information
 function showTransactionValueInfo(nodeId) {
+    console.log("updating transaction value info")
     const node = originalGraphData.nodes.find(n => n.id === nodeId);
     if (!node) return;
 
@@ -947,6 +975,7 @@ function handleAddressBalanceInfo() {
 
 // Function to show address balance information
 function showAddressBalanceInfo(nodeId) {
+    console.log("Updating address balance info")
     const node = originalGraphData.nodes.find(n => n.id === nodeId);
     if (!node) return;
 
@@ -1012,6 +1041,25 @@ function resetChosenNodesAndEdges(){
     infoBox.style.display = 'none';  // Hide the info box
 }
 
+// Function to show transaction information for the current index in the list
+function updateTxValNodeInfo(index) {
+    console.log("updateTxValNodeInfo")
+    console.log(index)
+    if (txValFilteredNodes.length > 0) {
+        const nodeId = txValFilteredNodes[index];
+        showTransactionValueInfo(nodeId);  // Update the display
+    }
+}
+
+// Function to show address balance information for the current index in the list
+function updateBalanceNodeInfo(index) {
+    console.log("updateBalanceNodeInfo")
+    console.log(index)
+    if (balanceFilteredNodes.length > 0) {
+        const nodeId = balanceFilteredNodes[index];
+        showAddressBalanceInfo(nodeId);  // Update the display
+    }
+}
 // function updateGraph(newGraphData, count) {
 //     console.log("Updating graph with new data:", newGraphData);
 

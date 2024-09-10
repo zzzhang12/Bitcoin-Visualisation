@@ -191,9 +191,9 @@ document.getElementById('viewTransactionInfoTxVal').addEventListener('click', ()
         filterType: 'transactionValue'
     });
 
-    // // Show Previous and Next buttons
-    // document.getElementById('previousTxValNode').style.display = 'block';
-    // document.getElementById('nextTxValNode').style.display = 'block';
+    // Show Previous and Next buttons
+    document.getElementById('previousTxValNode').style.display = 'block';
+    document.getElementById('nextTxValNode').style.display = 'block';
     
     console.log('Viewing transaction info for transaction value filter');
 });
@@ -206,11 +206,45 @@ document.getElementById('viewTransactionInfoBalance').addEventListener('click', 
         filterType: 'addressBalance'
     });
 
-    // // Show Previous and Next buttons
-    // document.getElementById('previousBalanceNode').style.display = 'block';
-    // document.getElementById('nextBalanceNode').style.display = 'block';
+    // Show Previous and Next buttons
+    document.getElementById('previousBalanceNode').style.display = 'block';
+    document.getElementById('nextBalanceNode').style.display = 'block';
 
     console.log('Viewing address info for balance filter');
+});
+
+// Attach event listeners for the TxVal filter navigation buttons
+document.getElementById('previousTxValNode').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'navigateTxValNode',
+        direction: 'previous'
+    });
+    console.log('Sent navigate previous transaction node command');
+});
+
+document.getElementById('nextTxValNode').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'navigateTxValNode',
+        direction: 'next'
+    });
+    console.log('Sent navigate next transaction node command');
+});
+
+// Attach event listeners for the Balance filter navigation buttons
+document.getElementById('previousBalanceNode').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'navigateBalanceNode',
+        direction: 'previous'
+    });
+    console.log('Sent navigate previous balance node command');
+});
+
+document.getElementById('nextBalanceNode').addEventListener('click', () => {
+    socket.emit('controller_command', {
+        action: 'navigateBalanceNode',
+        direction: 'next'
+    });
+    console.log('Sent navigate next balance node command');
 });
 
 

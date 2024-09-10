@@ -1311,6 +1311,16 @@ def handle_controller_command(data):
         filter_type = data.get('filterType')
         emit('view_transaction_info', {'filterType': filter_type}, broadcast = True)
 
+    elif action == 'navigateTxValNode':
+        direction = data.get('direction')
+        print(f"Navigating TxVal Node: {direction}")
+        emit('navigate_tx_val_node', {'direction': direction}, broadcast=True)
+
+    elif action == 'navigateBalanceNode':
+        direction = data.get('direction')
+        print(f"Navigating Balance Node: {direction}")
+        emit('navigate_balance_node', {'direction': direction}, broadcast=True)
+
 
 @socketio.on('connect')
 def handle_connect():
