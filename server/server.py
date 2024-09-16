@@ -706,21 +706,6 @@ def calculate_z_score(value, type):
 def calculate_iqr_score(value, type):
     global p25_tx, p75_tx, iqr_tx, p25_balance, p75_balance, iqr_balance
 
-    # if type == "tx":
-    #     if value < p25_tx:
-    #         # Value is below the 25th percentile
-            
-    #         return (value - p25_tx) / iqr_tx
-    #     else:
-    #         # Value is above the 75th percentile
-    #         return (value - p75_tx) / iqr_tx
-    # elif type == "balance":
-    #     if value < p25_balance:
-    #         # Value is below the 25th percentile
-    #         return (value - p25_balance) / iqr_balance
-    #     else:
-    #         # Value is above the 75th percentile
-    #         return (value - p75_balance) / iqr_balance
     if type == "tx":
         if iqr_tx == 0:  # Avoid division by zero
             logging.warning(f"Transaction IQR is 0. Cannot calculate IQR score for value {value}.")
@@ -816,62 +801,12 @@ def update_address_balance_stats():
     balance_stats["balanceMed"] = float(median_balance)
     balance_stats["balanceIQR"] = float(iqr)
     balance_stats["balanceMax"] = float(max_balance)
-
-
-# def compute_graph(new_nodes, new_edges):
-#     global nx_graph, node_positions, scale_factor
-#     total_iterations = 2000
-#     batch_size = 50
-#     # nx_graph_copy = copy.deepcopy(nx_graph)
-
-#     try:
-#         forceatlas2 = ForceAtlas2(
-#             outboundAttractionDistribution=False,
-#             linLogMode=False,
-#             adjustSizes=False,
-#             edgeWeightInfluence=1.0,
-#             jitterTolerance=0.5,
-#             barnesHutOptimize=True,
-#             barnesHutTheta=1.0,
-#             multiThreaded=False,
-#             scalingRatio=40.0,
-#             gravity=10.0,
-#             strongGravityMode=False,
-#             verbose=True
-#         )
-
-#         for i in range(0, total_iterations, batch_size):
-#             if not nx_graph.nodes or not nx_graph.edges:
-#                 print("Graph is empty, exiting compute_graph function.")
-#                 return
-
-#             positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=None, iterations=batch_size)
-#             # print ("\n")
-#             # print ("length of positions: ", len(positions))
-#             # print (positions)
-
-#             partial_graph_data = create_graph_data(new_nodes, new_edges, positions)
-
-#             start_time = time.time()
-#             socketio.emit('graph_data', partial_graph_data)
-#             end_time = time.time()
-#             emit_duration = end_time - start_time
-#             print(f"Emitted partial graph data after {i + batch_size} iterations in {emit_duration:.4f} seconds")
-#             time.sleep(1.6)
-
-#         return create_graph_data(new_nodes, new_edges, positions)
-
-#     except Exception as e:
-#         print("Error rendering graph:", str(e))
-#         traceback.print_exc()
-#         return {'nodes': [], 'edges': []}
-
+   
 
 def compute_graph(new_nodes, new_edges):
     global nx_graph, node_positions, scale_factor
 
     total_iterations = 80
-    batch_size = 1  # Run one iteration at a time
 
     try:
          # Initialize node_positions if it's not already done, or update with any new nodes
@@ -902,53 +837,23 @@ def compute_graph(new_nodes, new_edges):
             verbose=False
         )
 
-        # Loop over the total number of iterations
-        for i in range(total_iterations):
-            if not nx_graph.nodes or not nx_graph.edges:
-                print("Graph is empty, exiting compute_graph function.")
-                return
+        if not nx_graph.nodes or not nx_graph.edges:
+            print("Graph is empty, exiting compute_graph function.")
+            return
 
-            # Run ForceAtlas2 for one iteration, starting with the current node positions
-            positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=node_positions, iterations=batch_size)
+        # Run ForceAtlas2, starting with the current node positions
+        positions = forceatlas2.forceatlas2_networkx_layout(nx_graph, pos=node_positions, iterations=total_iterations)
 
-            # print ("-------------RAW POSITIONS---------------------")
-            # print (positions)
+        # Update the global node positions with the new positions calculated by ForceAtlas2
+        node_positions.update(positions)
 
-            # Update the global node positions with the new positions calculated by ForceAtlas2
-            node_positions.update(positions)
-
-            x_range = (-2880, 2880)
-            y_range = (-2160, 2160)
-
-            scaled_positions = node_positions.copy()
-            for node_id in scaled_positions:
-                x, y = scaled_positions[node_id]
-                scaled_positions[node_id] = (x * scale_factor, y * scale_factor)
-
-            # Extract x and y coordinates
-            x_coords = np.array([pos[0] for pos in scaled_positions.values()])
-            y_coords = np.array([pos[1] for pos in scaled_positions.values()])
-
-           # Normalize the x coordinates to fit within [-2880, 2880]
-            x_min, x_max = x_coords.min(), x_coords.max()
-            if x_max == x_min:
-                x_max = x_min + 1  # Prevent division by zero
-            x_normalized = (x_coords - x_min) / (x_max - x_min) * (y_range[1] - y_range[0]) + x_range[0]
-
-            # Normalize the y coordinates to fit within [-2160, 2160]
-            y_min, y_max = y_coords.min(), y_coords.max()
-            if y_max == y_min:
-                y_max = y_min + 1  # Prevent division by zero
-            y_normalized = (y_coords - y_min) / (y_max - y_min) * (y_range[1] - y_range[0]) + y_range[0]
-
-            # Update the positions with the normalized coordinates
-            normalized_positions = {node: (x, y) for node, x, y in zip(scaled_positions.keys(), x_normalized, y_normalized)}
-
-            # print(f"Completed iteration {i + 1}/{total_iterations}")
-
+        scaled_positions = node_positions.copy()
+        for node_id in scaled_positions:
+            x, y = scaled_positions[node_id]
+            scaled_positions[node_id] = (x * scale_factor, y * scale_factor)
+        
         # After all iterations, create and emit the final graph data
         final_graph_data = create_graph_data(new_nodes, new_edges, scaled_positions)
-        # final_graph_data = create_graph_data(new_nodes, new_edges, normalized_positions)
 
         socketio.emit('graph_data', final_graph_data)
         print(f"Completed {total_iterations} iteration ")
@@ -959,7 +864,7 @@ def compute_graph(new_nodes, new_edges):
         print("Error rendering graph:", str(e))
         traceback.print_exc()
         return {'nodes': [], 'edges': []}
-    
+   
 
 def create_graph_data(new_nodes, new_edges, positions):
     global scale_factor
@@ -1423,7 +1328,7 @@ if __name__ == '__main__':
     # threading.Thread(target=start_ws).start()
     # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
-    socketio.run(app, host='::', port=3000)
+    # socketio.run(app, host='::', port=3000)
 
     # socketio.run(app, host='127.0.0.1', port=3000)
-    # socketio.run(app, host='0.0.0.0', port=3000)
+    socketio.run(app, host='0.0.0.0', port=3000)
