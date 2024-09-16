@@ -4,7 +4,8 @@ const HEIGHT = 1080;
 const rows = [2, 1, -1, -2];
 const cols = [-1, 0, 1];
 
-const SOCKET_IP = 'localhost'
+// const SOCKET_IP = 'localhost'
+const SOCKET_IP = '[2a0c:5bc0:40:2e26:d03f:aca2:268a:6292]'
 
 // Function to determine x and y values based on row and column
 function getCoordinates(row, col) {
@@ -125,34 +126,34 @@ for (let row of rows) {
 }
 
 
-// // Function to send API call
-// function sendApiCall(payload) {
-//     return fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-//         method: "POST",
-//         headers: {
-//             'Content-Type': 'application/json'
-//         },
-//         body: JSON.stringify(payload)
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error(`Failed to load client on row ${payload.app.states.load.url.row} and col ${payload.app.states.load.url.col}`);
-//         }
-//         return response.json();
-//     })
-//     .then(data => {
-//         console.log('Client loaded:', data);
-//     })
-//     .catch(error => {
-//         console.error('Error:', error);
-//     });
-// }
+// Function to send API call
+function sendApiCall(payload) {
+    return fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Failed to load client on row ${payload.app.states.load.url.row} and col ${payload.app.states.load.url.col}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Client loaded:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
 
 // Send all API calls
-// Promise.all(payloads.map(payload => sendApiCall(payload)))
-//     .then(() => {
-//         console.log('All API calls completed.');
-//     })
-//     .catch(error => {
-//         console.error('Error in processing API calls:', error);
-//     });
+Promise.all(payloads.map(payload => sendApiCall(payload)))
+    .then(() => {
+        console.log('All API calls completed.');
+    })
+    .catch(error => {
+        console.error('Error in processing API calls:', error);
+    });

@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 import logging
 
 # Set up logging to a file
-logging.basicConfig(filename='iqr_score_log.txt', level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(filename='iqr_score_log.txt', level=logging.INFO, 
+#                     format='%(asctime)s - %(levelname)s - %(message)s')
                     
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -1417,10 +1417,13 @@ def send_json_files():
 
 
 if __name__ == '__main__':
+    # print("error")
     load_transaction_stats()
     print("Starting Flask server on 0.0.0.0:3000")
     # threading.Thread(target=start_ws).start()
     # threading.Thread(target=periodic_broadcast).start()
     # threading.Thread(target=send_json_files).start()
-    # socketio.run(app, host='2a0c:5bc0:40:2e26:a057:9103:9bbd:da99', port=3000)
-    socketio.run(app, host='0.0.0.0', port=3000)
+    socketio.run(app, host='::', port=3000)
+
+    # socketio.run(app, host='127.0.0.1', port=3000)
+    # socketio.run(app, host='0.0.0.0', port=3000)
