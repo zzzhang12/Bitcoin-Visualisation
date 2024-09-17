@@ -1337,8 +1337,8 @@ function mapIqrScoreToThickness(iqrScore) {
 }
 
 function mapIqrScoreToRadius(iqrScore) {
-    const minRadius = 0.8;
-    const medRadius = 2.0;
+    const minRadius = 1.0;
+    const medRadius = 2.5;
     const maxRadius = 6.5;
 
     let radius;
@@ -1353,7 +1353,7 @@ function mapIqrScoreToRadius(iqrScore) {
     } else if (iqrScore > 1 && iqrScore <= 20){
         const largeValueScale = d3.scaleLinear()
             .domain([1, 300]) 
-            .range([medRadius, 3.2])
+            .range([medRadius, 3.5])
             .clamp(true);
         
         radius = largeValueScale(iqrScore);
@@ -1361,7 +1361,7 @@ function mapIqrScoreToRadius(iqrScore) {
     else{
         const ExtremeValueScale = d3.scaleLinear()
             .domain([300, 3000])  
-            .range([3.2, maxRadius])
+            .range([3.5, maxRadius])
             .clamp(true);
         
         radius = ExtremeValueScale(iqrScore);

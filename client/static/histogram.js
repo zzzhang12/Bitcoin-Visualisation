@@ -1,4 +1,5 @@
 let dataBuffer = []; 
+let yMax = 0;
 
 export function createHistogram(containerId, barColor, xAxisLabel) {
     // Initial setup for the histogram
@@ -27,13 +28,18 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         .style("text-anchor", "middle")
         .text(xAxisLabel);
 
-    // Initialize an empty buffer for transaction sizes
-    // let dataBuffer = [];
-    // histogramDataBuffers[containerId] = [];
+    console.log(barColor)
+    // If the histogram is for transaction size
+    if (barColor == 'darkorange'){
+        yMax = 150;
+    }
+    // if the histogram is for transaction value
+    else if (barColor == 'steelblue'){
+        yMax = 70;
+    }
     let x;
 
     function updateHistogram(dataValue) {
-        // let dataBuffer = histogramDataBuffers[containerId];
 
         // Ensure dataValue is valid
         if (isNaN(dataValue) || dataValue === null || dataValue === undefined) {
@@ -101,7 +107,7 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
             }
         });
         // Update Y scale
-        const yMax = d3.max(bins, d => d.length);
+        // const yMax = d3.max(bins, d => d.length);
         y.domain([0, yMax]);
         yAxis.transition().call(d3.axisLeft(y))
             .selectAll("text")
