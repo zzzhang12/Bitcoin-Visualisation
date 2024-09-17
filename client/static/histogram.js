@@ -3,7 +3,7 @@ let yMax = 0;
 
 export function createHistogram(containerId, barColor, xAxisLabel) {
     // Initial setup for the histogram
-    const margin = {top: 20, right: 30, bottom: 250, left: 40}, 
+    const margin = {top: 20, right: 30, bottom: 250, left: 100}, 
           width = window.innerWidth - margin.left - margin.right,
           height = window.innerHeight - margin.top - margin.bottom;
 
@@ -27,6 +27,16 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
         .attr("y", height + 100)
         .style("text-anchor", "middle")
         .text(xAxisLabel);
+    
+    // Y-axis label
+    svg.append("text")
+        .attr("class", "axis-label")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -height / 2)
+        .attr("y", -margin.left + 20)
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .text("Number of Transactions");
 
     console.log(barColor)
     // If the histogram is for transaction size
