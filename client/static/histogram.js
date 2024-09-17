@@ -1,7 +1,7 @@
 let dataBuffer = []; 
 let yMax = 0;
 
-export function createHistogram(containerId, barColor, xAxisLabel) {
+export function createHistogram(containerId, barColor, xAxisLabel, xAxisDescription) {
     // Initial setup for the histogram
     const margin = {top: 20, right: 30, bottom: 250, left: 100}, 
           width = window.innerWidth - margin.left - margin.right,
@@ -24,10 +24,19 @@ export function createHistogram(containerId, barColor, xAxisLabel) {
     svg.append("text")
         .attr("class", "axis-label")
         .attr("x", width / 2)
-        .attr("y", height + 100)
+        .attr("y", height + 50)
         .style("text-anchor", "middle")
         .text(xAxisLabel);
     
+    // X-axis description (second line)
+    svg.append("text")
+        .attr("class", "axis-description")
+        .attr("x", width / 2)
+        .attr("y", height + 100) 
+        .style("text-anchor", "middle")
+        .style("fill", "white")
+        .text(xAxisDescription);
+
     // Y-axis label
     svg.append("text")
         .attr("class", "axis-label")

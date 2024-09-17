@@ -48,7 +48,7 @@
     </style>
 </head>
 <body>
-    <div id="header">Real-time Transaction Size</div>
+    <div id="header">Histogram of Bitcoin Transaction Sizes from Real-Time Data</div>
     <svg id="histogram"></svg>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -60,7 +60,7 @@
         let socket;
         import { createHistogram, saveHistogramSnapshot } from '../static/histogram.js';
 
-        const { updateHistogram, resetHistogram } = createHistogram("histogram", "darkorange", "Transaction Size (bytes)");
+        const { updateHistogram, resetHistogram } = createHistogram("histogram", "darkorange", "Transaction Size (bytes)", "Amount of Data Needed to Store and Transmit the Transaction (logarithmic scale)");
 
         // WebSocket connection to the server
         socket = io(`http://${SOCKET_IP}:3000/`,{
