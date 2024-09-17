@@ -103,22 +103,23 @@ def calculate_statistics():
     std_dev_tx = np.std(transaction_values) 
     p25_tx = np.percentile(transaction_values, 25)
     p75_tx = np.percentile(transaction_values, 75)
+    median_tx = np.median(transaction_values)
     iqr_tx = p75_tx - p25_tx
 
-    # Address balance statistics with log transformation
-    log_balances = np.log1p(address_balances)
-    mean_balance = np.mean(log_balances)
-    std_dev_balance = np.std(log_balances)
-    p25_balance = np.percentile(log_balances, 25)
-    p75_balance = np.percentile(log_balances, 75)
+    # Address balance statistics
+    mean_balance = np.mean(address_balances)
+    std_dev_balance = np.std(address_balances)
+    p25_balance = np.percentile(address_balances, 25)
+    p75_balance = np.percentile(address_balances, 75)
+    median_balance = np.median(address_balances)
     iqr_balance = p75_balance - p25_balance
 
-    print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}, p25_tx: {p25_tx}, p75_tx: {p75_tx}, IQR Tx: {iqr_tx}")
-    print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}, p25_balance: {p25_balance}, p75_balance: {p75_balance}, IQR Balance: {iqr_balance}")
+    print(f"Calculated MEAN: {mean_tx}, STD_DEV: {std_dev_tx}, p25_tx: {p25_tx}, p75_tx: {p75_tx}, median_tx: {median_tx}IQR Tx: {iqr_tx}")
+    print(f"Calculated Balance MEAN: {mean_balance}, STD_DEV: {std_dev_balance}, p25_balance: {p25_balance}, p75_balance: {p75_balance}, median_balance: {median_balance}, IQR Balance: {iqr_balance}")
     with open('./server/transaction_stats.json', 'w') as f:
         json.dump({
-            'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'p25_tx': p25_tx, 'p75_tx': p75_tx, 'iqr_tx': iqr_tx,
-            'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance, 'p25_balance': p25_balance, 'p75_balance': p75_balance, 'iqr_balance': iqr_balance
+            'mean_tx': mean_tx, 'std_dev_tx': std_dev_tx, 'p25_tx': p25_tx, 'p75_tx': p75_tx, 'median_tx': median_tx, 'iqr_tx': iqr_tx,
+            'mean_balance': mean_balance, 'std_dev_balance': std_dev_balance, 'p25_balance': p25_balance, 'p75_balance': p75_balance, 'median_balance': mean_balance, 'iqr_balance': iqr_balance,
         }, f, indent=4)
 
 

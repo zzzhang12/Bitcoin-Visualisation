@@ -1326,7 +1326,7 @@ function mapIqrScoreToThickness(iqrScore) {
     }
     else{
         const ExtremeValueScale = d3.scaleLinear()
-            .domain([20, 300])  // For larger values of IQR score
+            .domain([20, 300]) 
             .range([3.5, maxThickness])
             .clamp(true);
         
@@ -1337,18 +1337,36 @@ function mapIqrScoreToThickness(iqrScore) {
 }
 
 function mapIqrScoreToRadius(iqrScore) {
-    const minRadius = 0.9;
+    const minRadius = 0.8;
     const medRadius = 2.0;
-    const maxRadius = 6.0;
+    const maxRadius = 6.5;
 
-    const linearScale = d3.scaleLinear()
-        .domain([-1, 0, 1])  // Account for negative and positive IQR scores
-        .range([minRadius, medRadius, maxRadius])  // Assign midpoints around typical values
-        .clamp(true);
+    let radius;
 
-    // Map the IQR score to the radius based on sign
-    const radius = linearScale(iqrScore);
-    // console.log(`IQR Score: ${iqrScore}, Radius: ${radius}`);
+    if (iqrScore <= 1) {
+        const linearScale = d3.scaleLinear()
+            .domain([-1, 0, 1])
+            .range([minRadius, 1.0, medRadius])
+            .clamp(true);
+        
+        radius = linearScale(iqrScore);
+    } else if (iqrScore > 1 && iqrScore <= 20){
+        const largeValueScale = d3.scaleLinear()
+            .domain([1, 300]) 
+            .range([medRadius, 3.2])
+            .clamp(true);
+        
+        radius = largeValueScale(iqrScore);
+    }
+    else{
+        const ExtremeValueScale = d3.scaleLinear()
+            .domain([300, 3000])  
+            .range([3.2, maxRadius])
+            .clamp(true);
+        
+        radius = ExtremeValueScale(iqrScore);
+    }
+    console.log(`IQR Score: ${iqrScore}, Radius: ${radius}`);
     return radius
 }
 

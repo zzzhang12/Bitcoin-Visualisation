@@ -15,8 +15,8 @@ from dotenv import load_dotenv
 import logging
 
 # Set up logging to a file
-# logging.basicConfig(filename='iqr_score_log.txt', level=logging.INFO, 
-#                     format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename='iqr_score_log.txt', level=logging.INFO, 
+                    format='%(asctime)s - %(levelname)s - %(message)s')
                     
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -711,9 +711,13 @@ def calculate_iqr_score(value, type):
             logging.warning(f"Transaction IQR is 0. Cannot calculate IQR score for value {value}.")
             return 0
 
-        if value < p25_tx:
+        if value <= p25_tx:
             # Value is below the 25th percentile
             iqr_score = (value - p25_tx) / iqr_tx
+            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
+            return iqr_score
+        elif value > p25_tx and value < p75_tx:
+            iqr_score = (value - (p75_tx - p25_tx)) / iqr_tx
             logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
             return iqr_score
         else:
@@ -727,9 +731,13 @@ def calculate_iqr_score(value, type):
             logging.warning(f"Balance IQR is 0. Cannot calculate IQR score for value {value}.")
             return 0
 
-        if value < p25_balance:
+        if value <= p25_balance:
             # Value is below the 25th percentile
             iqr_score = (value - p25_balance) / iqr_balance
+            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
+            return iqr_score
+        elif value > p25_balance and value < p75_balance:
+            iqr_score = (value - (p75_balance - p25_balance)) / iqr_balance
             logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
             return iqr_score
         else:
@@ -978,8 +986,8 @@ def create_graph_data(new_nodes, new_edges, positions):
                    'fee': node['fee'] if node['type'] == 'tx' else None,
                    'z_score_tx': node['z_score_tx'] if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                    'balance': address_cache.get(node['addr'], 0) if node['type'] != 'tx' and node['type'] != 'intersection' else None,
-                   'z_score_balance': calculate_z_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
-                   'iqr_score_balance': calculate_iqr_score(np.log1p(address_cache.get(node['addr'], 0)), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
+                   'z_score_balance': calculate_z_score(address_cache.get(node['addr'], 0), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
+                   'iqr_score_balance': calculate_iqr_score(address_cache.get(node['addr'], 0), "balance") if node['type'] != 'tx' and node['type'] != 'intersection' else None,
                  } for node in new_nodes if node['id'] in positions],
         'edges': [{'source': edge['source'], 
                    'target': edge['target'], 
