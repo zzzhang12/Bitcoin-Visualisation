@@ -39,7 +39,7 @@
     </style>
 </head>
 <body>
-    <div id="header">Real-time Transaction Rate</div>
+    <div id="header">Real-Time Bitcoin Transaction Rate</div>
     <svg id="lineGraph"></svg>
 
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -52,7 +52,7 @@
         import { createLineGraph, saveLineGraphSnapshot } from '../static/lineGraph.js';
 
         // Initialize the line graph with parameters
-        const { updateLineGraph, resetLineGraph } = createLineGraph("lineGraph", "Transaction Rate (tps)", "darkorange");
+        const { updateLineGraph, resetLineGraph } = createLineGraph("lineGraph", "Transaction Rate (transactions per second)", "darkorange");
  
         // WebSocket connection to the server
         socket = io(`http://${SOCKET_IP}:3000/`,{

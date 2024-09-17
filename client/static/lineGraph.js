@@ -3,7 +3,7 @@ let dataBuffer = []
 
 export function createLineGraph(containerId, yAxisLabel, lineColor) {
     // Initial setup for the line graph
-    const margin = { top: 20, right: 30, bottom: 150, left: 100 },
+    const margin = { top: 20, right: 30, bottom: 200, left: 100 },
           width = window.innerWidth - margin.left - margin.right,
           height = window.innerHeight - margin.top - margin.bottom;
 
@@ -55,10 +55,10 @@ export function createLineGraph(containerId, yAxisLabel, lineColor) {
     svg.append("text")
         .attr("class", "axis-label")
         .attr("x", width / 2)
-        .attr("y", height + margin.bottom - 10)
+        .attr("y", height + 50)
         .style("text-anchor", "middle")
         .style("fill", "white")
-        .text("Time");
+        .text("Time (HH:MM:SS)");
 
     // Initialize an empty buffer for values
     // let dataBuffer = [];
