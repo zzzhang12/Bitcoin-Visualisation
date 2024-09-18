@@ -141,7 +141,7 @@ document.getElementById('applyBalanceFilter').addEventListener('click', () => {
         document.getElementById('viewBalanceInfoSection').style.display = 'block';
 
         // Display success message
-        let messageElement = document.getElementById('BalanceMessage');
+        let messageElement = document.getElementById('balanceMessage');
         if (!messageElement) {
             messageElement = document.createElement('p');
             messageElement.id = 'balanceMessage';

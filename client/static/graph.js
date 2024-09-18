@@ -1066,6 +1066,7 @@ function clearInfoBox(){
     infoBox.innerHTML = '';  // Clear the content
     infoBox.style.opacity = '0';  // Hide the info box
 }
+
 // Function to show transaction information for the current index in the list
 function updateTxValNodeInfo(index) {
     console.log("updateTxValNodeInfo")
