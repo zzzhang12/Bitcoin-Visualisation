@@ -109,6 +109,11 @@ document.getElementById('cancelTxValFilter').addEventListener('click', () => {
     document.getElementById('previousTxValNode').style.display = 'none';
     document.getElementById('nextTxValNode').style.display = 'none';
 
+    // Reset the "View" button color to default
+    const viewTxValInfoButton = document.getElementById('viewTransactionInfoTxVal');
+    viewTxValInfoButton.style.backgroundColor = ''; // Original background
+    viewTxValInfoButton.style.color = ''; // Original text color
+
     // Remove the success message
     const messageElement = document.getElementById('txValMessage');
     if (messageElement) {
@@ -174,6 +179,11 @@ document.getElementById('cancelBalanceFilter').addEventListener('click', () => {
     document.getElementById('previousBalanceNode').style.display = 'none';
     document.getElementById('nextBalanceNode').style.display = 'none';
 
+    // Reset the "View" button color to default
+    const viewBalanceInfoButton = document.getElementById('viewTransactionInfoBalance');
+    viewBalanceInfoButton.style.backgroundColor = ''; // Original background
+    viewBalanceInfoButton.style.color = ''; // Original text color
+
     // Remove the success message
     const messageElement = document.getElementById('balanceMessage');
     if (messageElement) {
@@ -191,6 +201,11 @@ document.getElementById('viewTransactionInfoTxVal').addEventListener('click', ()
         filterType: 'transactionValue'
     });
 
+    // Change the "View" button to green to indicate it's active
+    const viewTxValInfoButton = document.getElementById('viewTransactionInfoTxVal');
+    viewTxValInfoButton.style.backgroundColor = '#28a745'; // Green background
+    viewTxValInfoButton.style.color = '#fff'; // White text
+
     // Show Previous and Next buttons
     document.getElementById('previousTxValNode').style.display = 'block';
     document.getElementById('nextTxValNode').style.display = 'block';
@@ -205,6 +220,11 @@ document.getElementById('viewTransactionInfoBalance').addEventListener('click', 
         action: 'viewTransactionInfo',
         filterType: 'addressBalance'
     });
+
+    // Change the "View" button to green to indicate it's active
+    const viewBalanceInfoButton = document.getElementById('viewTransactionInfoBalance');
+    viewBalanceInfoButton.style.backgroundColor = '#28a745'; // Green background
+    viewBalanceInfoButton.style.color = '#fff'; // White text
 
     // Show Previous and Next buttons
     document.getElementById('previousBalanceNode').style.display = 'block';
