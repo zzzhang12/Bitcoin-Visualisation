@@ -813,6 +813,7 @@ function applyTransactionValueFilter(percentile) {
 
     // Update the graph to reflect the highlighted nodes
     updateOpacityForAllNodesAndEdges();
+    clearInfoBox();
 }
 
 // Function to apply address balance filter
@@ -846,6 +847,7 @@ function applyAddressBalanceFilter(percentile) {
 
     // Update the graph to reflect the highlighted nodes
     updateOpacityForAllNodesAndEdges();
+    clearInfoBox();
 }
 
 // Function to cancel the transaction value filter
@@ -987,7 +989,7 @@ function handleAddressBalanceInfo() {
         const nodeB = originalGraphData.nodes.find(n => n.id === b);
         return nodeB.balance - nodeA.balance;
     });
-    
+
     // Show the first node's information
     currentBalanceNodeIndex = 0;
     showAddressBalanceInfo(balanceFilteredNodes[currentBalanceNodeIndex]);
