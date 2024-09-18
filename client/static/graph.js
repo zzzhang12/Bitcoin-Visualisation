@@ -919,6 +919,13 @@ function handleTransactionValueInfo() {
         return;
     }
 
+    // Sort the filtered nodes by `outVals` in descending order
+    txValFilteredNodes.sort((a, b) => {
+        const nodeA = originalGraphData.nodes.find(n => n.id === a);
+        const nodeB = originalGraphData.nodes.find(n => n.id === b);
+        return nodeB.outVals - nodeA.outVals;
+    });
+
     // Show the first node's information
     currentTxValNodeIndex = 0;
     showTransactionValueInfo(txValFilteredNodes[currentTxValNodeIndex]);
@@ -974,6 +981,13 @@ function handleAddressBalanceInfo() {
         return;
     }
 
+    // Sort the filtered nodes by `balance` in descending order
+    balanceFilteredNodes.sort((a, b) => {
+        const nodeA = originalGraphData.nodes.find(n => n.id === a);
+        const nodeB = originalGraphData.nodes.find(n => n.id === b);
+        return nodeB.balance - nodeA.balance;
+    });
+    
     // Show the first node's information
     currentBalanceNodeIndex = 0;
     showAddressBalanceInfo(balanceFilteredNodes[currentBalanceNodeIndex]);
