@@ -47,6 +47,7 @@ document.getElementById('showSnapshot').addEventListener('click', () => {
 document.getElementById('resetGraph').addEventListener('click', () => {
     socket.emit('controller_command', { action: 'resetGraph' });
     console.log('Sent reset graph command');
+    location.reload(); 
 });
 
 // Function to toggle visibility of the input fields
