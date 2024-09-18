@@ -57,7 +57,7 @@
             loadHistogramData(snapshot, histogramType);
         });
 
-        let barColour, textLabel, pageTitle;
+        let barColour, textLabel, pageTitle, yMax;
         function loadHistogramData(snapshot, histogramType) {
             fetch(`/static/snapshots/${snapshot}`)
                 .then(response => response.json())
@@ -68,11 +68,13 @@
                             barColour = "steelblue";
                             textLabel = "Transaction Value (mB)";
                             pageTitle = "Transaction Value";
+                            yMax = 60;
                         }
                         else if (histogramType == "tx_size"){
                             barColour = "darkorange";
                             textLabel = "Transaction Size (bytes)";
                             pageTitle = "Transaction Size";
+                            yMax = 150;
                         }
                         updatePageHeader(pageTitle);
                         renderHistogram(histogramData);
@@ -141,7 +143,8 @@
             const bins = histogram(histogramData);
 
             // Update Y scale
-            const yMax = d3.max(bins, d => d.length);
+            const maxYVal = d3.max(bins, d => d.length);
+            yMax = Math.max(maxYVal, yMax);
             y.domain([0, yMax]);
             yAxis.transition().call(d3.axisLeft(y))
                 .selectAll("text")
