@@ -54,7 +54,7 @@ export function createHistogram(containerId, barColor, xAxisLabel, xAxisDescript
     }
     // if the histogram is for transaction value
     else if (barColor == 'steelblue'){
-        yMax = 70;
+        yMax = 60;
     }
     let x;
 
