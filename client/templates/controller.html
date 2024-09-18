@@ -166,10 +166,18 @@
         }
         @media (max-width: 600px) {
             .previous-next, .filter-input-container {
-                gap: 5px; /* Adjust gap for smaller screens */
+                gap: 5px; 
             }
         }
-
+        #pagination {
+            justify-content: center; 
+            gap: 10px; 
+            margin-top: 20px; 
+        }
+        #pagination button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
     </style>
 </head>
 <body>
@@ -225,6 +233,11 @@
         </div>
     </div>
     <div id="snapshotList"></div>
+    <div id="pagination" style="display: none;">
+        <button id="prevButton">Previous</button>
+        <button id="nextButton">Next</button>
+    </div>
+    
 
     <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
     <script type="module" src="../static/controller.js"></script>

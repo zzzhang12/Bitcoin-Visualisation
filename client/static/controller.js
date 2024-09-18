@@ -1,5 +1,8 @@
 let socket;
 
+const ITEMS_PER_PAGE = 10; // Number of snapshots per page
+let currentPage = 1;
+
 window.addEventListener("load", init, false);
 
 function init() {
@@ -38,6 +41,7 @@ document.getElementById('saveSnapshot').addEventListener('click', () => {
 
 document.getElementById('showSnapshot').addEventListener('click', () => {
     fetchSnapshots();
+    document.getElementById('pagination').style.display = 'flex'; // Show the pagination controls
 });
 
 document.getElementById('resetGraph').addEventListener('click', () => {
@@ -294,271 +298,302 @@ function displaySnapshotList(snapshots) {
         return dateB.getTime() - dateA.getTime();  // most recent first)
     });
 
-    console.log("Sorted snapshots:", snapshots);
+    // console.log("Sorted snapshots:", snapshots);
+    
+    const totalPages = Math.ceil(snapshots.length / ITEMS_PER_PAGE);
 
-    snapshots.forEach(snapshot => {
-        const fileName = snapshot.file_name
-        const snapshotName = fileName.replace('graph_snapshot_', '').replace('.json', '');
-        const button = document.createElement('button');
-        button.className = 'snapshot-button';
-        button.textContent = snapshotName;
+    function renderPage(page){
+        snapshotList.innerHTML = '';
+        const start = (page - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        const pageSnapshots = snapshots.slice(start, end);
 
-    const infoBox = document.createElement('div');
-    infoBox.className = 'snapshot-info';
+        pageSnapshots.forEach(snapshot => {
+            const fileName = snapshot.file_name
+            const snapshotName = fileName.replace('graph_snapshot_', '').replace('.json', '');
+            const button = document.createElement('button');
+            button.className = 'snapshot-button';
+            button.textContent = snapshotName;
 
-    // Structure the stats into columns
-    infoBox.innerHTML = `
-        <div id="infoBoxStatsArea" style="display: flex; flex-wrap: wrap; gap: 10px;">
-            <div class="stat-block">
-                <i>TxRate:</i> ${snapshot.stats.txRate ? snapshot.stats.txRate + ' tps' : 'N/A'}<br>
-                <i>NumTx:</i> ${snapshot.stats.numTx || 'N/A'}<br>
-                <i>NumNodes:</i> ${snapshot.stats.numNodes || 'N/A'}
+        const infoBox = document.createElement('div');
+        infoBox.className = 'snapshot-info';
+
+        // Structure the stats into columns
+        infoBox.innerHTML = `
+            <div id="infoBoxStatsArea" style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <div class="stat-block">
+                    <i>TxRate:</i> ${snapshot.stats.txRate ? snapshot.stats.txRate + ' tps' : 'N/A'}<br>
+                    <i>NumTx:</i> ${snapshot.stats.numTx || 'N/A'}<br>
+                    <i>NumNodes:</i> ${snapshot.stats.numNodes || 'N/A'}
+                </div>
+                <div class="stat-block">
+                    <b>Value</b><br>
+                    <i>Max:</i> ${snapshot.stats.txMaxVal || 'N/A'}<br>
+                    <i>Total:</i> ${snapshot.stats.txTotalVal || 'N/A'}<br>
+                    <i>Avg:</i> ${snapshot.stats.txAvgVal || 'N/A'}
+                </div>
+                <div class="stat-block">
+                    <b>Fees</b><br>
+                    <i>Max:</i> ${snapshot.stats.txMaxFee || 'N/A'}<br>
+                    <i>Total:</i> ${snapshot.stats.txTotalFee || 'N/A'}<br>
+                    <i>Avg:</i> ${snapshot.stats.txAvgFee || 'N/A'}
+                </div>
+                <div class="stat-block">
+                    <b>Size</b><br>
+                    <i>Max:</i> ${snapshot.stats.txMaxSize || 'N/A'}<br>
+                    <i>Total:</i> ${snapshot.stats.txTotalSize || 'N/A'}<br>
+                    <i>Avg:</i> ${snapshot.stats.txAvgSize || 'N/A'}
+                </div>
+                <div class="stat-block">
+                    <b>Wallet Balance</b><br>
+                    <i>Max:</i> ${snapshot.stats.balanceMax || 'N/A'}<br>
+                    <i>Median:</i> ${snapshot.stats.balanceMed || 'N/A'}<br>
+                    <i>IQR:</i> ${snapshot.stats.balanceIQR || 'N/A'}
+                </div>
             </div>
-            <div class="stat-block">
-                <b>Value</b><br>
-                <i>Max:</i> ${snapshot.stats.txMaxVal || 'N/A'}<br>
-                <i>Total:</i> ${snapshot.stats.txTotalVal || 'N/A'}<br>
-                <i>Avg:</i> ${snapshot.stats.txAvgVal || 'N/A'}
-            </div>
-            <div class="stat-block">
-                <b>Fees</b><br>
-                <i>Max:</i> ${snapshot.stats.txMaxFee || 'N/A'}<br>
-                <i>Total:</i> ${snapshot.stats.txTotalFee || 'N/A'}<br>
-                <i>Avg:</i> ${snapshot.stats.txAvgFee || 'N/A'}
-            </div>
-            <div class="stat-block">
-                <b>Size</b><br>
-                <i>Max:</i> ${snapshot.stats.txMaxSize || 'N/A'}<br>
-                <i>Total:</i> ${snapshot.stats.txTotalSize || 'N/A'}<br>
-                <i>Avg:</i> ${snapshot.stats.txAvgSize || 'N/A'}
-            </div>
-            <div class="stat-block">
-                <b>Wallet Balance</b><br>
-                <i>Max:</i> ${snapshot.stats.balanceMax || 'N/A'}<br>
-                <i>Median:</i> ${snapshot.stats.balanceMed || 'N/A'}<br>
-                <i>IQR:</i> ${snapshot.stats.balanceIQR || 'N/A'}
-            </div>
-        </div>
-    `;
+        `;
 
-    snapshotList.appendChild(button);
-    document.body.appendChild(infoBox);
+        snapshotList.appendChild(button);
+        document.body.appendChild(infoBox);
 
-    // Event listeners for hover to show and hide the info box
-    button.addEventListener('mouseenter', (event) => {
-        const rect = button.getBoundingClientRect();
-        infoBox.style.top = `${rect.top}px`;
-        infoBox.style.left = `${rect.right + 10}px`;
-        infoBox.style.display = 'block';
-    });
+        // Event listeners for hover to show and hide the info box
+        button.addEventListener('mouseenter', (event) => {
+            const rect = button.getBoundingClientRect();
+            infoBox.style.top = `${rect.top}px`;
+            infoBox.style.left = `${rect.right + 10}px`;
+            infoBox.style.display = 'block';
+        });
 
-    button.addEventListener('mouseleave', () => {
-        infoBox.style.display = 'none';
-    });
+        button.addEventListener('mouseleave', () => {
+            infoBox.style.display = 'none';
+        });
 
-    // Handle click event to show region buttons
-    button.addEventListener('click', () => {
-        // If there's already a set of region buttons active, remove it
-        if (activeRegionButtons) {
-            activeRegionButtons.remove();
-        }
-
-        // Check if the clicked button already has its region buttons displayed
-        if (button.nextSibling && button.nextSibling.className === 'region-buttons') {
-            activeRegionButtons = null; // If so, remove them
-            return;
-        }
-
-        const regionButtons = document.createElement('div');
-        regionButtons.className = 'region-buttons'
-
-        const regions = ['Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5', 'Region 6'];
-
-        regions.forEach((region, index) => {
-            const regionButton = document.createElement('button');
-            regionButton.textContent = region;
-            regionButton.className = 'region-button';
-
-            // Check if this region already has a snapshot loaded
-            if (regionMapping[region] && regionMapping[region] === snapshotName) {
-                regionButton.style.backgroundColor = '#28a745'; // Green to indicate it’s loaded
-            } else {
-                regionButton.style.backgroundColor = '#444'; // Default color
+        // Handle click event to show region buttons
+        button.addEventListener('click', () => {
+            // If there's already a set of region buttons active, remove it
+            if (activeRegionButtons) {
+                activeRegionButtons.remove();
             }
 
-            regionButton.addEventListener('mouseenter', () => {
-                regionButton.style.backgroundColor = '#666';
-            });
-            regionButton.addEventListener('mouseleave', () => {
-                if (regionMapping[region] === snapshotName) {
-                    regionButton.style.backgroundColor = '#28a745'; // Keep green if already loaded
+            // Check if the clicked button already has its region buttons displayed
+            if (button.nextSibling && button.nextSibling.className === 'region-buttons') {
+                activeRegionButtons = null; // If so, remove them
+                return;
+            }
+
+            const regionButtons = document.createElement('div');
+            regionButtons.className = 'region-buttons'
+
+            const regions = ['Region 1', 'Region 2', 'Region 3', 'Region 4', 'Region 5', 'Region 6'];
+
+            regions.forEach((region, index) => {
+                const regionButton = document.createElement('button');
+                regionButton.textContent = region;
+                regionButton.className = 'region-button';
+
+                // Check if this region already has a snapshot loaded
+                if (regionMapping[region] && regionMapping[region] === snapshotName) {
+                    regionButton.style.backgroundColor = '#28a745'; // Green to indicate it’s loaded
                 } else {
-                    regionButton.style.backgroundColor = '#444';
-                }
-            });
-
-            regionButton.addEventListener('click', () => {
-                const WIDTH = 1920;
-                const HEIGHT = 1080;
-
-                // console.log(x, y)
-
-                // let x, Y
-                // if (index == 0){
-                //     x = 
-                // }
-                const payloads = [
-                    // Static graph snapshot -- 2 x 2 screens
-                    {
-                        app: {
-                            states: {
-                                load: {
-                                    url: `http://${SOCKET_IP}:3000/static_graph?snapshot=${snapshot.file_name}`
-                                }
-                            },
-                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                        },
-                        x: (index * 2 + 4) * WIDTH,  
-                        y: 0,
-                        w: 2 * WIDTH,       
-                        h: 2 * HEIGHT,  
-                        space: "DOCluster"  
-                    },
-                    // Info panel 
-                    {
-                        app: {
-                            states: {
-                                load: {
-                                    url: `http://${SOCKET_IP}:3000/snapshot_stats?snapshot=${snapshot.file_name}`
-                                }
-                            },
-                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                        },
-                        x: (index * 2 + 4) * 1920,  
-                        y: 2 * HEIGHT,
-                        w: WIDTH,       
-                        h: HEIGHT,  
-                        space: "DOCluster"  
-                    },
-                    // Line graphs of tx rate and tx fee
-                    {
-                        app: {
-                            states: {
-                                load: {
-                                    url: `http://${SOCKET_IP}:3000/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
-                                }
-                            },
-                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                        },
-                        x: (index * 2 + 5) * 1920, 
-                        y: 2 * HEIGHT,
-                        w: WIDTH,       
-                        h: HEIGHT,  
-                        space: "DOCluster"  
-                    },
-                    // Histogram of tx value
-                    {
-                        app: {
-                            states: {
-                                load: {
-                                    url: `http://${SOCKET_IP}:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
-                                }
-                            },
-                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                        },
-                        x: (index * 2 + 4) * 1920,  
-                        y: 3 * HEIGHT,
-                        w: WIDTH,       
-                        h: HEIGHT,  
-                        space: "DOCluster"  
-                    },
-                    // Histogram of tx size
-                    {
-                        app: {
-                            states: {
-                                load: {
-                                    url: `http://${SOCKET_IP}:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
-                                }
-                            },
-                            url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
-                        },
-                        x: (index * 2 + 5) * 1920, 
-                        y: 3 * HEIGHT,
-                        w: WIDTH,       
-                        h: HEIGHT,  
-                        space: "DOCluster"  
-                    }
-                ];
-
-                // // Execute multiple fetch requests in parallel
-                // Promise.all(
-                //     payloads.map(payload => 
-                //         fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-                //             method: "POST",
-                //             headers: {
-                //                 'Content-Type': 'application/json'
-                //             },
-                //             body: JSON.stringify(payload)
-                //         })
-                //         .then(response => {
-                //             if (!response.ok) {
-                //                 throw new Error('Failed to load snapshot.');
-                //             }
-                //             return response.json();
-                //         })
-                //     )
-                // )
-                // .then(dataArray => {
-                //     dataArray.forEach(data => {
-                //         console.log('Snapshot loaded into the observatory:', data);
-                //     });
-                //     button.style.backgroundColor = '#28a745'; // Green color to indicate success
-                //     regionButtons.remove();
-                //     activeRegionButtons = null; // Reset the active region buttons
-                // })
-                // .catch(error => {
-                //     console.error('Error loading snapshot into the observatory:', error);
-                // });
-                // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-                //     method: "POST",
-                //     headers: {
-                //         'Content-Type': 'application/json'
-                //     },
-                //     body: JSON.stringify(payload)
-                // })
-                
-
-                // //  For local testing only
-                // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank')
-                // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank')
-                // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`, '_blank');
-                window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
-                // window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
-
-                // If this region was previously occupied by another snapshot, reset its color
-                if (regionMapping[region] && regionMapping[region] !== snapshotName) {
-                    const previousSnapshotButton = Array.from(document.querySelectorAll('.snapshot-button'))
-                        .find(btn => btn.textContent === regionMapping[region]);
-                    if (previousSnapshotButton) {
-                        previousSnapshotButton.style.backgroundColor = '#444';
-                    }
+                    regionButton.style.backgroundColor = '#444'; // Default color
                 }
 
-                // Update the region mapping to the new snapshot
-                regionMapping[region] = snapshotName;
-                button.style.backgroundColor = '#28a745'; // Green color to indicate success
+                regionButton.addEventListener('mouseenter', () => {
+                    regionButton.style.backgroundColor = '#666';
+                });
+                regionButton.addEventListener('mouseleave', () => {
+                    if (regionMapping[region] === snapshotName) {
+                        regionButton.style.backgroundColor = '#28a745'; // Keep green if already loaded
+                    } else {
+                        regionButton.style.backgroundColor = '#444';
+                    }
+                });
 
-                // // Remove region buttons after selecting one
-                // regionButtons.remove();
-                // activeRegionButtons = null;
+                regionButton.addEventListener('click', () => {
+                    const WIDTH = 1920;
+                    const HEIGHT = 1080;
+
+                    // console.log(x, y)
+
+                    // let x, Y
+                    // if (index == 0){
+                    //     x = 
+                    // }
+                    const payloads = [
+                        // Static graph snapshot -- 2 x 2 screens
+                        {
+                            app: {
+                                states: {
+                                    load: {
+                                        url: `http://${SOCKET_IP}:3000/static_graph?snapshot=${snapshot.file_name}`
+                                    }
+                                },
+                                url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                            },
+                            x: (index * 2 + 4) * WIDTH,  
+                            y: 0,
+                            w: 2 * WIDTH,       
+                            h: 2 * HEIGHT,  
+                            space: "DOCluster"  
+                        },
+                        // Info panel 
+                        {
+                            app: {
+                                states: {
+                                    load: {
+                                        url: `http://${SOCKET_IP}:3000/snapshot_stats?snapshot=${snapshot.file_name}`
+                                    }
+                                },
+                                url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                            },
+                            x: (index * 2 + 4) * 1920,  
+                            y: 2 * HEIGHT,
+                            w: WIDTH,       
+                            h: HEIGHT,  
+                            space: "DOCluster"  
+                        },
+                        // Line graphs of tx rate and tx fee
+                        {
+                            app: {
+                                states: {
+                                    load: {
+                                        url: `http://${SOCKET_IP}:3000/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`
+                                    }
+                                },
+                                url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                            },
+                            x: (index * 2 + 5) * 1920, 
+                            y: 2 * HEIGHT,
+                            w: WIDTH,       
+                            h: HEIGHT,  
+                            space: "DOCluster"  
+                        },
+                        // Histogram of tx value
+                        {
+                            app: {
+                                states: {
+                                    load: {
+                                        url: `http://${SOCKET_IP}:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`
+                                    }
+                                },
+                                url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                            },
+                            x: (index * 2 + 4) * 1920,  
+                            y: 3 * HEIGHT,
+                            w: WIDTH,       
+                            h: HEIGHT,  
+                            space: "DOCluster"  
+                        },
+                        // Histogram of tx size
+                        {
+                            app: {
+                                states: {
+                                    load: {
+                                        url: `http://${SOCKET_IP}:3000/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`
+                                    }
+                                },
+                                url: "http://gdo-apps.dsi.ic.ac.uk:9080/app/html"
+                            },
+                            x: (index * 2 + 5) * 1920, 
+                            y: 3 * HEIGHT,
+                            w: WIDTH,       
+                            h: HEIGHT,  
+                            space: "DOCluster"  
+                        }
+                    ];
+
+                    // // Execute multiple fetch requests in parallel
+                    // Promise.all(
+                    //     payloads.map(payload => 
+                    //         fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                    //             method: "POST",
+                    //             headers: {
+                    //                 'Content-Type': 'application/json'
+                    //             },
+                    //             body: JSON.stringify(payload)
+                    //         })
+                    //         .then(response => {
+                    //             if (!response.ok) {
+                    //                 throw new Error('Failed to load snapshot.');
+                    //             }
+                    //             return response.json();
+                    //         })
+                    //     )
+                    // )
+                    // .then(dataArray => {
+                    //     dataArray.forEach(data => {
+                    //         console.log('Snapshot loaded into the observatory:', data);
+                    //     });
+                    //     button.style.backgroundColor = '#28a745'; // Green color to indicate success
+                    //     regionButtons.remove();
+                    //     activeRegionButtons = null; // Reset the active region buttons
+                    // })
+                    // .catch(error => {
+                    //     console.error('Error loading snapshot into the observatory:', error);
+                    // });
+                    // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                    //     method: "POST",
+                    //     headers: {
+                    //         'Content-Type': 'application/json'
+                    //     },
+                    //     body: JSON.stringify(payload)
+                    // })
+                    
+
+                    // //  For local testing only
+                    // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank')
+                    // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank')
+                    // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`, '_blank');
+                    window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
+                    // window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
+
+                    // If this region was previously occupied by another snapshot, reset its color
+                    if (regionMapping[region] && regionMapping[region] !== snapshotName) {
+                        const previousSnapshotButton = Array.from(document.querySelectorAll('.snapshot-button'))
+                            .find(btn => btn.textContent === regionMapping[region]);
+                        if (previousSnapshotButton) {
+                            previousSnapshotButton.style.backgroundColor = '#444';
+                        }
+                    }
+
+                    // Update the region mapping to the new snapshot
+                    regionMapping[region] = snapshotName;
+                    button.style.backgroundColor = '#28a745'; // Green color to indicate success
+
+                    // // Remove region buttons after selecting one
+                    // regionButtons.remove();
+                    // activeRegionButtons = null;
+                });
+
+                regionButtons.appendChild(regionButton);
             });
-
-            regionButtons.appendChild(regionButton);
+            button.after(regionButtons);
+            activeRegionButtons = regionButtons;
         });
-        button.after(regionButtons);
-        activeRegionButtons = regionButtons;
+        });
+        // Update navigation buttons
+        document.getElementById('prevButton').disabled = currentPage === 1;
+        document.getElementById('nextButton').disabled = currentPage === totalPages;
+    }
+
+     // Handle the "Next" button
+     document.getElementById('nextButton').addEventListener('click', () => {
+        if (currentPage < totalPages) {
+            currentPage++;
+            renderPage(currentPage);
+        }
     });
+
+    // Handle the "Previous" button
+    document.getElementById('prevButton').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderPage(currentPage);
+        }
     });
+
+    // Initial render of the first page
+    renderPage(currentPage);
     snapshotList.style.display = 'block'; // Show the list
 }
 
