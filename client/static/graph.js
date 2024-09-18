@@ -859,6 +859,7 @@ function cancelTransactionValueFilter(){
 
     updateOpacityForAllNodesAndEdges();
     resetChosenNodesAndEdges();
+    clearInfoBox();
 }
 
 // Function to cancel the address balance filter
@@ -872,6 +873,7 @@ function cancelAddressBalanceFilter(){
 
     updateOpacityForAllNodesAndEdges();
     resetChosenNodesAndEdges();
+    clearInfoBox();
 }
 
 // Function to update the opacity for all nodes and edges based on filter states
@@ -922,68 +924,23 @@ function handleTransactionValueInfo() {
     showTransactionValueInfo(txValFilteredNodes[currentTxValNodeIndex]);
 }
 
-// // Function to show transaction value information
-// function showTransactionValueInfo(nodeId) {
-//     console.log("updating transaction value info")
-//     const node = originalGraphData.nodes.find(n => n.id === nodeId);
-//     if (!node) return;
-
-
-//     // Display node information (size, inVals, outVals, fee)
-//     const infoBox = document.getElementById('infoBox');
-//     infoBox.innerHTML = `
-//         <h3>Transaction Node Info</h3>
-//         <p>Node ID: ${node.id}</p>
-//         <p>Size: ${node.size} bytes</p>
-//         <p>inVals: ${(node.inVals * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.inVals).toFixed(2).toLocaleString()}</p>
-//         <p>outVals: ${(node.outVals * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.outVals).toFixed(2).toLocaleString()}</p>
-//         <p>Fee: ${(node.fee * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.fee).toFixed(2).toLocaleString()}</p>
-//     `;
-
-//     // Highlight the current node and its connected edges and nodes
-//     resetChosenNodesAndEdges();
-//     highlightTransactionNode(node);
-// }
 // Function to show transaction value information
 function showTransactionValueInfo(nodeId) {
-    console.log("Attempting to display transaction value info for node:", nodeId);
-
+    console.log("updating transaction value info")
     const node = originalGraphData.nodes.find(n => n.id === nodeId);
-    if (!node) {
-        console.error(`Node with ID ${nodeId} not found in originalGraphData`);
-        return;
-    }
+    if (!node) return;
 
-    console.log("Transaction Node found:", node);
-
-    // Ensure usdPrice is defined, log it
-    const usdPrice = window.usdPrice || 0;
-    console.log("Current USD Price:", usdPrice);
-
-    // Log the transaction values to ensure they are valid
-    console.log(`Node Size: ${node.size}, inVals: ${node.inVals}, outVals: ${node.outVals}, Fee: ${node.fee}`);
-
-    // Ensure node properties are valid, fallback to 'N/A' if not defined
-    const size = node.size || 'N/A';
-    const inVals = node.inVals ? (node.inVals * 1000 / 10000000).toLocaleString() : 'N/A';
-    const outVals = node.outVals ? (node.outVals * 1000 / 10000000).toLocaleString() : 'N/A';
-    const fee = node.fee ? (node.fee * 1000 / 10000000).toLocaleString() : 'N/A';
-    const inValsUSD = node.inVals ? (usdPrice * node.inVals).toFixed(2).toLocaleString() : 'N/A';
-    const outValsUSD = node.outVals ? (usdPrice * node.outVals).toFixed(2).toLocaleString() : 'N/A';
-    const feeUSD = node.fee ? (usdPrice * node.fee).toFixed(2).toLocaleString() : 'N/A';
-
-    // Display node information in the infoBox
+    // Display node information (size, inVals, outVals, fee)
     const infoBox = document.getElementById('infoBox');
     infoBox.innerHTML = `
         <h3>Transaction Node Info</h3>
         <p>Node ID: ${node.id}</p>
-        <p>Size: ${size} bytes</p>
+        <p>Size: ${node.size} bytes</p>
+        <p>inVals: ${(node.inVals * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.inVals).toFixed(2).toLocaleString()}</p>
+        <p>outVals: ${(node.outVals * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.outVals).toFixed(2).toLocaleString()}</p>
+        <p>Fee: ${(node.fee * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.fee).toFixed(2).toLocaleString()}</p>
     `;
-    console.log("Transaction Node info displayed successfully.");
 
-    // <p>inVals: ${inVals} mB / $${inValsUSD}</p>
-    // <p>outVals: ${outVals} mB / $${outValsUSD}</p>
-    // <p>Fee: ${fee} mB / $${feeUSD}</p>
     // Highlight the current node and its connected edges and nodes
     resetChosenNodesAndEdges();
     highlightTransactionNode(node);
@@ -1022,76 +979,30 @@ function handleAddressBalanceInfo() {
     showAddressBalanceInfo(balanceFilteredNodes[currentBalanceNodeIndex]);
 }
 
-// // Function to show address balance information
-// function showAddressBalanceInfo(nodeId) {
-//     console.log("Updating address balance info")
-//     const node = originalGraphData.nodes.find(n => n.id === nodeId);
-//     if (!node) return;
-
-//     // Display node information
-//     const nodeTypeTitle = node.type === 'input' ? 'Input Node Info' : 'Output Node Info';
-//     const connectedEdge = originalGraphData.edges.find(edge => edge.source === node.id || edge.target === node.id);
-//     const edgeSize = connectedEdge ? connectedEdge.size : 'N/A';
-
-//     const infoBox = document.getElementById('infoBox');
-//     infoBox.innerHTML = `
-//         <h3>${nodeTypeTitle}</h3>
-//         <p>Node ID: ${node.id}</p>
-//         <p>Balance size: ${(node.balance * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.balance).toFixed(2).toLocaleString()}</p>
-//         <p>Value: ${(edgeSize * 1000 / 10000000).toLocaleString()} mB  / $${(usdPrice * node.balance).toFixed(2).toLocaleString()}</p>
-//     `;
-
-//     // Highlight the current node and its connected edge
-//     resetChosenNodesAndEdges();
-//     highlightAddressNode(node, connectedEdge);
-// }
 // Function to show address balance information
 function showAddressBalanceInfo(nodeId) {
-    console.log("Attempting to display address balance info for node:", nodeId);
-
+    console.log("Updating address balance info")
     const node = originalGraphData.nodes.find(n => n.id === nodeId);
-    if (!node) {
-        console.error(`Node with ID ${nodeId} not found in originalGraphData`);
-        return;
-    }
+    if (!node) return;
 
-    console.log("Address Node found:", node);
-
-    // Log the balance and the edge information
-    const usdPrice = window.usdPrice || 0;
-    console.log("Current USD Price:", usdPrice);
-    console.log(`Node Balance: ${node.balance}, Node Type: ${node.type}`);
-
-    const connectedEdge = originalGraphData.edges.find(edge => edge.source === node.id || edge.target === node.id);
-    if (connectedEdge) {
-        console.log("Connected Edge found:", connectedEdge);
-    } else {
-        console.warn("No connected edge found for node:", nodeId);
-    }
-
-    const edgeSize = connectedEdge ? connectedEdge.size : 'N/A';
-    const balance = node.balance ? (node.balance * 1000 / 10000000).toLocaleString() : 'N/A';
-    const balanceUSD = node.balance ? (usdPrice * node.balance).toFixed(2).toLocaleString() : 'N/A';
-    const value = connectedEdge ? (connectedEdge.size * 1000 / 10000000).toLocaleString() : 'N/A';
-    const valueUSD = connectedEdge ? (usdPrice * node.balance).toFixed(2).toLocaleString() : 'N/A';
-
-    // Determine if it's an input or output node and display the information
+    // Display node information
     const nodeTypeTitle = node.type === 'input' ? 'Input Node Info' : 'Output Node Info';
+    const connectedEdge = originalGraphData.edges.find(edge => edge.source === node.id || edge.target === node.id);
+    const edgeSize = connectedEdge ? connectedEdge.size : 'N/A';
 
-    // Display node information in the infoBox
     const infoBox = document.getElementById('infoBox');
     infoBox.innerHTML = `
         <h3>${nodeTypeTitle}</h3>
         <p>Node ID: ${node.id}</p>
-        <p>Balance size: ${balance} mB / $${balanceUSD}</p>
-        <p>Value: ${value} mB  / $${valueUSD}</p>
+        <p>Balance size: ${(node.balance * 1000 / 10000000).toLocaleString()} mB / $${(usdPrice * node.balance).toFixed(2).toLocaleString()}</p>
+        <p>Value: ${(edgeSize * 1000 / 10000000).toLocaleString()} mB  / $${(usdPrice * node.balance).toFixed(2).toLocaleString()}</p>
     `;
-    console.log("Address Node info displayed successfully.");
 
     // Highlight the current node and its connected edge
     resetChosenNodesAndEdges();
     highlightAddressNode(node, connectedEdge);
 }
+
 
 // Highlight the current address node and its connected edge
 function highlightAddressNode(node, edge) {
@@ -1131,13 +1042,14 @@ function resetChosenNodesAndEdges(){
     // Reset the color for all nodes and edges to their original colors
     node.style("fill", d => d.color)
     link.style("stroke", d => d.color)
+}
 
+function clearInfoBox(){
     // Clear and hide the info box
     const infoBox = document.getElementById('infoBox');
     infoBox.innerHTML = '';  // Clear the content
-    // infoBox.style.display = 'none';  // Hide the info box
+    infoBox.style.opacity = '0';  // Hide the info box
 }
-
 // Function to show transaction information for the current index in the list
 function updateTxValNodeInfo(index) {
     console.log("updateTxValNodeInfo")
