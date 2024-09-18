@@ -940,6 +940,7 @@ function showTransactionValueInfo(nodeId) {
     `;
 
     // Highlight the current node and its connected edges and nodes
+    resetChosenNodesAndEdges();
     highlightTransactionNode(node);
 }
 
@@ -996,6 +997,7 @@ function showAddressBalanceInfo(nodeId) {
     `;
 
     // Highlight the current node and its connected edge
+    resetChosenNodesAndEdges();
     highlightAddressNode(node, connectedEdge);
 }
 
