@@ -980,7 +980,7 @@ def create_graph_data(new_nodes, new_edges, positions):
                    'y': positions[node['id']][1], 
                    'color': node['color'], 
                    'type': node['type'], 
-                   'size': node['size'] if node['type'] == 'tx' else None,
+                   'size': node['bytesize'] if node['type'] == 'tx' else None,
                    'inVals': node['inVals'] if node['type'] == 'tx' else None,
                    'outVals': node['outVals'] if node['type'] == 'tx' else None,
                    'fee': node['fee'] if node['type'] == 'tx' else None,
