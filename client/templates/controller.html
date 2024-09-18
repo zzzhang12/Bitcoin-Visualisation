@@ -138,6 +138,7 @@
             align-items: center;
             justify-content: space-between;
             width: 100%;
+            gap: 10px;
         }
         .viewInfoSection {
             display: none;
@@ -157,8 +158,18 @@
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            gap: 10px; /* Optional: Adds some space between the buttons */
+            gap: 10px; 
         }
+        .previous-next .navigation-btn, .filter-input-container .apply-filter-btn, .filter-input-container .cancel-filter-btn {
+            flex: 1; /* Each button takes equal space */
+            max-width: 48%;
+        }
+        @media (max-width: 600px) {
+            .previous-next, .filter-input-container {
+                gap: 5px; /* Adjust gap for smaller screens */
+            }
+        }
+
     </style>
 </head>
 <body>
