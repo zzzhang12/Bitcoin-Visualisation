@@ -859,6 +859,7 @@ def get_usd_price():
     #     return None
 
     usd_price = 57717.04792391205
+    print (usd_price)
     socketio.emit('usd_price', usd_price)
 
 

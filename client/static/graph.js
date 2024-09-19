@@ -2,9 +2,9 @@
  * Created by zz3823 MSc Computing in Sep2024.
  */
 
-// Global variables
-var paused = false;
-var msgBuf = [];
+///////////////////////////////////////// 
+////////////  Global variables ////////// 
+let msgBuf = [];
 const CLIENT_WIDTH = 1920;  
 const CLIENT_HEIGHT = 1080;
 
@@ -13,7 +13,7 @@ let socket, svg, g, link, node;
 let offsetX, offsetY
 let firstLoaded = false
 let startTime
-let isTopLeft, isTopRight
+let isTopLeft, isTopRight, isBottomLeft
 let originalGraphData = { nodes: [], edges: [] };
 let hasDisplayedRange = false;
 let usdPrice
@@ -21,6 +21,7 @@ let usdPrice
 let txValFilterApplied = false;  // Initiliased to false, set to true when at least one filter is applied
 let balanceFilterApplied = false;  // Initiliased to false, set to true when at least one filter is applied
 
+// Keep track of nodes and edges selected by the respective filter, which retain full opacity
 let highlightedNodesByBalance = new Set();
 let highlightedEdgesByBalance = new Set();
 let highlightedNodesByTxValue = new Set();
@@ -34,88 +35,99 @@ let orderedNodesByBalance = []; // Sorted input and output nodes based on addres
 const txNodesById = new Map();  // For transaction nodes by outVals
 const nodesByBalanceId = new Map();  // For input/output nodes by balance
 
+// Keep track of node index in the list of nodes to view info
 let currentTxValNodeIndex = 0;
 let currentBalanceNodeIndex = 0;
 let txValFilteredNodes = [];
 let balanceFilteredNodes = [];
 
+// Currently 'selected' nodes and edges, which are green
 let chosenNodes = new Set();
 let chosenEdges = new Set();
 
+////////// End of Global Variables //////////
+////////////////////////////////////////////
+
 window.addEventListener("load", init, false);
 
-
+// Initialize the WebSocket connection
 function init() {
     console.log("Initializing...");
     runWebSocket();
 }
 
-
-function runWebSocket() {
-    socket = io(`http://${SOCKET_IP}:3000/`,{
+// Establish WebSocket connection and define event handlers for different socket events
+const runWebSocket = () => {
+    socket = io(`http://${SOCKET_IP}:3000/`, {
         withCredentials: true,
-        }
-    )
-    socket.on('connect', function() {
+    });
+
+    socket.on('connect', () => {
         console.log("Connected to server WebSocket");
     });
 
-    socket.on('disconnect', function() {
+    socket.on('disconnect', () => {
         console.log('Disconnected from server');
     });
 
-    socket.on('graph_data', function(msg) {
+    // Handle receiving graph data from the server
+    socket.on('graph_data', (msg) => {
         console.log('Received graph data:', msg);
-        if (!firstLoaded){
-            console.log("First time loading graph")
+        if (!firstLoaded) {
+            console.log("First time loading graph");
             setTimer();
-            firstLoaded = true
+            firstLoaded = true;
         }
         originalGraphData = JSON.parse(JSON.stringify(msg)); // Deep copy to preserve original data
-        processMessage(msg);
+        processMessage(msg);// Process and render the received graph data
     });
 
-    socket.on('update_stats', function(stats) {
-        if (isTopLeft){
+    // Handle receiving statistics updates from the server
+    socket.on('update_stats', (stats) => {
+        if (isTopLeft) {
             updateStats(stats);
         }
-
     });
 
-    socket.on('connection_response', function(msg) {
-        console.log('Server response:', msg);
+    // Handle connection response from the server
+    socket.on('connection_response', ({ status }) => {
+        console.log(`Server response: ${status}`);
     });
-    
-    socket.on('reload', function() {
+
+    // Reload the page if the server resets its state
+    socket.on('reload', () => {
         console.log("Reloading page because the server state has been reset");
-        location.reload(); 
+        location.reload();
     });
 
-    socket.on('usd_price', function(msg) {
+    // Handle receiving the current bitcoin price from the server
+    socket.on('usd_price', ( price ) => { 
         console.log("Received bitcoin price");
-        usdPrice = msg;
+        usdPrice = price;
     });
 
-    socket.on('controller_command', function(msg) {
-        console.log("Received controller command")
-        if (msg.action === 'saveSnapshot') {
+    // Handle receiving commands from the controller to save snapshots
+    socket.on('controller_command', ( action ) => { 
+        console.log("Received controller command");
+        if (action === 'saveSnapshot') {
             saveGraphSnapshot();
         }
     });
-    socket.on('filter_nodes', function(msg){
-        const filterType = msg.filterType;
-        const percentile = parseFloat(msg.percentile);
 
-        console.log(`Applying filter: ${filterType}, top ${percentile}%`);
+    // Apply filters to the nodes based on the filter type and percentile
+    socket.on('filter_nodes', ({ filterType, percentile })  => {
+        const parsedPercentile = parseFloat(percentile);
+        console.log(`Applying filter: ${filterType}, top ${parsedPercentile}%`);
 
         if (filterType === 'transactionValue') {
-            applyTransactionValueFilter(percentile);
+            applyTransactionValueFilter(parsedPercentile);
         } else if (filterType === 'addressBalance') {
-            applyAddressBalanceFilter(percentile);
+            applyAddressBalanceFilter(parsedPercentile);
         }
-    })
-    socket.on('cancel_filter', function(msg){
-        const filterType = msg.filterType;
+    });
+
+    // Cancel filters based on the filter type
+    socket.on('cancel_filter', ({ filterType }) => {
         console.log(`Cancelling filter: ${filterType}`);
 
         if (filterType === 'transactionValue') {
@@ -123,30 +135,29 @@ function runWebSocket() {
         } else if (filterType === 'addressBalance') {
             cancelAddressBalanceFilter();
         }
-    })
-    socket.on('view_transaction_info', function(msg) {
-        const filterType = msg.filterType;
+    });
+
+    // Handle viewing transaction info for nodes
+    socket.on('view_transaction_info',  ({ filterType })=> {
         console.log(`Received view transaction info for filter: ${filterType}`);
-    
+
+        // If the client is responsible for the top-right view, show the info box
         if (isTopRight) {
-            // Ensure the infoBox is visible again when reapplying the filter
             const infoBox = document.getElementById('infoBox');
             infoBox.style.visibility = 'visible';  // Show the infoBox again
             infoBox.style.opacity = '1';  // Restore opacity
         }
         if (filterType === 'transactionValue') {
-            // Logic to handle viewing transaction info for transaction value filter
             handleTransactionValueInfo();
         } else if (filterType === 'addressBalance') {
-            // Logic to handle viewing transaction info for balance filter
             handleAddressBalanceInfo();
         }
     });
-    // Handle navigation for transaction value nodes
-    socket.on('navigate_tx_val_node', function(msg) {
-        const direction = msg.direction;
-        console.log("navigate tx val")
-        console.log(direction)
+
+     // Navigate through nodes selected by tx val filter
+    socket.on('navigate_tx_val_node', ({ direction }) => {
+        console.log("navigate tx val");
+        console.log(direction);
         if (direction === 'previous') {
             currentTxValNodeIndex = (currentTxValNodeIndex - 1 + txValFilteredNodes.length) % txValFilteredNodes.length;
         } else if (direction === 'next') {
@@ -156,11 +167,10 @@ function runWebSocket() {
         updateTxValNodeInfo(currentTxValNodeIndex);
     });
 
-    // Handle navigation for address balance nodes
-    socket.on('navigate_balance_node', function(msg) {
-        const direction = msg.direction;
-        console.log("navigate balance")
-        console.log(direction)
+    // Navigate through nodes selected by balance size filter
+    socket.on('navigate_balance_node', ({ direction }) => {
+        console.log("navigate balance");
+        console.log(direction);
         if (direction === 'previous') {
             currentBalanceNodeIndex = (currentBalanceNodeIndex - 1 + balanceFilteredNodes.length) % balanceFilteredNodes.length;
         } else if (direction === 'next') {
@@ -168,24 +178,24 @@ function runWebSocket() {
         }
 
         updateBalanceNodeInfo(currentBalanceNodeIndex);
-});
+    });
 };
 
-
+// Get URL parameters based on the parameter name
 function getUrlParameter(name) {
     name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
-    var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
-    var results = regex.exec(location.search);
+    let regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+    let results = regex.exec(location.search);
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
 }
 
-
+// Set a timer that will update every second
 function setTimer(){
     startTime = Date.now();
     setInterval(updateObsTimer, 1000);
 }
 
-
+// Update the timer display on the page
 function updateObsTimer() {
     const elapsedTime = Date.now() - startTime;
     const seconds = Math.floor((elapsedTime / 1000) % 60);
@@ -196,30 +206,33 @@ function updateObsTimer() {
     `${hours}h ${minutes}m ${seconds}s`;
 }
 
-
+// Update statistics elements on the page based on the received data
 function updateStats(stats) {
-    // console.log(stats)
     document.getElementById('statTxRate').innerHTML = stats.txRate ? stats.txRate.toLocaleString() : 'N/A';
-    document.getElementById('txMaxVal').innerHTML = (stats.txMaxVal / 100000000).toLocaleString() + ' B /  ' + '<span class="usd-price">$'+ 
-                                                    (usdPrice * stats.txMaxVal / 100000000).toFixed(2).toLocaleString() + '</span>';
-    document.getElementById('txTotalVal').innerHTML = (stats.txTotalVal / 100000000).toLocaleString() + ' B /  ' + '<span class="usd-price">$'+ 
-                                                    (usdPrice * stats.txTotalVal / 100000000).toFixed(2).toLocaleString() + '</span>';
-    document.getElementById('txAvgVal').innerHTML = ((stats.txTotalVal / stats.numTx) * 1000 / 100000000).toLocaleString() + ' mB /  ' + '<span class="usd-price">$' +
-                                                    ((usdPrice * stats.txTotalVal / stats.numTx) / 100000000).toFixed(2).toLocaleString() + '</span>';
 
-    document.getElementById('txMaxFee').innerHTML = (stats.txMaxFee * 1000 / 100000000).toLocaleString() + ' mB /  ' + '<span class="usd-price">$'+
-                                                    (usdPrice * stats.txMaxFee / 100000000).toFixed(2).toLocaleString()+ '</span>';
-    document.getElementById('txTotalFee').innerHTML = (stats.txTotalFee / 100000000).toLocaleString() + ' B /  ' + '<span class="usd-price">$' +
-                                                    (usdPrice * stats.txTotalFee / 100000000).toFixed(2).toLocaleString()+ '</span>';
-    document.getElementById('txAvgFee').innerHTML = ((stats.txTotalFee / stats.numTx) * 1000 / 100000000).toLocaleString() + ' mB /  ' + '<span class="usd-price">$' + 
-                                                    ((usdPrice * stats.txTotalFee / stats.numTx) / 100000000).toFixed(2).toLocaleString()+ '</span>';
+    document.getElementById('txMaxVal').innerHTML = `${(stats.txMaxVal / 100000000).toLocaleString()} B / <span class="usd-price">
+                                                    $${(usdPrice * stats.txMaxVal / 100000000).toFixed(2).toLocaleString()}</span>`;
+    
+    document.getElementById('txTotalVal').innerHTML = `${(stats.txTotalVal / 100000000).toLocaleString()} B / <span class="usd-price">
+                                                    $${(usdPrice * stats.txTotalVal / 100000000).toFixed(2).toLocaleString()}</span>`;
+    
+    document.getElementById('txAvgVal').innerHTML = `${((stats.txTotalVal / stats.numTx) * 1000 / 100000000).toLocaleString()} mB / <span class="usd-price">
+                                                    $${((usdPrice * stats.txTotalVal / stats.numTx) / 100000000).toFixed(2).toLocaleString()}</span>`;
 
-    document.getElementById('txMaxSize').innerHTML = stats.txMaxSize.toLocaleString() + ' bytes'; 
-    document.getElementById('txTotalSize').innerHTML = stats.txTotalSize.toLocaleString() + ' bytes';
-    document.getElementById('txAvgSize').innerHTML = (stats.txTotalSize / stats.numTx).toLocaleString() + ' bytes';
+    document.getElementById('txMaxFee').innerHTML = `${(stats.txMaxFee * 1000 / 100000000).toLocaleString()} mB / <span class="usd-price">
+                                                    $${(usdPrice * stats.txMaxFee / 100000000).toFixed(2).toLocaleString()}</span>`;
+    
+    document.getElementById('txTotalFee').innerHTML = `${(stats.txTotalFee / 100000000).toLocaleString()} B / <span class="usd-price">
+                                                    $${(usdPrice * stats.txTotalFee / 100000000).toFixed(2).toLocaleString()}</span>`;
+    
+    document.getElementById('txAvgFee').innerHTML = `${((stats.txTotalFee / stats.numTx) * 1000 / 100000000).toLocaleString()} mB / <span class="usd-price">
+                                                    $${((usdPrice * stats.txTotalFee / stats.numTx) / 100000000).toFixed(2).toLocaleString()}</span>`;
 
-    document.getElementById('txAvgFeeDens').innerHTML = (stats.txTotalFee / stats.txTotalSize).toLocaleString() + ' sat/byte / $' + 
-                                                        (usdPrice * 1024 * stats.txTotalFee/(stats.txTotalSize*100000000)).toFixed(2).toLocaleString() + '/kB';;
+    document.getElementById('txMaxSize').innerHTML = `${stats.txMaxSize.toLocaleString()} bytes`;
+    document.getElementById('txTotalSize').innerHTML = `${stats.txTotalSize.toLocaleString()} bytes`;
+    document.getElementById('txAvgSize').innerHTML = `${(stats.txTotalSize / stats.numTx).toLocaleString()} bytes`;
+    document.getElementById('txAvgFeeDens').innerHTML = `${(stats.txTotalFee / stats.txTotalSize).toLocaleString()} sat/byte / 
+                                                        $${(usdPrice * 1024 * stats.txTotalFee / (stats.txTotalSize * 100000000)).toFixed(2).toLocaleString()}/kB`;
 
     document.getElementById('statNumTx').innerHTML = stats.numTx.toLocaleString();
     document.getElementById('statNumIn').innerHTML = stats.numIn.toLocaleString();
@@ -227,18 +240,18 @@ function updateStats(stats) {
     document.getElementById('statNumNodes').innerHTML = stats.numNodes.toLocaleString();
 
     document.getElementById('balanceMax').innerHTML = stats.balanceMax ? 
-                                                    (stats.balanceMax / 100000000).toLocaleString() + ' B /  ' + 
-                                                    '<span class="usd-price">$' + (usdPrice * stats.balanceMax / 10000000).toLocaleString()+ '</span>': 'N/A';
-    document.getElementById('balanceMed').innerHTML =(stats.balanceMed !== null && stats.balanceMed !== undefined) ? 
-                                                    (stats.balanceMed * 1000 / 100000000).toLocaleString() + ' mB /  ' + 
-                                                    '<span class="usd-price">$' + (usdPrice * stats.balanceMed / 10000000).toFixed(2).toLocaleString()+ '</span>': 'N/A';
-    document.getElementById('balanceIQR').innerHTML = (stats.balanceIQR !== null && stats.balanceMed !== undefined)? 
-                                                    (stats.balanceIQR * 1000 / 100000000).toLocaleString() + ' mB /  ' + 
-                                                    '<span class="usd-price">$' + (usdPrice * stats.balanceIQR / 10000000).toFixed(2).toLocaleString()+ '</span>': 'N/A';
+        `${(stats.balanceMax / 100000000).toLocaleString()} B / <span class="usd-price">$${(usdPrice * stats.balanceMax / 10000000).toLocaleString()}</span>` : 'N/A';
+    
+    document.getElementById('balanceMed').innerHTML = (stats.balanceMed !== null && stats.balanceMed !== undefined) ? 
+        `${(stats.balanceMed * 1000 / 100000000).toLocaleString()} mB / <span class="usd-price">$${(usdPrice * stats.balanceMed / 10000000).toFixed(2).toLocaleString()}</span>` : 'N/A';
+    
+    document.getElementById('balanceIQR').innerHTML = (stats.balanceIQR !== null && stats.balanceMed !== undefined) ? 
+        `${(stats.balanceIQR * 1000 / 100000000).toLocaleString()} mB / <span class="usd-price">$${(usdPrice * stats.balanceIQR / 10000000).toFixed(2).toLocaleString()}</span>` : 'N/A';
 }
 
 
-function saveGraphSnapshot() {
+// Save a snapshot of the current graph state
+async function saveGraphSnapshot() {
     console.log("--------------SAVING GRAPH SNAPSHOT-------------")
     const graphData = {
         nodes: [],
@@ -313,61 +326,50 @@ function saveGraphSnapshot() {
     const timestamp = now.toISOString().replace(/T/, '_').replace(/:/g, '-').split('.')[0];
     const filename = `graph_snapshot_${timestamp}.json`;
 
-    // Send the graphData to the server
-    fetch(`/save_snapshot?filename=${filename}`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(graphData)
-    })
-    .then(response => response.json())
-    .then(data => {
+    try {
+        // Send the graphData to the server using async/await
+        const response = await fetch(`/save_snapshot?filename=${filename}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(graphData)
+        });
+
+        const data = await response.json();
+
         if (data.status === "success") {
-            console.log("Graph snapshot saved successfully as ${filename}.");
+            console.log(`Graph snapshot saved successfully as ${filename}.`);
         } else {
             console.error("Failed to save graph snapshot.");
         }
-    })
-    .catch(error => {
+    } catch (error) {
         console.error("Error saving graph snapshot:", error);
-    });
+    }
 }
 
-
+// Process incoming graph data and render it
 function processMessage(msg){
-    if (paused) {
-        msgBuf.push(msg);
-    }
-    else {
-        renderGraph(msg);
-    }
+    renderGraph(msg);
 }
 
-
+// Initialize the graph 
 function initializeGraph() {
-    const width = window.innerWidth;
-    const height = window.innerHeight;
-    console.log("width: ", width)
-    console.log("height: ", height)
-
-
     svg = d3.select("svg")
         .call(d3.zoom().on("zoom", ({ transform }) => {
-            g.attr("transform", transform);
+            g.attr("transform", transform);// Apply zoom and pan transformations
         }))
         .append("g");
 
     g = svg.append("g");
 
-    link = g.selectAll(".link");
-    node = g.selectAll(".node");
+    link = g.selectAll(".link"); // Initialize empty link selection
+    node = g.selectAll(".node");  // Initialize empty node selection
 }
 
-
+// Render the graph data by filtering nodes and edges within the client's range
 function renderGraph(graphData) {
     console.log("Attempting to render graph");
-    // console.log("Received graph data structure:", graphData);
 
     if (!Array.isArray(graphData.nodes) || !Array.isArray(graphData.edges)) {
         console.error("Graph data is not correctly structured:", graphData);
@@ -380,6 +382,7 @@ function renderGraph(graphData) {
     // Determine if this is the top-left / top-right screen
     isTopLeft = (row === 2 && col === -1);
     isTopRight = (row ===2 && col === 1);
+    isBottomLeft = (row ===-2 && col === -1);
 
     const infoArea = document.getElementById('infoArea');
     const infoBox = document.getElementById('infoBox')
@@ -426,7 +429,6 @@ function renderGraph(graphData) {
     // x and y value ranges based on client position
     let xMax, xMin, yMax, yMin
     if (col == 0){
-        // const xInRange = node.x >= -0.5 * CLIENT_WIDTH && node.x <= 0.5 * CLIENT_WIDTH
         xMax = 0.5 * CLIENT_WIDTH
         xMin = -0.5 * CLIENT_WIDTH
     }
@@ -490,7 +492,7 @@ function renderGraph(graphData) {
     updateGraph({nodes: filteredNodes, edges: filteredEdges});
 }
 
-
+// Update the graph with new nodes and edges data
 function updateGraph(newGraphData) {
     console.log("Updating graph with new data:", newGraphData);
 
@@ -1012,6 +1014,7 @@ function updateBalanceNodeInfo(index) {
 }
 
 
+// Mapping function to translate iqr score to edge thickness
 function mapIqrScoreToThickness(iqrScore) {
     const minThickness = 0.6;
     const medThickness = 2.0;
@@ -1045,6 +1048,7 @@ function mapIqrScoreToThickness(iqrScore) {
     return thickness
 }
 
+// Mapping function to translate iqr score to node radius
 function mapIqrScoreToRadius(iqrScore) {
     const minRadius = 1.0;
     const medRadius = 2.5;
