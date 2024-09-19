@@ -355,6 +355,8 @@ function processMessage(msg){
 
 // Initialize the graph 
 function initializeGraph() {
+    const height = 1080;
+
     svg = d3.select("svg")
         .call(d3.zoom().on("zoom", ({ transform }) => {
             g.attr("transform", transform);// Apply zoom and pan transformations
@@ -365,6 +367,51 @@ function initializeGraph() {
 
     link = g.selectAll(".link"); // Initialize empty link selection
     node = g.selectAll(".node");  // Initialize empty node selection
+
+    if (isBottomLeft){
+        // Define legend container position and dimensions
+        const legend = svg.append("g")
+        .attr("class", "legend")
+        .attr("transform", `translate(50, ${height - 200})`);  
+
+        // Legend items array
+        const legendData = [
+        { label: "Transaction", color: "white", type: "tx" },
+        { label: "Input", color: "#FF9933", type: "input" },
+        { label: "Output", color: "#003399", type: "output" }
+        ];
+
+        // For each item in the legendData array, create the appropriate nodes and edges
+        legendData.forEach((item, index) => {
+        const yOffset = index * 25;  
+
+        // Add circle (node)
+        legend.append("circle")
+            .attr("cx", 10)
+            .attr("cy", yOffset)
+            .attr("r", 8)  
+            .style("fill", item.color);
+
+        // Add line (edge) for input/output types
+        if (item.type !== "tx") {
+            legend.append("line")
+                .attr("x1", 20)  
+                .attr("y1", yOffset)
+                .attr("x2", 50)  
+                .attr("y2", yOffset)
+                .style("stroke", item.color)
+                .style("stroke-width", 2);  
+        }
+
+        // Add label text
+        legend.append("text")
+            .attr("x", 60)  
+            .attr("y", yOffset + 4) 
+            .text(item.label)
+            .style("fill", "#ffffff")  
+            .style("font-size", "120%");
+        });
+    }
 }
 
 // Render the graph data by filtering nodes and edges within the client's range
