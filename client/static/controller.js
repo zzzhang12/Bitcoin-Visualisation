@@ -500,49 +500,49 @@ function displaySnapshotList(snapshots) {
                         }
                     ];
 
-                    // // Execute multiple fetch requests in parallel
-                    // Promise.all(
-                    //     payloads.map(payload => 
-                    //         fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-                    //             method: "POST",
-                    //             headers: {
-                    //                 'Content-Type': 'application/json'
-                    //             },
-                    //             body: JSON.stringify(payload)
-                    //         })
-                    //         .then(response => {
-                    //             if (!response.ok) {
-                    //                 throw new Error('Failed to load snapshot.');
-                    //             }
-                    //             return response.json();
-                    //         })
-                    //     )
-                    // )
-                    // .then(dataArray => {
-                    //     dataArray.forEach(data => {
-                    //         console.log('Snapshot loaded into the observatory:', data);
-                    //     });
-                    //     button.style.backgroundColor = '#28a745'; // Green color to indicate success
-                    //     regionButtons.remove();
-                    //     activeRegionButtons = null; // Reset the active region buttons
-                    // })
-                    // .catch(error => {
-                    //     console.error('Error loading snapshot into the observatory:', error);
-                    // });
-                    // fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
-                    //     method: "POST",
-                    //     headers: {
-                    //         'Content-Type': 'application/json'
-                    //     },
-                    //     body: JSON.stringify(payload)
-                    // })
+                    // Execute multiple fetch requests in parallel
+                    Promise.all(
+                        payloads.map(payload => 
+                            fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                                method: "POST",
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(payload)
+                            })
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Failed to load snapshot.');
+                                }
+                                return response.json();
+                            })
+                        )
+                    )
+                    .then(dataArray => {
+                        dataArray.forEach(data => {
+                            console.log('Snapshot loaded into the observatory:', data);
+                        });
+                        button.style.backgroundColor = '#28a745'; // Green color to indicate success
+                        regionButtons.remove();
+                        activeRegionButtons = null; // Reset the active region buttons
+                    })
+                    .catch(error => {
+                        console.error('Error loading snapshot into the observatory:', error);
+                    });
+                    fetch("http://gdo-apps.dsi.ic.ac.uk:9080/section", {
+                        method: "POST",
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
                     
 
                     // //  For local testing only
                     // window.open(`/static_graph?snapshot=${snapshot.file_name}`, '_blank')
                     // window.open(`/snapshot_stats?snapshot=${snapshot.file_name}`, '_blank')
                     // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_value`, '_blank');
-                    window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
+                    // window.open(`/static_histogram?snapshot=${snapshot.file_name}&histogramType=tx_size`, '_blank');
                     // window.open(`/static_lineGraph?snapshot=${snapshot.file_name}&lineGraphTypes=tx_fee,tx_rate`, '_blank');
 
                     // If this region was previously occupied by another snapshot, reset its color

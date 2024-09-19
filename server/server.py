@@ -844,22 +844,21 @@ def get_usd_price():
         'X-CMC_PRO_API_KEY': api_key,
     }
 
-    # response = requests.get(url, headers=headers, params=parameters)
+    response = requests.get(url, headers=headers, params=parameters)
 
-    # # Check if the request was successful
-    # if response.status_code == 200:
-    #     data = response.json()
-    #     # Extract the USD price from the response
-    #     usd_price = data['data']['1']['quote']['USD']['price']
-    #     usd_price = 57717.04792391205
-    #     socketio.emit('usd_price', usd_price)
-    # else:
-    #     # If the request failed, print the error and return None
-    #     print(f"Error {response.status_code}: {response.text}")
-    #     return None
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = response.json()
+        # Extract the USD price from the response
+        usd_price = data['data']['1']['quote']['USD']['price']
+        usd_price = 57717.04792391205
+        socketio.emit('usd_price', usd_price)
+    else:
+        # If the request failed, print the error and return None
+        print(f"Error {response.status_code}: {response.text}")
+        return None
 
-    usd_price = 57717.04792391205
-    print (usd_price)
+    # usd_price = 57717.04792391205 # For testing
     socketio.emit('usd_price', usd_price)
 
 
