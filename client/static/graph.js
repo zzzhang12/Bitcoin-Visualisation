@@ -1071,7 +1071,6 @@ function mapIqrScoreToRadius(iqrScore) {
         
         radius = ExtremeValueScale(iqrScore);
     }
-    console.log(`IQR Score: ${iqrScore}, Radius: ${radius}`);
     return radius
 }
 

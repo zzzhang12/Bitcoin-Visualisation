@@ -299,7 +299,6 @@ function displaySnapshotList(snapshots) {
         return dateB.getTime() - dateA.getTime();  // most recent first)
     });
 
-    // console.log("Sorted snapshots:", snapshots);
     
     const totalPages = Math.ceil(snapshots.length / ITEMS_PER_PAGE);
 
@@ -414,12 +413,6 @@ function displaySnapshotList(snapshots) {
                     const WIDTH = 1920;
                     const HEIGHT = 1080;
 
-                    // console.log(x, y)
-
-                    // let x, Y
-                    // if (index == 0){
-                    //     x = 
-                    // }
                     const payloads = [
                         // Static graph snapshot -- 2 x 2 screens
                         {
@@ -561,9 +554,9 @@ function displaySnapshotList(snapshots) {
                     regionMapping[region] = snapshotName;
                     button.style.backgroundColor = '#28a745'; // Green color to indicate success
 
-                    // // Remove region buttons after selecting one
-                    // regionButtons.remove();
-                    // activeRegionButtons = null;
+                    // Remove region buttons after selecting one
+                    regionButtons.remove();
+                    activeRegionButtons = null;
                 });
 
                 regionButtons.appendChild(regionButton);
