@@ -32,7 +32,7 @@ MAX_SIZE = 100 # max queue size
 nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
-broadcast_interval = 1.4 # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1.8 # Frequency in seconds to broadcast data to clients
 scale_factor = 2.0
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
@@ -174,7 +174,7 @@ def shift():
     return None
 
 polling_ref = None
-
+stop_event = threading.Event()
 
 def start_polling():
     global polling_ref

@@ -12,7 +12,6 @@ address_set = set()
 new_addresses = set()
 
 def get_address_balances(addresses):
-    # print ("length of addresses: ", len(addresses))
     url = f"https://blockchain.info/multiaddr?active={'|'.join(addresses)}&n=1"
     response = requests.get(url)
     if response.status_code == 200:
