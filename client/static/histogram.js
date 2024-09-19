@@ -1,3 +1,7 @@
+/**
+ * Created by zz3823 MSc Computing in Sep2024.
+ */
+
 let dataBuffer = []; 
 let yMax = 0;
 

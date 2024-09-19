@@ -1,3 +1,7 @@
+/**
+ * Created by zz3823 MSc Computing in Sep2024.
+ */
+
 let socket;
 
 const ITEMS_PER_PAGE = 10; // Number of snapshots per page

@@ -1,3 +1,7 @@
+/**
+ * Created by zz3823 MSc Computing in Sep2024.
+ */
+
 const WIDTH = 1920; 
 const HEIGHT = 1080;
 
