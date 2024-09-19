@@ -12,29 +12,27 @@ import requests
 import numpy as np
 import os
 from dotenv import load_dotenv
-import logging
 
-# Set up logging to a file
-logging.basicConfig(filename='iqr_score_log.txt', level=logging.INFO, 
-                    format='%(asctime)s - %(levelname)s - %(message)s')
                     
 app = Flask(__name__, static_folder='../client/static', template_folder='../client/templates')
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 # Load environment variables from the .env file
 load_dotenv()
+
 SOCKET_IP = os.getenv('IP_ADDRESS')
 
 # WebSocket to receive Bitcoin transactionss
 BITCOIN_WS_URL = "wss://ws.blockchain.info/inv"
 
-# Global Variables
+##################################################
+############### Global Variables #################
 queue = []
 MAX_SIZE = 100 # max queue size
 nodes = [] # all nodes
 edges = [] # all edges
 node_ids = set()   # for tracking nodes
-broadcast_interval = 2 # Frequency in seconds to broadcast data to clients
+broadcast_interval = 1.4 # Frequency in seconds to broadcast data to clients
 scale_factor = 2.0
 nx_graph = nx.Graph()  # Global NetworkX graph instance
 address_cache = {}  # Cache of addresses balances
@@ -62,7 +60,7 @@ forceatlas2_lock = threading.Lock()
 start_lock = threading.Lock()
 save_lock = threading.Lock()
 
-# Statistics 
+# Statistical measures of tx value and balance size. Retrieved from stats.py
 mean_tx = 0 # Mean of transaction values
 std_dev_tx = 0 # Standard deviation of transaction values
 p25_tx = 0 # 25th percentile of transaction values
@@ -74,20 +72,6 @@ p25_balance = 0 # 25th percentile of address balances
 p75_balance = 0 # 75th percentile of address balances
 iqr_balance = 0 # interquartile range of address balances
 
-# For testing - send local files
-file_index = 0
-# json_files = [
-#     '1.json',
-#     '2.json',
-#     '3.json',
-#     '4.json',
-#     '5.json',
-#     '6.json',
-#     '7.json',
-#     '8.json',
-#     '9.json',
-#     '10.json'
-# ]
 
 # Canvas sizes
 NUM_CLIENTS = 16
@@ -119,6 +103,8 @@ txMaxFee = 0
 txTotalSize = 0
 txMaxSize = 0
 
+############### End of global variables #############
+########################################################
 
 
 def load_transaction_stats():
@@ -201,9 +187,7 @@ def start_polling():
             message = shift()
             if message is None:
                 continue
-            # print("message: ", message)
             process_message([message])
-            # print ("length of queue: ", len(queue))
             time.sleep(0.5)  # Polling interval
 
     if polling_ref is not None:
@@ -215,7 +199,6 @@ def start_polling():
 
 
 def on_message(ws, message):
-    # print("received websocket messages")
     data = json.loads(message)
     push(data)
 
@@ -236,8 +219,6 @@ def on_open(ws):
         print("Connected to external Bitcoin WebSocket service")
         ws.send(json.dumps({"op": "unconfirmed_sub"}))
         print("subscribed to unconfirmed transactions")
-        # ws.send(json.dumps({"op": "blocks_sub"}))
-        # print("subscribed to new block notifications")
         start_polling()
 
     threading.Thread(target=run).start()
@@ -249,7 +230,6 @@ def start_ws():
                                 on_error=on_error,
                                 on_close=on_close)
     ws.on_open = on_open
-    # websocket.enableTrace(True)
     print("Starting WebSocket connection to:", BITCOIN_WS_URL) 
     ws.run_forever()
 
@@ -268,9 +248,6 @@ def process_message(msg):
 
 
 def process_transaction(transactions):
-    # print ("-----------------------------")
-    # print("transactions: ", transactions)
-    # print("length of transacions: ", len(transactions))
 
     global nodes, edges, node_ids, nx_graph, address_dict, address_cache, current_addresses, balance_stats
     global numNodes, numTx, numIn, numOut, txTotalVal, txMaxVal, txTotalFee, txMaxFee, txTotalSize, txMaxSize, lastRateTx, timeOfLastTx, txRate
@@ -278,12 +255,8 @@ def process_transaction(transactions):
     new_nodes = []
     new_edges = []
     try:
-        # print ("number of transactions: ", len(transactions))
         i = 1
         for tx in transactions:
-            # if i == 1:
-            #     print ("-----------------------------------")
-            #     print ("transaction: ", tx)
             txIndex = random.randint(0, 100000000)
             tx['x']['tx_index'] = txIndex
             tx_id = tx['x']['tx_index']
@@ -327,10 +300,6 @@ def process_transaction(transactions):
                 numNodes += 1
                 numTx += 1
                 # print ("Added tx node", numNodes)
-                # graph_data = compute_graph(nodes, edges)
-                # if graph_data:
-                #     socketio.emit('graph_data', graph_data)
-                #     print("emitted to client after processing transaction")
 
 
             inVals = 0
@@ -369,25 +338,6 @@ def process_transaction(transactions):
                         new_nodes.append(node)
                         node_ids.add(currID)
                         nx_graph.add_node(currID)  
-
-                        # # Add grey edges for addresses referenced by >1 input or output
-                        # if addr in address_dict:
-                        #     latest_node_id = address_dict[addr][-1]
-                        #     edge = {
-                        #         'id': f"{latest_node_id}:{currID}gray",
-                        #         'source': latest_node_id,
-                        #         'target': currID,
-                        #         'color': '#555555',
-                        #         'type': 'addr_link',
-                        #         'weight': 30
-                        #     }
-                        #     edges.append(edge)
-                        #     new_edges.append(edge)
-                        #     # nx_graph.add_edge(latest_node_id, currID)
-                        #     nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
-                        #     address_dict[addr].append(currID)
-                        # else:
-                        #     address_dict[addr] = [currID]
                         
                         edge = {
                             'id': f"{currID}:{tx_id}",
@@ -404,7 +354,6 @@ def process_transaction(transactions):
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
-                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         node_positions[currID] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
@@ -415,11 +364,6 @@ def process_transaction(transactions):
                         # print ("Added input node", numNodes)
                         # print(f"Added new input node: {currID}")
                         # print(f"Added input edge: {currID} -> {tx_id}")
-
-                        # graph_data = compute_graph(nodes, edges)
-                        # if graph_data:
-                        #     socketio.emit('graph_data', graph_data)
-                        #     print("emitted to client after processing transaction")
 
                     else:
                         existInput['type'] = 'InOut'
@@ -439,13 +383,8 @@ def process_transaction(transactions):
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(currID, tx_id)
-                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         # print('Joined input node:', currID)
-                        # graph_data = compute_graph(nodes, edges)
-                        # if graph_data:
-                        #     socketio.emit('graph_data', graph_data)
-                        #     print("emitted to client after processing transaction")
                     inVals += size
 
                         
@@ -464,9 +403,6 @@ def process_transaction(transactions):
                 out_color = '#003399'
 
                 existOutput = nx_graph.nodes.get(currID)
-
-                # if addr is None:
-                #     print(f"Skipping output with None address: {currID}")
 
                 if addr:
                     if existOutput is None:
@@ -488,25 +424,6 @@ def process_transaction(transactions):
                         node_ids.add(currID)
                         nx_graph.add_node(currID)
 
-                        # #Add grey edges for addresses referenced by >1 input or output
-                        # if addr in address_dict:
-                        #     latest_node_id = address_dict[addr][-1]
-                        #     edge = {
-                        #         'id': f"{latest_node_id}:{currID}gray",
-                        #         'source': latest_node_id,
-                        #         'target': currID,
-                        #         'color': '#555555',
-                        #         'type': 'addr_link',
-                        #         'weight': 30
-                        #     }
-                        #     edges.append(edge)
-                        #     new_edges.append(edge)
-                        #     # nx_graph.add_edge(latest_node_id, currID)
-                        #     nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
-                        #     address_dict[addr].append(currID)
-                        # else:
-                        #     address_dict[addr] = [currID]
-
                         edge = {
                             'id': f"{tx_id}:{currID}",
                             'source': tx_id, 
@@ -522,7 +439,6 @@ def process_transaction(transactions):
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
-                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         node_positions[currID] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
@@ -532,10 +448,6 @@ def process_transaction(transactions):
                         # print ("Added output node", numNodes)
                         # print(f"Added new output node: {currID}")
                         # print(f"Added output edge: {tx_id} -> {currID}")
-                        # graph_data = compute_graph(nodes, edges)
-                        # if graph_data:
-                        #     socketio.emit('graph_data', graph_data)
-                        #     print("emitted to client after processing transaction")
 
                     else:
                         existOutput['type'] = 'InOut'
@@ -554,13 +466,8 @@ def process_transaction(transactions):
                         edges.append(edge)
                         new_edges.append(edge)
                         nx_graph.add_edge(tx_id, currID)
-                        # nx_graph.add_edge(edge['source'], edge['target'], weight=edge.get('weight', 1))
 
                         # print('Joined output node:', currID)
-                        # graph_data = compute_graph(nodes, edges)
-                        # if graph_data:
-                        #     socketio.emit('graph_data', graph_data)
-                        #     print("emitted to client after processing transaction")
                     outVals += size
 
             # Update transaction node values
@@ -623,16 +530,11 @@ def process_transaction(transactions):
             }
 
             socketio.emit('stats', graph_stats)
-        # Compute positions and send graph data after processing each transaction
-        # graph_data = compute_graph(nodes, edges)
-        # if graph_data:
-        #     socketio.emit('graph_data', graph_data)
-        #     print("emitted to client after processing transaction")
+
 
         # Get balance of each address
         global addresses_to_query
 
-        # print ("---------number of global addresses to query-----------", len(addresses_to_query))
         for node in new_nodes:
             # only input and output nodes can have addresses
             if (node['type'] != "tx" and node['type'] != "intersection"):
@@ -648,51 +550,14 @@ def process_transaction(transactions):
                         update_cache(address, transaction_value, "current")
 
         if len(addresses_to_query) >= 50:
-            # print("-----------quering: ", len(addresses_to_query))
             new_balances = get_address_balances(addresses_to_query)
             address_cache.update(new_balances)
             current_addresses.update(new_balances)
             addresses_to_query = []
 
-        # compute_graph(new_nodes, new_edges)
-
     except Exception as e:
         print("Error processing transactions:", str(e))
         traceback.print_exc()
-
-
-def process_block(msg):
-    global nodes, edges, node_ids, nx_graph
-    global numNodes, numTx
-    global paused, blkTimer, blkStart
-
-    paused = True
-    print(f'New block {msg[0]["x"]["height"]} received')
-
-    # Update timers and alerts (if needed)
-    blkStart = time.time()
-    # Clear and set blkTimer (need to implement timeBlock logic)
-    # blkTimer = setInterval(timeBlock, 1000, [blkStart])
-
-    txs = msg[0]["x"]["txIndexes"]
-
-    preBlockTxCount = numTx
-    nodes_to_drop = set()
-
-    for tx_id in txs:
-        if tx_id in node_ids:
-            # Drop all connected nodes
-            nodes_to_drop.update(drop_connected(tx_id))
-            # Drop tx node itself
-            numTx -= 1
-            numNodes -= 1
-            nodes_to_drop.add(tx_id)
-
-    print(f'{preBlockTxCount - numTx} txs removed')
-
-    # Send nodes to drop to client
-    socketio.emit('drop_nodes', list(nodes_to_drop))
-    paused = False
 
 
 def calculate_z_score(value, type):
@@ -708,62 +573,28 @@ def calculate_iqr_score(value, type):
 
     if type == "tx":
         if iqr_tx == 0:  # Avoid division by zero
-            logging.warning(f"Transaction IQR is 0. Cannot calculate IQR score for value {value}.")
             return 0
 
         if value <= p25_tx:
             # Value is below the 25th percentile
-            iqr_score = (value - p25_tx) / iqr_tx
-            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
-            return iqr_score
+            return (value - p25_tx) / iqr_tx
         elif value > p25_tx and value < p75_tx:
-            iqr_score = (value - (p75_tx - p25_tx)) / iqr_tx
-            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
-            return iqr_score
+            return (value - (p75_tx - p25_tx)) / iqr_tx
         else:
             # Value is above the 75th percentile
-            iqr_score = (value - p75_tx) / iqr_tx
-            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
-            return iqr_score
+            return (value - p75_tx) / iqr_tx
 
     elif type == "balance":
         if iqr_balance == 0:  # Avoid division by zero
-            logging.warning(f"Balance IQR is 0. Cannot calculate IQR score for value {value}.")
             return 0
-
         if value <= p25_balance:
             # Value is below the 25th percentile
-            iqr_score = (value - p25_balance) / iqr_balance
-            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
-            return iqr_score
+            return (value - p25_balance) / iqr_balance
         elif value > p25_balance and value < p75_balance:
-            iqr_score = (value - (p75_balance - p25_balance)) / iqr_balance
-            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
-            return iqr_score
+            return (value - (p75_balance - p25_balance)) / iqr_balance
         else:
             # Value is above the 75th percentile
-            iqr_score = (value - p75_balance) / iqr_balance
-            logging.info(f"type: {type}, value: {value}, IQR score: {iqr_score}")
-            return iqr_score
-
-def drop_connected(tx_id):
-    nodes_to_drop = set()
-    txnbrs = nx_graph.adj[tx_id]
-
-    for txnbr in txnbrs:
-        is_to_drop = True
-        nbrsnbrs = nx_graph.adj[txnbr]
-
-        for nbrsnbr in nbrsnbrs:
-            for edg in nx_graph.edges(nbrsnbr):
-                if edg[0] != tx_id and edg[1] != tx_id and nx_graph.edges[edg]['type'] != 'addr_link':
-                    is_to_drop = False
-
-        if is_to_drop:
-            nodes_to_drop.add(txnbr)
-            nx_graph.remove_node(txnbr)
-
-    return nodes_to_drop
+            return (value - p75_balance) / iqr_balance
 
 
 def get_address_balances(addresses):
@@ -826,7 +657,6 @@ def compute_graph(new_nodes, new_edges):
             for node in new_nodes:
                 node_id = node['id']
                 if node_id not in node_positions or node_positions[node_id] == (0.0, 0.0):
-                    # print ("initialise node position")
                     node_positions[node_id] = (random.uniform(-1, 1), random.uniform(-1, 1))
 
         # Initialize ForceAtlas2 with the desired parameters
@@ -864,7 +694,6 @@ def compute_graph(new_nodes, new_edges):
         final_graph_data = create_graph_data(new_nodes, new_edges, scaled_positions)
 
         socketio.emit('graph_data', final_graph_data)
-        print(f"Completed {total_iterations} iteration ")
 
         return final_graph_data
 
@@ -946,33 +775,6 @@ def create_graph_data(new_nodes, new_edges, positions):
                 })
             else:
                 new_edges_split.append(edge)
-
-    # Determine the range of x and y values
-    x_min, x_max = min(all_x_values), max(all_x_values)
-    y_min, y_max = min(all_y_values), max(all_y_values)
-
-     # Calculate scaling factors for x and y
-    # x_scale_factor = (2880 * 2) / (x_max - x_min)
-    # y_scale_factor = (2160 * 2) / (y_max - y_min)
-
-    # Choose the smaller scaling factor to maintain aspect ratio
-    # scale_factor = min(x_scale_factor, y_scale_factor)
-    # scaled_x_values = [(x - x_min) * scale_factor - 2880 for x in all_x_values]
-    # scaled_y_values = [(y - y_min) * scale_factor - 2160 for y in all_y_values]
-
-    for x in all_x_values:
-        if x < -2880 or x > 2880:
-            outside_x_range += 1
-
-    for y in all_y_values:
-        if y < -2160 or y > 2160:
-            outside_y_range += 1
-
-    # Print the range of x and y values and how many are outside the boundaries
-    print(f"X range: ({x_min}, {x_max})")
-    print(f"Y range: ({y_min}, {y_max})")
-    print(f"Nodes outside X range: {outside_x_range}")
-    print(f"Nodes outside Y range: {outside_y_range}")
 
     graph_data = {
         'nodes': [{'id': node['id'], 
@@ -1219,7 +1021,6 @@ def handle_controller_command(data):
             start_visualization = True
             threading.Thread(target=start_ws).start()
             threading.Thread(target=periodic_broadcast).start()
-            # get_usd_price()
             print("Visualization started.")
 
     elif action == 'resetGraph':
@@ -1285,8 +1086,7 @@ def periodic_broadcast():
         with queue_lock:
             if not queue:
                 continue
-            # new_nodes, new_edges = process_transaction(transactions)
-            # graph_data = compute_graph(new_nodes, new_edges)
+
             if not nodes and not edges:
                 print("Graph has no nodes or edges yet.")
                 time.sleep(broadcast_interval)
@@ -1300,7 +1100,6 @@ def periodic_broadcast():
                 continue
 
             graph_data = compute_graph(nodes, edges)
-            # graph_data = compute_graph_safe(nodes, edges)
 
             start_time = time.time()
             socketio.emit('graph_data', graph_data)
@@ -1309,34 +1108,13 @@ def periodic_broadcast():
             print ("---------------------------------------")
             print(f"Emitted to client in {emit_duration:.4f} seconds")
 
-         # Save graph_data to a local JSON file with sequential names
-        # filename = f"{counter}.json"
-        # with open(filename, 'w') as f:
-        #     json.dump(graph_data, f, indent=4)
-        # counter += 1
-
         time.sleep(broadcast_interval)
-
-## For Testing only
-def send_json_files():
-    global file_index, json_files
-    while file_index < len(json_files):
-        with open(json_files[file_index]) as f:
-            graph_data = json.load(f)
-            socketio.emit('graph_data', graph_data)
-            print("emitted to client")
-        file_index += 1
-        time.sleep(broadcast_interval) 
 
 
 if __name__ == '__main__':
-    # print("error")
     load_transaction_stats()
-    print("Starting Flask server on 0.0.0.0:3000")
-    # threading.Thread(target=start_ws).start()
-    # threading.Thread(target=periodic_broadcast).start()
-    # threading.Thread(target=send_json_files).start()
-    # socketio.run(app, host='::', port=3000)
+    print("Starting Flask server")
 
+    # socketio.run(app, host='::', port=3000)
     # socketio.run(app, host='127.0.0.1', port=3000)
     socketio.run(app, host='0.0.0.0', port=3000)
