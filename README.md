@@ -12,16 +12,26 @@ Crypto Explorer distributes the rendering of the visualization across multiple c
 ### **Dynamic Data-Driven Visualization**  
 Transaction values and wallet balances are dynamically visualized, with **edge thickness** representing transaction sizes and **node size** reflecting wallet balances. This provides clear and intuitive insights into Bitcoin transactions.  
 
-<img src="figures/Sizing_1.png"  width="400">
-<img src="figures/Sizing_2.png"  width="400">
+<table>
+  <tr>
+    <img src="figures/Sizing_1.png"  width="300">
+    <img src="figures/Sizing_2.png"  width="300">
+  </tr>
+</table>
 
 ### **Statistical Data Visualizations**  
 Interactive statistical graphs, including **histograms** and **line charts**, dynamically display transaction metrics. These visualizations make it easier to identify patterns and anomalies in real-time.  
 
-<img src="figures/tx_value.png" width="400">
-<img src="figures/tx_size.png" width="400">
-<img src="figures/tx_rate.png" width="400">
-<img src="figures/tx_fee.png" width="400">
+<table>
+  <tr>
+    <td><img src="figures/tx_value.png" width="400"></td>
+    <td><img src="figures/tx_size.png" width="400"></td>
+  </tr>
+  <tr>
+    <td><img src="figures/tx_rate.png" width="400"></td>
+    <td><img src="figures/tx_fee.png" width="400"></td>
+  </tr>
+</table>
 
 ### **Historical Data Comparison**  
 Users can save snapshots of the current graph and statistical measures, then compare multiple snapshots side-by-side to analyze historical trends.  
