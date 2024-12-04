@@ -36,7 +36,7 @@ Real-time statistical graphs, including **histograms** and **line charts**, dyna
 ### **Historical Data Comparison**  
 Users can save snapshots of the current graph and statistical measures, then compare multiple snapshots side-by-side to analyze historical trends. Users can select which snapshots to view using the controller. Below are examples showing the controller interface and how a snapshot view appears on the observatory screens.
 
-<img src="figures/snapshot_list.png" width="400">
+<img src="figures/snapshot_list.png" width="600">
 <img src="figures/snapshot_layout.jpg" width="400">
 
 
@@ -60,13 +60,13 @@ Crypto Explorer allows users to:
     <td><img src="figures/tx_node_info.png"  width="300"></td>
   </tr>
 </table>
+
 ---
 
 ## Technologies Used
 
 - **Python**:
-  - Backend for real-time data processing.
-  - Retrieves Bitcoin data using **Blockchain.com's WebSocket API**.
+  - Retrieves real-time Bitcoin data and processes it to compute graph layouts using the ForceAtlas2 algorithm.
 - **JavaScript**:
   - Visualization rendering implemented using **D3.js**.
 - **Socket.IO**:
@@ -91,4 +91,12 @@ Crypto Explorer allows users to:
 4. **Continuous Updates**:  
    - The server periodically updates the graph as new transactions are processed.
    - Updated graph data is sent to the clients, ensuring real-time changes are reflected dynamically.
+
+
+### Note
+
+The system was designed specifically for use in the **Data Observatory** environment. As such:  
+- The full real-time visualization demo may not display properly on a standard desktop setup due to its distributed rendering design.  
+- While the controller interface can be accessed in a separate browser tab, the snapshot viewing functionalities rely on API calls to the observatory, which will not function outside the observatory setup.  
+
 
