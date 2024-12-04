@@ -36,8 +36,8 @@ Real-time statistical graphs, including **histograms** and **line charts**, dyna
 ### **Historical Data Comparison**  
 Users can save snapshots of the current graph and statistical measures, then compare multiple snapshots side-by-side to analyze historical trends. Users can select which snapshots to view using the controller. Below are examples showing the controller interface and how a snapshot view appears on the observatory screens.
 
-<img src="figures/snapshot_list.png" width="600">
-<img src="figures/snapshot_layout.jpg" width="400">
+<img src="figures/snapshot_list.png" width="650">
+<img src="figures/snapshot_layout.JPG" width="400">
 
 
 ### **Enhanced Interactivity**  
@@ -92,8 +92,9 @@ Crypto Explorer allows users to:
    - The server periodically updates the graph as new transactions are processed.
    - Updated graph data is sent to the clients, ensuring real-time changes are reflected dynamically.
 
+---
 
-### Note
+## Note
 
 The system was designed specifically for use in the **Data Observatory** environment. As such:  
 - The full real-time visualization demo may not display properly on a standard desktop setup due to its distributed rendering design.  
